@@ -6,11 +6,11 @@ from pathlib import Path
 
 
 def app_path() -> Path:
-    return Path(__file__).with_name("ui_app.py")
+    return Path(__file__).with_name("ui_workbench.py")
 
 
 def main() -> None:
-    """Launch the local TABITO item-generation workbench."""
+    """Launch the local TABITO content-production workbench."""
     subprocess.run(
         [sys.executable, "-m", "streamlit", "run", str(app_path())],
         check=True,
