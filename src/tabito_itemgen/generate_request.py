@@ -9,15 +9,23 @@ from jinja2 import Template
 from .io import load_json
 from .models import Item
 
+BLUEPRINT_VERSION = "R8-2026-main-tsui-v2"
 
-BLUEPRINT_VERSION = "R8-2026-main-tsui-v1"
+
+def _reference_context(root: Path) -> dict[str, str]:
+    return {
+        "blueprint_yaml": (root / "blueprints" / "common_test_chinese.yaml").read_text(encoding="utf-8"),
+        "reference_patterns_yaml": (root / "blueprints" / "q4_2026_reference_patterns.yaml").read_text(encoding="utf-8"),
+        "template_yaml": (root / "templates" / "q4.yaml").read_text(encoding="utf-8"),
+        "item_writing_direction": (root / "docs" / "ITEM_WRITING_DIRECTION_2026.md").read_text(encoding="utf-8"),
+    }
 
 
 def create_q4_request(
     root: Path,
     topic: str,
-    difficulty: str = "medium",
-    domain: str = "school_life",
+    difficulty: str = "official_like",
+    domain: str = "auto",
     scope: str = "full",
     notes: str | None = None,
 ) -> tuple[str, Path, Path]:
@@ -41,15 +49,9 @@ def create_q4_request(
     spec_path = requests / f"{item_id}.spec.json"
     spec_path.write_text(json.dumps(spec, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    blueprint_path = root / "blueprints" / "common_test_chinese.yaml"
-    template_path = root / "templates" / "q4.yaml"
-    direction_path = root / "docs" / "ITEM_WRITING_DIRECTION_2026.md"
     prompt_path = root / "prompts" / "generate_q4.md"
-
     prompt = Template(prompt_path.read_text(encoding="utf-8")).render(
-        blueprint_yaml=blueprint_path.read_text(encoding="utf-8"),
-        template_yaml=template_path.read_text(encoding="utf-8"),
-        direction_md=direction_path.read_text(encoding="utf-8"),
+        **_reference_context(root),
         item_spec_json=json.dumps(spec, ensure_ascii=False, indent=2),
     )
     request_path = requests / f"{item_id}.request.md"
@@ -75,10 +77,9 @@ def create_review_request(root: Path, item_path: Path) -> Path:
     item = Item.model_validate(load_json(item_path))
     blind_json = json.dumps(_blind_item_dict(item), ensure_ascii=False, indent=2)
     prompt_path = root / "prompts" / "review_q4.md"
-    direction_path = root / "docs" / "ITEM_WRITING_DIRECTION_2026.md"
     prompt = Template(prompt_path.read_text(encoding="utf-8")).render(
+        **_reference_context(root),
         item_json=blind_json,
-        direction_md=direction_path.read_text(encoding="utf-8"),
     )
     reviews = root / "workspace" / "reviews"
     reviews.mkdir(parents=True, exist_ok=True)
@@ -92,6 +93,7 @@ def create_revision_request(root: Path, item_path: Path, review_path: Path) -> P
     review_json = review_path.read_text(encoding="utf-8")
     prompt_path = root / "prompts" / "revise_q4.md"
     prompt = Template(prompt_path.read_text(encoding="utf-8")).render(
+        **_reference_context(root),
         item_json=item_json,
         review_json=review_json,
     )
