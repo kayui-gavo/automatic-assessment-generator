@@ -1,50 +1,98 @@
-baseline_version: R8-2026-main-tsui-v2
+baseline_version: R8-2026-main-tsui-v3
 purpose: >-
-  Generation-safe abstraction of the 2026 main + makeup Q4 pair. Unlike the detailed reference
-  patterns file, this profile intentionally omits the official per-answer-number sequence so the
-  generator learns the design space without being nudged toward a surface interpolation or reskin.
+  Production profile for original Q4 generation based on the 2026 main and makeup examinations.
+  Earlier versions abstracted away too much of the observable item form. This version intentionally
+  preserves the 2026 surface grammar while requiring original content, wording, data and logic.
 
 hard_core:
   score: 60
   answer_numbers: [21, 36]
   answer_slot_count: 16
   subsections: [A, B]
-  one_continuing_purposeful_context: true
-  heterogeneous_information_sources: true
+  subsection_A_answer_slots: [21, 28]
+  subsection_B_answer_slots: [29, 36]
+  one_continuing_topic_or_activity: true
   substantial_multi_answer_selection: true
   information_processing_beyond_keyword_matching: true
-  information_use_changes_as_the_section_progresses: true
 
-functional_range:
-  A:
-    - establish_context
-    - investigate
-    - understand
-    - verify
-    - compare
-    - organize
-    - integrate
-  B:
-    - recontextualize
-    - apply_conditions_or_rules
-    - plan
-    - match
-    - reason_about_routes_processes_or_cases
-    - synthesize
-    - reflect
+surface_family_required_for_full:
+  allowed:
+    - main_2026
+    - makeup_2026
+  rule: >-
+    A full generated Q4 must choose one family and follow its slot/task scaffold. Do not invent an
+    unconstrained hybrid just to be original.
 
-observed_information_families:
-  - dialogue_or_discussion
-  - explanatory_text
-  - memo_or_reflection
-  - table_or_timetable
-  - chart_or_related_charts
-  - checklist_or_profile
-  - notice_flyer_or_instructions
-  - social_timeline
-  - schematic_map_or_route_information
-  - annotated_or_system_diagram
-  - flow_or_process_information
+shared_A_surface_grammar:
+  q1:
+    answer_slots: [21, 22]
+    form: chinese_dialogue_plus_two_answer_content_match
+    option_count_guideline: [7, 8]
+    role: introduce_theme_positions_and_questions
+  q2:
+    answer_slots: [23, 26]
+    role: research_and_document_reading
+    required_character: structured_or_visual_information
+    family_variants:
+      main_2026:
+        subpart_slot_pattern: [2, 1, 1]
+        typical_relations:
+          - table_with_missing_labels_or_descriptions
+          - graph_reading
+          - related_graph_comparison
+      makeup_2026:
+        subpart_slot_pattern: [2, 2]
+        typical_relations:
+          - chart_statement_verification
+          - explanatory_text_plus_diagram_integration
+  q3:
+    answer_slots: [27, 28]
+    form: lecture_summary_or_structured_memo_plus_two_answer_content_match
+    option_count_guideline: [6, 8]
+    role: consolidate_and_deepen_A
+
+B_surface_families:
+  main_2026:
+    q1:
+      answer_slots: [29, 30]
+      form: checklist_or_condition_document_plus_two_answer_selection
+    q2:
+      answer_slots: [31, 33]
+      slot_pattern: [2, 1]
+      form: profile_or_candidate_matching_followed_by_missing_information_inference
+      notes:
+        - use shared options or target profiles where natural
+        - one task should require matching stated preferences/conditions to profiles or cases
+        - final slot should infer what additional field/information is needed from the matching process
+    q3:
+      answer_slots: [34, 36]
+      slot_pattern: [1, 2]
+      form: rule_tree_flowchart_or_process_plus_principle_then_two_case_application
+      notes:
+        - first slot asks for a general implication/necessary action from the rule/process
+        - final two slots apply the same structure to two concrete cases
+  makeup_2026:
+    q1:
+      answer_slots: [29, 30]
+      form: chronological_operational_information_plus_two_answer_plan_or_datetime_selection
+      notes:
+        - combine schedule/date/day/weather/crowding/availability or similarly meaningful conditions
+    q2:
+      answer_slots: [31, 34]
+      slot_pattern: [2, 2]
+      form: compound_operational_source_then_second_practical_document
+      first_pair_sources:
+        - map_or_route_information
+        - memo_or_field_notes
+        - system_or_annotated_diagram
+      second_pair_sources:
+        - interview_derived_flyer
+        - instructions_or_safety_notice
+        - another_realistic_practical_document
+    q3:
+      answer_slots: [35, 36]
+      form: reflection_summary_or_opinion_text_plus_two_answer_content_match
+      role: close_the_activity_by_synthesizing_what_was_learned
 
 observed_response_patterns:
   - single_choice
@@ -59,46 +107,33 @@ information_dependency_modes:
 
 quality_shape:
   - direct_comprehension_and_deeper_processing_should_coexist
-  - material_variety_should_follow_the_scenario_not_a_quota
-  - at_least_one_genuinely_integrative_task_in_each_subsection_for_internal_QA
   - numerical_information_should_test_reading_judgment_not_heavy_arithmetic
-  - multi_select_should_require_independent_verification_of_multiple_statements
-  - later_tasks_should_recontextualize_apply_or_synthesize_information
-  - reflective_synthesis_is_as_valid_as_practical_action_when_the_scenario_supports_it
+  - two_answer_selection_should_be_prominent_as_in_both_2026_references
+  - materials_should_have_exam_like_density_not_card_style_micro_snippets
+  - Japanese_instruction_text_should_control_the_task_while_Chinese_material_carries_the_content
+  - the_question_should_feel_like_one_DNC_Q4_not_a_collection_of_worksheet_cards
 
-variation_space:
-  scenario_mode:
-    - everyday_consultation_or_service
-    - inquiry_or_research
-    - planning_or_field_activity
-    - another_original_purposeful_context
-  ending_mode:
-    - practical_decision
-    - condition_or_profile_matching
-    - route_schedule_or_rule_use
-    - process_or_case_application
-    - integrated_summary
-    - reflective_synthesis
-  source_composition:
-    - independent_sources
-    - compound_source_bundle
-    - chronological_information_stream
-    - mixed_text_visual_structured_information
-
-anti_reskin_rules:
-  - do_not_copy_the_event_sequence_of_either_2026_official_paper
-  - do_not_copy_the_role_sequence_of_official_materials
-  - do_not_copy_the_same_final_judgment_pattern_only_with_new_nouns
-  - do_not_create_a_hybrid_by_alternating_main_like_and_makeup_like_blocks
-  - create_a_new_information_journey_that_only_shares_the_underlying_constructs
+originality_boundary:
+  must_preserve:
+    - the_selected_2026_surface_family
+    - answer_slot_grouping_and_major_task_roles
+    - exam_like_document_to_question_relationships
+  must_change:
+    - topic_and_scenario_content
+    - proper_nouns
+    - all_source_text
+    - numerical_values
+    - exact_answer_relations
+    - distinctive_examples_or_cases
+  prohibited:
+    - copying_or_lightly_paraphrasing_official_passages_or_options
+    - replacing_only_nouns_in_an_official_scenario
+    - reproducing_the_same_case_logic_with_cosmetic_topic_changes
+    - mixing_main_and_makeup_B_shapes_without_an_explicit_reason
 
 not_hard_rules:
   - exact_material_count
-  - exact_material_type_count
-  - exact_cross_source_task_count
-  - mandatory_map
-  - mandatory_flowchart
-  - mandatory_chart
-  - B_must_end_in_action
-  - final_task_must_be_case_matching
-  - exact_response_mode_distribution
+  - exact_line_count
+  - mandatory_specific_chart_type
+  - mandatory_specific_real_world_topic
+  - identical_option_count_for_every_task
