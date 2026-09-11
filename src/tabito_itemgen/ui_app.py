@@ -26,6 +26,10 @@ from tabito_itemgen.render import compile_xelatex, render_item_tex
 from tabito_itemgen.validate import validate_item_file
 
 OPTION_MARKS = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"]
+FAMILY_LABELS = {
+    "main_2026": "2026 本試験型",
+    "makeup_2026": "2026 追試験型",
+}
 
 
 def _root() -> Path:
@@ -47,7 +51,11 @@ def _discover_items(root: Path) -> dict[str, Path]:
         if not directory.exists():
             continue
         for path in sorted(directory.glob("*.json")):
-            result[f"{group} · {path.name}"] = path
+            if path.name.startswith("q4_pilot_001_"):
+                label_group = "Rejected calibration"
+            else:
+                label_group = group
+            result[f"{label_group} · {path.name}"] = path
     return result
 
 
@@ -57,6 +65,14 @@ def _parse_item(text: str) -> tuple[Item | None, str | None]:
         return Item.model_validate(data), None
     except (json.JSONDecodeError, ValidationError, ValueError) as exc:
         return None, str(exc)
+
+
+def _raw_item_data(text: str) -> dict:
+    try:
+        data = json.loads(text)
+        return data if isinstance(data, dict) else {}
+    except json.JSONDecodeError:
+        return {}
 
 
 def _write_ui_temp(root: Path, text: str) -> Path:
@@ -119,7 +135,6 @@ def _render_material(material) -> None:
         return
 
     if isinstance(material, (FlowchartMaterial, SchematicMaterial)):
-        node_lookup = {node.node_id: node for node in material.nodes}
         lines = ["digraph G {", 'rankdir="LR";', 'node [shape=box, style="rounded"];']
         for node in material.nodes:
             label = node.label.replace('"', "'")
@@ -262,7 +277,7 @@ def main() -> None:
     st.markdown('<div class="tabito-kicker">TABITO EDUCATION · INTERNAL ITEM WORKBENCH</div>', unsafe_allow_html=True)
     st.title("共通テスト中国語 命題 Workbench")
     st.markdown(
-        '<div class="tabito-sub">2026 本試験 + 追試験 dual baseline · Q4 production workflow</div>',
+        '<div class="tabito-sub">2026 本試験型 / 追試験型 surface grammar · Q4 production workflow</div>',
         unsafe_allow_html=True,
     )
 
@@ -273,7 +288,7 @@ def main() -> None:
 
     labels = list(items)
     preferred = next(
-        (i for i, label in enumerate(labels) if "q4_pilot_001_reuse_station.json" in label),
+        (i for i, label in enumerate(labels) if "q4_pilot_002_library_study_main2026.json" in label),
         0,
     )
 
@@ -296,14 +311,23 @@ def main() -> None:
         st.session_state["editor_text"] = source_text
 
     text = st.session_state["editor_text"]
+    raw_data = _raw_item_data(text)
     item, parse_error = _parse_item(text)
+    surface_family = raw_data.get("surface_family")
+
+    if source_name.startswith("q4_pilot_001_"):
+        st.error(
+            "Pilot 001 已判定为 REJECTED calibration sample：它只有泛化的多资料阅读结构，"
+            "不够接近 2026 本试/追试的实际 Q4 题型。请以 Pilot 002 及之后的 v3 样本为准。"
+        )
 
     if item:
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4, c5 = st.columns(5)
         c1.metric("Answer slots", sum(len(task.answer_slots) for task in item.tasks))
         c2.metric("Materials", len(item.materials))
         c3.metric("Tasks", len(item.tasks))
-        c4.metric("Blueprint", item.workflow.blueprint_version.replace("R8-2026-", ""))
+        c4.metric("Surface family", FAMILY_LABELS.get(surface_family, surface_family or "legacy"))
+        c5.metric("Blueprint", item.workflow.blueprint_version.replace("R8-2026-", ""))
     else:
         st.error("当前 JSON 无法解析，先到「JSON / 校验」修正。")
 
@@ -315,6 +339,8 @@ def main() -> None:
         if item is None:
             st.code(parse_error or "Unknown parsing error", language=None)
         else:
+            if surface_family in FAMILY_LABELS:
+                st.info(f"当前结构：{FAMILY_LABELS[surface_family]}（{surface_family}）")
             student_tab, teacher_tab = st.tabs(["学生版", "教师版"])
             with student_tab:
                 _render_exam(item, teacher=False)
@@ -351,13 +377,25 @@ def main() -> None:
 
     with request_tab:
         st.subheader("生成一个新的 Q4 命题请求")
+        st.caption(
+            "full Q4 必须先选 2026 本试型或追试型。内容要原创，但 21–36 的题型骨架按所选 family 复现。"
+        )
         with st.form("new_item_form"):
             topic = st.text_input("主题 / 情境", placeholder="例如：地域図書館の利用改善")
+            surface_family_choice = st.radio(
+                "2026 题型 family",
+                options=["main_2026", "makeup_2026"],
+                format_func=lambda value: FAMILY_LABELS[value],
+                horizontal=True,
+            )
             c1, c2, c3 = st.columns(3)
             difficulty = c1.selectbox("难度", ["official_like", "easy", "medium", "hard"])
             scope = c2.selectbox("范围", ["full", "mini"])
             domain = c3.text_input("domain", value="auto")
-            notes = st.text_area("追加要求", placeholder="不要换皮官方题；希望后半出现真正的信息用途变化……")
+            notes = st.text_area(
+                "追加要求",
+                placeholder="内容原创，但请严格保持所选2026 family的问1/问2/问3和解答格结构……",
+            )
             submitted = st.form_submit_button("生成 request.md", type="primary", use_container_width=True)
         if submitted:
             if not topic.strip():
@@ -370,8 +408,9 @@ def main() -> None:
                     domain=domain.strip() or "auto",
                     scope=scope,
                     notes=notes.strip() or None,
+                    surface_family=surface_family_choice,
                 )
-                st.success(f"已生成 {item_id}")
+                st.success(f"已生成 {item_id} · {FAMILY_LABELS[surface_family_choice]}")
                 request_text = request_path.read_text(encoding="utf-8")
                 st.text_area("直接复制给 ChatGPT", request_text, height=420)
                 c1, c2 = st.columns(2)
@@ -420,6 +459,7 @@ def main() -> None:
                 {
                     "item_id": item.item_id,
                     "state": item.workflow.state,
+                    "surface_family": surface_family,
                     "generation_mode": item.workflow.generation_mode,
                     "blueprint": item.workflow.blueprint_version,
                     "source": source_name,
