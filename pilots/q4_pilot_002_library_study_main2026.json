@@ -117,21 +117,23 @@
       "nodes": [
         {"node_id": "S", "label": "想使用预约制学习室"},
         {"node_id": "R", "label": "已经预约？"},
-        {"node_id": "BOOK", "label": "先在网上预约"},
+        {"node_id": "B", "label": "B：先在网上预约"},
         {"node_id": "LATE", "label": "比预约开始时间晚15分钟以上？"},
-        {"node_id": "CODE", "label": "出示预约码入室"},
+        {"node_id": "A", "label": "A：出示预约码入室"},
         {"node_id": "CANCEL", "label": "原预约自动取消"},
-        {"node_id": "DESK", "label": "到服务台确认当前是否有空室"}
+        {"node_id": "C", "label": "C：到服务台确认当前是否有空室"},
+        {"node_id": "D", "label": "D：当天不能直接使用原预约"}
       ],
       "edges": [
         {"source": "S", "target": "R"},
-        {"source": "R", "target": "BOOK", "label": "否"},
+        {"source": "R", "target": "B", "label": "否"},
         {"source": "R", "target": "LATE", "label": "是"},
-        {"source": "LATE", "target": "CODE", "label": "否"},
+        {"source": "LATE", "target": "A", "label": "否"},
         {"source": "LATE", "target": "CANCEL", "label": "是"},
-        {"source": "CANCEL", "target": "DESK"}
+        {"source": "CANCEL", "target": "C"},
+        {"source": "C", "target": "D", "label": "原预约は使用不可"}
       ],
-      "footnotes": ["预约开始后迟到15分钟以上时，原预约失效。"]
+      "footnotes": ["预约开始后迟到15分钟以上时，原预约失效。服务台可另行确认当时是否有空室。"]
     },
     {
       "type": "profile",
@@ -148,14 +150,14 @@
       "task_id": "A1", "subsection": "A", "order": 2,
       "prompt_ja": "会話の内容と一致するものを二つ選べ。",
       "options": [
-        "他们准备调查高中生选择自习空间时重视什么。",
-        "小林每个周末都去市立图书馆学习。",
-        "王雪认为图书馆所有区域的设备都一样。",
-        "他们已经决定要求图书馆增加座位。",
-        "这次调查只以经常利用图书馆的人为对象。",
-        "调查以后，他们还打算听馆员的介绍。",
-        "小林最关心的是图书馆能不能吃东西。",
-        "王雪说图书馆里没有可以充电的地方。"
+        "二人は、高校生が自習スペースを選ぶ際に重視することを調べる予定である。",
+        "小林は毎週末、市立図書館で勉強している。",
+        "王雪は、図書館のすべての区域の設備は同じだと考えている。",
+        "二人は、図書館に座席を増やすよう求めることを既に決めている。",
+        "今回の調査は、普段から図書館を利用する高校生だけを対象とする。",
+        "二人は、調査の後に館員の説明も聞く予定である。",
+        "小林が最も気にしているのは、図書館内で飲食できるかどうかである。",
+        "王雪は、図書館には充電できる場所がないと述べている。"
       ],
       "response_mode": "multi_select",
       "answer_slots": [{"slot_id": "S21", "answer_number": 21, "correct_option": 1}, {"slot_id": "S22", "answer_number": 22, "correct_option": 6}],
@@ -202,7 +204,7 @@
       "task_id": "A2c", "subsection": "A", "order": 9,
       "prompt_ja": "試行前後の変化について正しいものを選べ。",
       "options": [
-        "利用率が最も大きく上がったのは平日18—20時である。",
+        "利用率提高最多的是平日18—20时。",
         "周末下午的利用率在试行后下降了。",
         "四个时间段的利用率都提高了20个百分点以上。",
         "试行前利用率最低的是周末上午。"
@@ -217,14 +219,14 @@
       "task_id": "A3", "subsection": "A", "order": 11,
       "prompt_ja": "館員の説明と一致するものを二つ選べ。",
       "options": [
-        "去年收到的意见中，最多的是“座位总数太少”。",
-        "试行期间，图书馆把不同学习区域的规则集中说明。",
-        "试行后，周末下午的利用率比原来低。",
-        "图书馆准备把所有学习区域改成相同的形式。",
-        "试行后，18点以后的利用率有所上升。",
-        "图书馆认为使用者到馆后再选择区域就可以。",
-        "图书馆已经决定取消小组讨论区。",
-        "馆员认为增加座位数量是唯一需要解决的问题。"
+        "昨年寄せられた意見で最も多かったのは、座席の総数が少ないというものだった。",
+        "試行期間中、図書館は異なる学習区域の利用ルールを一つにまとめて示した。",
+        "試行後、週末午後の利用率は試行前より低くなった。",
+        "図書館は、すべての学習区域を同じ形式に変える予定である。",
+        "試行後、18時以降の利用率は上昇した。",
+        "図書館は、利用者が来館してから初めて区域を選べばよいと考えている。",
+        "図書館は、小組討論区を廃止することを既に決めている。",
+        "館員は、座席数を増やすことだけが唯一の課題だと考えている。"
       ],
       "response_mode": "multi_select", "answer_slots": [{"slot_id": "S27", "answer_number": 27, "correct_option": 2}, {"slot_id": "S28", "answer_number": 28, "correct_option": 5}],
       "option_reuse": "forbidden", "operations": ["extract", "synthesize"], "dependency_mode": "single_source",
@@ -236,14 +238,14 @@
       "task_id": "B1", "subsection": "B", "order": 2,
       "prompt_ja": "確認事項から分かることとして正しいものを二つ選べ。",
       "options": [
-        "一个人使用个人静音席时必须提前预约。",
-        "三个人一起讨论时，应考虑预约小组学习室。",
-        "需要白板的人只能选择个人静音席。",
-        "小组学习室一个人也可以预约。",
-        "周末所有学习空间都开放到20点。",
-        "只要有插座，任何区域都可以六个人一起使用。",
-        "周末18点以后不能使用这些学习空间。",
-        "个人静音席没有空位时可以提前预约第二天的座位。"
+        "一人で個人静音席を利用する場合は、必ず事前予約が必要である。",
+        "三人で相談しながら学習する場合は、小組学習室の予約を検討すべきである。",
+        "白板が必要な人は、個人静音席しか利用できない。",
+        "小組学習室は、一人でも予約して利用できる。",
+        "週末は、すべての学習スペースを20時まで利用できる。",
+        "コンセントがあれば、どの区域でも六人で利用できる。",
+        "週末の18時以降は、これらの学習スペースを利用できない。",
+        "個人静音席に空きがない場合は、翌日の席を事前予約できる。"
       ],
       "response_mode": "multi_select", "answer_slots": [{"slot_id": "S29", "answer_number": 29, "correct_option": 2}, {"slot_id": "S30", "answer_number": 30, "correct_option": 7}],
       "option_reuse": "forbidden", "operations": ["condition_match", "evaluate"], "dependency_mode": "single_source",
@@ -271,7 +273,7 @@
     {
       "task_id": "B2b", "subsection": "B", "order": 6,
       "prompt_ja": "陳雨に適した区域を判断するため、「学习空间介绍」に追加する必要がある情報として最も適当なものを選べ。",
-      "options": ["每个区域的墙壁颜色", "每个区域去年使用过的人数", "每个区域是否方便轮椅进出", "每个区域离学校有多远"],
+      "options": ["各区域の壁の色", "各区域の昨年の利用者数", "各区域が車いすで出入りしやすいかどうか", "各区域が学校からどのくらい離れているか"],
       "response_mode": "single_choice", "answer_slots": [{"slot_id": "S33", "answer_number": 33, "correct_option": 3}],
       "option_reuse": "forbidden", "operations": ["infer", "evaluate"], "dependency_mode": "cross_source",
       "evidence": [{"material_id": "B-M2", "locator": "陳雨の希望", "explanation_ja": "車いすで進出しやすい区域を希望している。"}, {"material_id": "B-M3", "locator": "紹介表の項目", "explanation_ja": "現表にはバリアフリー情報がない。"}],
@@ -289,29 +291,29 @@
       ],
       "response_mode": "single_choice", "answer_slots": [{"slot_id": "S34", "answer_number": 34, "correct_option": 2}],
       "option_reuse": "forbidden", "operations": ["sequence", "infer"], "dependency_mode": "single_source",
-      "evidence": [{"material_id": "B-M4", "locator": "LATE→CANCEL→DESK", "explanation_ja": "15分以上遅れると原予約が取消され、サービス台で空室確認へ進む。"}],
+      "evidence": [{"material_id": "B-M4", "locator": "LATE→CANCEL→C", "explanation_ja": "15分以上遅れると原予約が取消され、サービス台で空室確認へ進む。"}],
       "rationale_ja": "フローの15分条件と取消後の経路を読む。",
       "distractor_rationales_ja": {"1": "15分未満なら予約碼で入室。", "3": "未予約なら先にオンライン予約。", "4": "取消後も空室確認の手続きがある。"}, "slot_distractor_rationales_ja": {}
     },
     {
       "task_id": "B3b", "subsection": "B", "order": 10,
-      "prompt_ja": "甲[35]、乙[36]が次に取る行動として最も適当なものを、それぞれ選べ。選択肢は繰り返し使用しない。",
-      "options": ["そのまま部屋に入る", "予約码を示して入室する", "いったん帰宅して別の日に予約する", "サービス台で現在の空室を確認する", "当日の利用をあきらめる"],
-      "response_mode": "multi_slot_choice", "answer_slots": [{"slot_id": "S35", "answer_number": 35, "correct_option": 2}, {"slot_id": "S36", "answer_number": 36, "correct_option": 4}],
+      "prompt_ja": "甲[35]、乙[36]について、流程图のA〜Dのうち次に当たるものを、それぞれ選べ。選択肢は繰り返し使用しない。",
+      "options": ["A", "B", "C", "D"],
+      "response_mode": "multi_slot_choice", "answer_slots": [{"slot_id": "S35", "answer_number": 35, "correct_option": 1}, {"slot_id": "S36", "answer_number": 36, "correct_option": 3}],
       "option_reuse": "forbidden", "operations": ["sequence", "condition_match"], "dependency_mode": "cross_source",
-      "evidence": [{"material_id": "B-M4", "locator": "15分未満/以上の分岐", "explanation_ja": "10分遅れは予約碼入室、20分遅れは取消後に空室確認。"}, {"material_id": "B-M5", "locator": "甲乙の到着時刻", "explanation_ja": "甲は10分遅れ、乙は20分遅れ。"}],
+      "evidence": [{"material_id": "B-M4", "locator": "A/Cへの分岐", "explanation_ja": "10分遅れはA、20分遅れは原予約取消後Cへ進む。"}, {"material_id": "B-M5", "locator": "甲乙の到着時刻", "explanation_ja": "甲は10分遅れ、乙は20分遅れ。"}],
       "rationale_ja": "二つの到着時刻を同じフローチャートに適用する。",
       "distractor_rationales_ja": {},
       "slot_distractor_rationales_ja": {
-        "S35": {"1": "予約制なので予約碼確認が必要。", "3": "10分遅れでは予約は有効。", "4": "15分未満なのでサービス台経由ではない。", "5": "利用を断念する必要はない。"},
-        "S36": {"1": "20分遅れで原予約は無効。", "2": "原予約碼では直接入室できない。", "3": "まず現在の空室確認を行う。", "5": "空室があれば利用できる可能性がある。"}
+        "S35": {"2": "既に予約済みなのでBではない。", "3": "15分未満なのでCへ進まない。", "4": "原予約は有効。"},
+        "S36": {"1": "20分遅れでAへは進めない。", "2": "既に予約済みなのでBではない。", "4": "まずCで当時の空室を確認する段階である。"}
       }
     }
   ],
   "quality_notes": {
     "ambiguity_risk": "low",
     "originality_note": "2026本試型の21〜36 surface grammarを維持しつつ、図書館学習スペースという原创題材・本文・数値・case・正誤関係で構成。",
-    "language_note": "中国語資料は現代簡体字を基本とし、日本語は設問指示に限定。",
+    "language_note": "中国語資料を中心としつつ、2026本試の題面手感に近づけるため、会話内容一致・説明内容一致・B冒頭条件判断は日本語選択肢、資料内照合・図表判断・フロー原則は中国語または記号選択肢を用いる。",
     "difficulty_note": "直接理解から資料照合・条件判断・フロー適用まで段階差を設ける。",
     "source_integrity_note": "All scenario text and numerical data are synthetic/original for internal pilot use."
   },
