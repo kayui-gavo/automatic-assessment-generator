@@ -62,6 +62,7 @@ def _blind_item_dict(item: Item) -> dict:
         task.pop("evidence", None)
         task.pop("rationale_ja", None)
         task.pop("distractor_rationales_ja", None)
+        task.pop("slot_distractor_rationales_ja", None)
     return data
 
 
