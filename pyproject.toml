@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tabito-common-test-chinese-itemgen"
-version = "0.2.0"
+version = "0.3.0"
 description = "Internal item-generation workflow for TABITO Education's Common Test Chinese materials."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,9 +16,14 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<9", "ruff>=0.6,<1"]
+ui = [
+  "streamlit>=1.40,<2",
+  "pandas>=2,<3",
+]
 
 [project.scripts]
 tabito-itemgen = "tabito_itemgen.cli:main"
+tabito-itemgen-ui = "tabito_itemgen.ui_launcher:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

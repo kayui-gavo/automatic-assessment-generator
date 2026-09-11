@@ -15,6 +15,26 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,ui]"
+      - name: UI import smoke test
+        run: python -c "import tabito_itemgen.ui_app; import tabito_itemgen.ui_launcher"
+      - name: Launch UI smoke test
+        shell: bash
+        run: |
+          streamlit run src/tabito_itemgen/ui_app.py \
+            --server.headless true \
+            --server.port 8501 \
+            > /tmp/tabito-streamlit.log 2>&1 &
+          UI_PID=$!
+          trap 'kill $UI_PID || true' EXIT
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8501/_stcore/health >/dev/null; then
+              echo "Streamlit health check passed"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/tabito-streamlit.log
+          exit 1
       - name: Test
         run: pytest -q
