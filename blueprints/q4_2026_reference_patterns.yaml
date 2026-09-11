@@ -114,35 +114,43 @@ makeup_2026:
       response_pattern: multi_select_two
       information_family: discussion_dialogue
       main_operation: organize_positions_and_concerns
+      option_language_tendency: Japanese
     - answer_numbers: [23, 24]
       response_pattern: multi_select_two
       information_family: survey_chart
       main_operation: verify_quantitative_statements
+      option_language_tendency: Chinese
     - answer_numbers: [25, 26]
       response_pattern: multi_select_two
       information_family: explanatory_text_plus_annotated_diagram
       main_operation: integrate_prose_and_diagram
+      option_language_tendency: Japanese
     - answer_numbers: [27, 28]
       response_pattern: multi_select_two
       information_family: hierarchical_memo
       main_operation: read_structured_summary
+      option_language_tendency: Japanese
   subsection_B:
     - answer_numbers: [29, 30]
       response_pattern: multi_select_two
       information_family: social_feed_plus_calendar_time_conditions
       main_operation: practical_schedule_planning
+      option_language_tendency: Japanese_dates_times_or_schedule_labels
     - answer_numbers: [31, 32]
       response_pattern: multi_select_two
       information_family: route_map_plus_notes_plus_system_diagram
       main_operation: integrate_route_operational_and_system_information
+      option_language_tendency: Japanese
     - answer_numbers: [33, 34]
       response_pattern: multi_select_two
       information_family: safety_flyer
       main_operation: verify_action_rules
+      option_language_tendency: Japanese
     - answer_numbers: [35, 36]
       response_pattern: multi_select_two
       information_family: reflection_text_after_discussion
       main_operation: synthesize_and_verify_reflection
+      option_language_tendency: Japanese
   do_not_copy:
     - autonomous_driving_research
     - municipal_driverless_bus
