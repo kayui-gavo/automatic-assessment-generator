@@ -175,7 +175,7 @@ class QualityNotes(BaseModel):
 class WorkflowMeta(BaseModel):
     state: Literal["draft", "reviewed", "approved"] = "draft"
     generation_mode: Literal["manual_chat"] = "manual_chat"
-    blueprint_version: str = "R8-2026-v1"
+    blueprint_version: str = "R8-2026-main-tsui-v1"
 
 
 class Item(BaseModel):
