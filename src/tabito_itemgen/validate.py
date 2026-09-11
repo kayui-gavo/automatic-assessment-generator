@@ -10,6 +10,7 @@ from .io import load_json
 from .models import Item, Review, SocialFeedMaterial, TextMaterial
 
 CURRENT_BLUEPRINT_VERSION = "R8-2026-main-tsui-v3"
+KANA_RE = re.compile(r"[\u3040-\u30ff]")
 
 
 def _expected_distractor_keys(task) -> set[str]:
@@ -28,6 +29,62 @@ def _task_slot_groups(item: Item, subsection: str) -> set[frozenset[int]]:
 def _task_for_slots(item: Item, slots: set[int]):
     target = frozenset(slots)
     return next((task for task in item.tasks if _task_answer_set(task) == target), None)
+
+
+def _option_language(task) -> str:
+    """Classify a choice set by the visible script used in the options.
+
+    Japanese Common Test options reliably contain kana when they are Japanese prose.
+    Chinese choices generally contain Han characters/punctuation without kana. Very short
+    dates, names and A/B/C/D labels are intentionally treated elsewhere as neutral.
+    """
+    if not task.options:
+        return "unknown"
+    kana_count = sum(bool(KANA_RE.search(option)) for option in task.options)
+    ratio = kana_count / len(task.options)
+    if ratio >= 0.6:
+        return "Japanese"
+    if ratio <= 0.2:
+        return "Chinese_or_neutral"
+    return "mixed"
+
+
+def _validate_option_language_surface(item: Item, family: str) -> list[str]:
+    errors: list[str] = []
+
+    if family == "main_2026":
+        expected_japanese = [{21, 22}, {27, 28}, {29, 30}, {33}]
+        expected_chinese = [{23, 24}, {25}, {26}, {34}]
+        # 31-32 names/entities and 35-36 A/B/C/D-style results are intentionally neutral.
+    else:
+        expected_japanese = [
+            {21, 22},
+            {25, 26},
+            {27, 28},
+            {31, 32},
+            {33, 34},
+            {35, 36},
+        ]
+        expected_chinese = [{23, 24}]
+        # 29-30 is primarily dates/times and is intentionally neutral.
+
+    for slots in expected_japanese:
+        task = _task_for_slots(item, slots)
+        if task and _option_language(task) != "Japanese":
+            errors.append(
+                f"{family} slots {sorted(slots)} should use Japanese prose options to match "
+                f"the 2026 exam face; detected {_option_language(task)}"
+            )
+
+    for slots in expected_chinese:
+        task = _task_for_slots(item, slots)
+        if task and _option_language(task) != "Chinese_or_neutral":
+            errors.append(
+                f"{family} slots {sorted(slots)} should use Chinese/label options to match "
+                f"the 2026 exam face; detected {_option_language(task)}"
+            )
+
+    return errors
 
 
 def _validate_2026_surface_grammar(item: Item, raw: dict) -> tuple[list[str], list[str]]:
@@ -174,6 +231,7 @@ def _validate_2026_surface_grammar(item: Item, raw: dict) -> tuple[list[str], li
             if not evidence_types.intersection({"reflection", "memo", "short_explanatory_text"}):
                 warnings.append("makeup_2026 B Q3 (35-36) should close with reflection/summary-type material")
 
+    errors.extend(_validate_option_language_surface(item, family))
     return errors, warnings
 
 
