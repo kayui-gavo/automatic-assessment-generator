@@ -105,10 +105,7 @@ def timeline(item: Item, subsection: str) -> list[tuple[int, str, object]]:
 def slot_group_summary(item: Item) -> str:
     parts: list[str] = []
     for subsection in ("A", "B"):
-        groups = task_groups(item, subsection)
-        rendered = []
-        for qno, tasks in groups.items():
+        for qno, tasks in task_groups(item, subsection).items():
             slots = ["-".join(map(str, answer_numbers(task))) for task in tasks]
-            rendered.append(f"問{qno}: {' / '.join(slots)}")
-        parts.append(f"{subsection} {' | '.join(rendered)}")
+            parts.append(f"{subsection} 問{qno}: {' / '.join(slots)}")
     return "  ·  ".join(parts)
