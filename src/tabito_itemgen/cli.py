@@ -53,6 +53,7 @@ def _print_validation(item, errors, warnings) -> int:
         print(f"item_id: {item.item_id}")
         print(f"tasks: {len(item.tasks)}")
         print(f"answer_slots: {slot_count}")
+        print(f"blueprint: {item.workflow.blueprint_version}")
     for warning in warnings:
         print(f"WARNING: {warning}")
     return 0
@@ -183,8 +184,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     command = sub.add_parser("new-item", help="Create a manual ChatGPT request for Q4")
     command.add_argument("--topic", required=True)
-    command.add_argument("--difficulty", choices=["easy", "medium", "hard"], default="medium")
-    command.add_argument("--domain", default="school_life")
+    command.add_argument(
+        "--difficulty",
+        choices=["official_like", "easy", "medium", "hard"],
+        default="official_like",
+        help="official_like keeps a mixed difficulty gradient instead of flattening the whole Q4",
+    )
+    command.add_argument("--domain", default="auto")
     command.add_argument("--scope", choices=["full", "mini"], default="full")
     command.add_argument("--notes", default=None)
     command.set_defaults(func=cmd_new_item)
