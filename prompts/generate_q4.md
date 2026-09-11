@@ -47,7 +47,8 @@
   - correct_option (1始まり)
 - fullの場合 answer_number は21〜36をちょうど一度ずつ使用。
 - operations は task ごとに1〜3個。
-- distractor_rationales_ja は**正答以外の全選択肢番号**をキーにする。
+- single_choice / multi_select では distractor_rationales_ja を用い、**正答以外の全選択肢番号**をキーにする。
+- multi_slot_choice では slot_distractor_rationales_ja を用い、各 slot_id ごとに、その slot の正答以外の全選択肢番号の誤り理由を書く。
 - quality_notes.ambiguity_risk は原則 low。high の問題は納品しない。
 
 内部で十分に検討してから、最終JSONだけを返すこと。
