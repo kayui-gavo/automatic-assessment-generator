@@ -16,4 +16,5 @@ def test_blind_packet_removes_answer_key_and_rationales():
         assert "evidence" not in task
         assert "rationale_ja" not in task
         assert "distractor_rationales_ja" not in task
+        assert "slot_distractor_rationales_ja" not in task
         assert all("correct_option" not in slot for slot in task["answer_slots"])
