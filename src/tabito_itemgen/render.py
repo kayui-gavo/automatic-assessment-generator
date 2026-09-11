@@ -38,14 +38,10 @@ def _answer_boxes(task) -> str:
     )
 
 
-def _material_prefix(material) -> str:
-    bundle = ""
-    if getattr(material, "bundle_id", None):
-        bundle = rf"\hfill{{\scriptsize bundle: {latex_escape(material.bundle_id)}}}"
-    title = rf"\textbf{{{latex_escape(material.title)}}}" if material.title else ""
-    if not title and not bundle:
+def _material_title(material) -> str:
+    if not material.title:
         return ""
-    return title + bundle + r"\par\medskip "
+    return rf"\textbf{{{latex_escape(material.title)}}}\par\medskip "
 
 
 def _text_material(material: TextMaterial) -> str:
@@ -59,7 +55,7 @@ def _text_material(material: TextMaterial) -> str:
     return (
         "\\Needspace{6\\baselineskip}\n"
         "\\begin{minipage}{0.94\\linewidth}\n"
-        + _material_prefix(material)
+        + _material_title(material)
         + "{\\zhfont "
         + body
         + "}"
@@ -72,11 +68,14 @@ def _table_material(material: TableMaterial) -> str:
     n = len(material.columns)
     colspec = "|" + "|".join([">{\\centering\\arraybackslash}X"] * n) + "|"
     header = " & ".join(rf"\textbf{{{latex_escape(c)}}}" for c in material.columns) + r" \\ \hline"
-    rows = "\n".join(" & ".join(latex_escape(cell) for cell in row) + r" \\ \hline" for row in material.rows)
+    rows = "\n".join(
+        " & ".join(latex_escape(cell) for cell in row) + r" \\ \hline"
+        for row in material.rows
+    )
     notes = "\\\n".join(rf"\footnotesize {latex_escape(note)}" for note in material.footnotes)
     return (
         "\\Needspace{8\\baselineskip}\n"
-        + _material_prefix(material)
+        + _material_title(material)
         + "\\begin{center}\n\\small\n"
         + rf"\begin{{tabularx}}{{0.98\linewidth}}{{{colspec}}}\hline"
         + "\n"
@@ -92,7 +91,9 @@ def _table_material(material: TableMaterial) -> str:
 def _chart_material(material: ChartMaterial) -> str:
     plots: list[str] = []
     line_styles = ["solid,mark=*", "dashed,mark=square*", "dotted,mark=triangle*"]
+    fills = ["black!15", "black!35", "black!55", "black!75"]
     horizontal = material.chart_kind == "horizontal_bar"
+
     for index, series in enumerate(material.series):
         if horizontal:
             pairs = " ".join(
@@ -104,30 +105,36 @@ def _chart_material(material: ChartMaterial) -> str:
                 f"({latex_escape(category)},{value})"
                 for category, value in zip(material.categories, series.values)
             )
+
         if material.chart_kind in {"bar", "horizontal_bar", "stacked_bar"}:
-            plot_style = "draw=black,fill=black!15"
+            plot_style = f"draw=black,fill={fills[index % len(fills)]}"
         else:
             plot_style = "draw=black," + line_styles[index % len(line_styles)]
         legend = rf"\addlegendentry{{{latex_escape(series.name)}}}" if len(material.series) > 1 else ""
         plots.append(rf"\addplot+[{plot_style}] coordinates {{{pairs}}};{legend}")
 
-    ylabel = latex_escape(material.y_label or "")
+    axis_label = latex_escape(material.y_label or "")
     symbols = ",".join(latex_escape(c) for c in material.categories)
     if horizontal:
         axis_style = (
-            rf"xbar,symbolic y coords={{{symbols}}},ytick=data,xlabel={{{ylabel}}},"
+            rf"xbar,symbolic y coords={{{symbols}}},ytick=data,xlabel={{{axis_label}}},"
             "y tick label style={font=\\small}"
         )
     else:
-        bar_style = "ybar stacked," if material.chart_kind == "stacked_bar" else ("ybar," if material.chart_kind == "bar" else "")
+        bar_style = (
+            "ybar stacked,"
+            if material.chart_kind == "stacked_bar"
+            else ("ybar," if material.chart_kind == "bar" else "")
+        )
         axis_style = (
             rf"{bar_style}symbolic x coords={{{symbols}}},xtick=data,"
-            rf"x tick label style={{rotate=30,anchor=east}},ylabel={{{ylabel}}}"
+            rf"x tick label style={{rotate=30,anchor=east}},ylabel={{{axis_label}}}"
         )
+
     notes = "\\\n".join(rf"\footnotesize {latex_escape(note)}" for note in material.footnotes)
     return (
         "\\Needspace{12\\baselineskip}\n"
-        + _material_prefix(material)
+        + _material_title(material)
         + "\\begin{center}\n"
         + "\\begin{tikzpicture}\n"
         + rf"\begin{{axis}}[width=0.9\linewidth,height=6cm,{axis_style},legend style={{at={{(0.5,-0.28)}},anchor=north,legend columns=-1}}]"
@@ -147,23 +154,30 @@ def _node_xy(index: int, x: float | None, y: float | None, columns: int = 3) -> 
 
 
 def _flowchart_material(material: FlowchartMaterial) -> str:
-    nodes = []
+    nodes: list[str] = []
     for index, node in enumerate(material.nodes):
         x, y = _node_xy(index, node.x, node.y)
         nodes.append(
             rf"\node[flowbox] ({latex_escape(node.node_id)}) at ({x},{y}) {{{latex_escape(node.label)}}};"
         )
-    edges = []
+
+    edges: list[str] = []
     for edge in material.edges:
-        label = rf" node[midway,fill=white,inner sep=1pt] {{{latex_escape(edge.label)}}}" if edge.label else ""
+        label = (
+            rf" node[midway,fill=white,inner sep=1pt] {{{latex_escape(edge.label)}}}"
+            if edge.label
+            else ""
+        )
         edges.append(
             rf"\draw[->,>=stealth] ({latex_escape(edge.source)}) --{label} ({latex_escape(edge.target)});"
         )
+
     notes = "\\\n".join(rf"\footnotesize {latex_escape(note)}" for note in material.footnotes)
     return (
         "\\Needspace{12\\baselineskip}\n"
-        + _material_prefix(material)
-        + "\\begin{center}\n\\begin{tikzpicture}[flowbox/.style={draw,rounded corners=1pt,align=center,text width=3.7cm,minimum height=1.0cm}]\n"
+        + _material_title(material)
+        + "\\begin{center}\n"
+        + "\\begin{tikzpicture}[flowbox/.style={draw,rounded corners=1pt,align=center,text width=3.7cm,minimum height=1.0cm}]\n"
         + "\n".join(nodes)
         + "\n"
         + "\n".join(edges)
@@ -182,9 +196,12 @@ def _social_feed_material(material: SocialFeedMaterial) -> str:
         blocks.append(
             "\\noindent\\fbox{\\begin{minipage}{0.91\\linewidth}\n"
             + (rf"\textbf{{{meta}}}\par " if meta else "")
-            + "{\\zhfont " + body + "}\n"
+            + "{\\zhfont "
+            + body
+            + "}\n"
             + "\\end{minipage}}\\par\\vspace{0.35em}\n"
         )
+
     glosses = ""
     if material.glosses:
         glosses = r"\quad ".join(
@@ -194,7 +211,7 @@ def _social_feed_material(material: SocialFeedMaterial) -> str:
     notes = "\\\n".join(rf"\footnotesize {latex_escape(note)}" for note in material.footnotes)
     return (
         "\\Needspace{10\\baselineskip}\n"
-        + _material_prefix(material)
+        + _material_title(material)
         + "\n".join(blocks)
         + glosses
         + (notes + "\n" if notes else "")
@@ -211,6 +228,7 @@ def _schematic_material(material: SchematicMaterial) -> str:
         nodes.append(
             rf"\node[schematicnode] ({latex_escape(node.node_id)}) at ({x},{y}) {{{label}}};"
         )
+
     edges: list[str] = []
     for edge in material.edges:
         if edge.bidirectional:
@@ -218,17 +236,22 @@ def _schematic_material(material: SchematicMaterial) -> str:
         elif material.type == "annotated_diagram":
             arrow = "->,>=stealth"
         else:
-            arrow = "-"
+            arrow = "draw"
         dash = ",dashed" if edge.dashed else ""
-        label = rf" node[midway,fill=white,inner sep=1pt] {{{latex_escape(edge.label)}}}" if edge.label else ""
+        label = (
+            rf" node[midway,fill=white,inner sep=1pt] {{{latex_escape(edge.label)}}}"
+            if edge.label
+            else ""
+        )
         edges.append(
             rf"\draw[{arrow}{dash}] ({latex_escape(edge.source)}) --{label} ({latex_escape(edge.target)});"
         )
+
     annotations = "\\\n".join(rf"\footnotesize {latex_escape(note)}" for note in material.annotations)
     footnotes = "\\\n".join(rf"\footnotesize {latex_escape(note)}" for note in material.footnotes)
     return (
         "\\Needspace{12\\baselineskip}\n"
-        + _material_prefix(material)
+        + _material_title(material)
         + "\\begin{center}\n"
         + "\\begin{tikzpicture}[schematicnode/.style={draw,rounded corners=1pt,align=center,text width=3.0cm,minimum height=0.9cm}]\n"
         + "\n".join(nodes)
@@ -276,15 +299,20 @@ def _task_block(task, teacher: bool) -> str:
         for index, option in enumerate(task.options)
     ]
     boxes = _answer_boxes(task)
-    answer_line = (r"\par\hfill " + boxes + r"\par") if len(task.answer_slots) >= 3 else (r" \hfill " + boxes + r"\par")
+    answer_line = (
+        r"\par\hfill " + boxes + r"\par"
+        if len(task.answer_slots) >= 3
+        else (r" \hfill " + boxes + r"\par")
+    )
     block = (
         "\\Needspace{10\\baselineskip}\n\\vspace{0.9em}\n"
         + rf"\noindent\textbf{{{latex_escape(task.task_id)}}}\quad {latex_escape(task.prompt_ja)}"
-        + answer_line + "\n"
-        + "\\vspace{0.45em}\n"
+        + answer_line
+        + "\n\\vspace{0.45em}\n"
         + "\n".join(labels)
         + "\n"
     )
+
     if teacher:
         answers = ", ".join(
             f"{slot.answer_number}→{slot.correct_option}" for slot in task.answer_slots
@@ -329,7 +357,10 @@ def render_item_tex(item: Item, out_dir: Path, teacher: bool = False) -> Path:
     edition = "【教師用】" if teacher else ""
     tex += rf"\noindent\textbf{{中国語}}\hfill {edition}\par\vspace{{0.8em}}" + "\n"
     tex += rf"\noindent{{\Large\textbf{{第4問}}}}\quad 次の問い（A・B）に答えよ。（配点 60）\par" + "\n"
-    tex += rf"\vspace{{0.5em}}\noindent\textbf{{旅人教育 オリジナル模試}}\quad {latex_escape(item.title_ja)}\par" + "\n"
+    tex += (
+        rf"\vspace{{0.5em}}\noindent\textbf{{旅人教育 オリジナル模試}}\quad {latex_escape(item.title_ja)}\par"
+        + "\n"
+    )
 
     for subsection in ("A", "B"):
         tex += rf"\vspace{{1.2em}}\noindent{{\large\textbf{{{subsection}}}}}\par\vspace{{0.5em}}" + "\n"
