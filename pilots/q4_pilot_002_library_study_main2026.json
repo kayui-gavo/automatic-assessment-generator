@@ -1,0 +1,319 @@
+{
+  "schema_version": "0.2",
+  "item_id": "TABITO-CN-Q4-PILOT-002",
+  "section": "Q4",
+  "scope": "full",
+  "surface_family": "main_2026",
+  "title_ja": "市立図書館の学習スペース",
+  "topic": "図書館の学習スペース利用",
+  "scenario_summary_ja": "高校生が市立図書館の学習スペースについて調査し、利用実態と館員の説明を踏まえた後、実際の利用条件・スペース選択・予約ルールを検討する。",
+  "difficulty": "official_like",
+  "materials": [
+    {
+      "type": "dialogue",
+      "material_id": "A-M1",
+      "subsection": "A",
+      "order": 1,
+      "title": "小林和王雪的对话",
+      "body": "小林：下个月要准备升学报告，我最近总在找能安静学习的地方。\n王雪：我周末常去市立图书馆，不过有些同学说那里不太方便。\n小林：我只去过一次。座位很多吗？能给电脑充电吗？\n王雪：不同区域不一样。学生会不是正好要调查高中生怎么用图书馆吗？\n小林：对。那我们先看看大家选自习空间时最重视什么，也问问为什么有人不去图书馆。\n王雪：调查完再听馆员介绍，应该能想出更实用的建议。",
+      "glosses": {"升学报告": "進学に関するレポート", "充电": "充電する"}
+    },
+    {
+      "type": "table",
+      "material_id": "A-M2",
+      "subsection": "A",
+      "order": 3,
+      "bundle_id": "A-SURVEY-1",
+      "title": "选择自习空间时最重视的条件",
+      "columns": ["项目", "选择人数"],
+      "rows": [["甲", "64"], ["乙", "51"], ["可以提前预约", "39"], ["可以小声讨论", "33"]],
+      "footnotes": ["调查对象为100名高中生，每人最多选择两项。"]
+    },
+    {
+      "type": "memo",
+      "material_id": "A-M3",
+      "subsection": "A",
+      "order": 4,
+      "bundle_id": "A-SURVEY-1",
+      "title": "调查记录",
+      "body": "问卷选项中还包括“安静”和“有插座”。这两项都进入前两位，而且选择“安静”的人数比选择“有插座”的人数多13人。",
+      "glosses": {"插座": "コンセント"}
+    },
+    {
+      "type": "chart",
+      "material_id": "A-M4",
+      "subsection": "A",
+      "order": 6,
+      "title": "不常利用图书馆自习区的原因",
+      "chart_kind": "horizontal_bar",
+      "categories": ["不知道哪些区域可以自习", "觉得开放时间不合适", "担心没有座位", "离家太远"],
+      "series": [{"name": "人数", "values": [46, 31, 28, 17]}],
+      "y_label": "人",
+      "footnotes": ["可多选。"]
+    },
+    {
+      "type": "chart",
+      "material_id": "A-M5",
+      "subsection": "A",
+      "order": 8,
+      "title": "试行前后自习区平均利用率",
+      "chart_kind": "bar",
+      "categories": ["平日16—18时", "平日18—20时", "周末上午", "周末下午"],
+      "series": [
+        {"name": "试行前", "values": [72, 35, 61, 78]},
+        {"name": "公布分区说明并增加电源席后", "values": [75, 58, 69, 80]}
+      ],
+      "y_label": "%",
+      "footnotes": []
+    },
+    {
+      "type": "memo",
+      "material_id": "A-M6",
+      "subsection": "A",
+      "order": 10,
+      "title": "馆员说明的记录",
+      "body": "馆员说：去年我们收到的意见中，最常见的并不是“座位总数太少”，而是“不知道哪一区适合自己”。所以试行期间，我们把安静区、小组讨论区和电源席的规则集中写在一张说明上，也增加了18点以后可以使用的电源席。试行后，18点以后的利用率上升了，而周末下午原来的利用率已经很高。今后我们不打算把所有区域改成一样的形式，而是希望大家来馆前就能判断哪里更适合自己的学习方式。",
+      "glosses": {"电源席": "電源を利用できる席"}
+    },
+    {
+      "type": "checklist",
+      "material_id": "B-M1",
+      "subsection": "B",
+      "order": 1,
+      "title": "利用学习空间前的确认事项",
+      "body": "・先确认使用人数、日期和时间。\n・需要完全安静还是可以小声讨论？\n・是否需要插座或白板？\n・小组学习室只限2—6人使用，必须提前预约。\n・个人静音席不能预约，有空位时先到先用。\n・周末所有学习空间17:00关闭。",
+      "glosses": {"白板": "ホワイトボード"}
+    },
+    {
+      "type": "memo",
+      "material_id": "B-M2",
+      "subsection": "B",
+      "order": 3,
+      "title": "三名学生的希望",
+      "body": "林佳：周三18:30一个人学习，希望完全安静，而且需要插座。\n周明：周六10:00和另外两名同学一起学习，需要讨论，也想用白板。\n陈雨：周日14:00一个人学习，使用轮椅，希望选择进出方便的区域。",
+      "glosses": {"轮椅": "車いす"}
+    },
+    {
+      "type": "table",
+      "material_id": "B-M3",
+      "subsection": "B",
+      "order": 4,
+      "title": "学习空间介绍",
+      "columns": ["区域", "类型", "开放时间", "设备・规则"],
+      "rows": [
+        ["A区", "个人静音席", "平日9—20时／周末9—17时", "有插座／不能预约"],
+        ["B区", "小组学习室（2—4人）", "平日15—20时／周末9—17时", "有白板／无插座／必须预约"],
+        ["C区", "个人静音席", "平日9—17时／周末关闭", "有插座／不能预约"],
+        ["D区", "小组学习室（2—6人）", "平日9—20时／周末9—17时", "有插座／无白板／必须预约"]
+      ],
+      "footnotes": []
+    },
+    {
+      "type": "flowchart",
+      "material_id": "B-M4",
+      "subsection": "B",
+      "order": 7,
+      "title": "预约制学习室的利用流程",
+      "nodes": [
+        {"node_id": "S", "label": "想使用预约制学习室"},
+        {"node_id": "R", "label": "已经预约？"},
+        {"node_id": "BOOK", "label": "先在网上预约"},
+        {"node_id": "LATE", "label": "比预约开始时间晚15分钟以上？"},
+        {"node_id": "CODE", "label": "出示预约码入室"},
+        {"node_id": "CANCEL", "label": "原预约自动取消"},
+        {"node_id": "DESK", "label": "到服务台确认当前是否有空室"}
+      ],
+      "edges": [
+        {"source": "S", "target": "R"},
+        {"source": "R", "target": "BOOK", "label": "否"},
+        {"source": "R", "target": "LATE", "label": "是"},
+        {"source": "LATE", "target": "CODE", "label": "否"},
+        {"source": "LATE", "target": "CANCEL", "label": "是"},
+        {"source": "CANCEL", "target": "DESK"}
+      ],
+      "footnotes": ["预约开始后迟到15分钟以上时，原预约失效。"]
+    },
+    {
+      "type": "profile",
+      "material_id": "B-M5",
+      "subsection": "B",
+      "order": 9,
+      "title": "两个利用情况",
+      "body": "甲：王磊预约了周五16:00的B区学习室，16:10到达图书馆。\n乙：李娜预约了周日10:00的D区学习室，10:20到达图书馆。",
+      "glosses": {}
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "A1", "subsection": "A", "order": 2,
+      "prompt_ja": "会話の内容と一致するものを二つ選べ。",
+      "options": [
+        "他们准备调查高中生选择自习空间时重视什么。",
+        "小林每个周末都去市立图书馆学习。",
+        "王雪认为图书馆所有区域的设备都一样。",
+        "他们已经决定要求图书馆增加座位。",
+        "这次调查只以经常利用图书馆的人为对象。",
+        "调查以后，他们还打算听馆员的介绍。",
+        "小林最关心的是图书馆能不能吃东西。",
+        "王雪说图书馆里没有可以充电的地方。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [{"slot_id": "S21", "answer_number": 21, "correct_option": 1}, {"slot_id": "S22", "answer_number": 22, "correct_option": 6}],
+      "option_reuse": "forbidden", "operations": ["extract", "organize"], "dependency_mode": "single_source",
+      "evidence": [{"material_id": "A-M1", "locator": "小林第3発話・王雪第3発話", "explanation_ja": "調査内容と、その後に館員の説明を聞く予定が明示されている。"}],
+      "rationale_ja": "会話中の調査計画と次の行動を確認する。",
+      "distractor_rationales_ja": {"2": "週末によく行くのは王雪である。", "3": "区域によって異なると述べている。", "4": "座席増設はまだ決めていない。", "5": "調査対象を常連に限定していない。", "7": "飲食については話していない。", "8": "充電可否を小林が質問しているだけで、無いとは述べていない。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "A2a", "subsection": "A", "order": 5,
+      "prompt_ja": "表の甲・乙に入る項目を、それぞれ選べ。選択肢は繰り返し使用しない。",
+      "options": ["安静", "有插座", "可以提前预约", "可以小声讨论", "可以吃东西", "离家近"],
+      "response_mode": "multi_slot_choice",
+      "answer_slots": [{"slot_id": "S23", "answer_number": 23, "correct_option": 1}, {"slot_id": "S24", "answer_number": 24, "correct_option": 2}],
+      "option_reuse": "forbidden", "operations": ["compare", "integrate"], "dependency_mode": "within_compound",
+      "evidence": [
+        {"material_id": "A-M2", "locator": "甲64人・乙51人", "explanation_ja": "甲と乙の人数差は13人である。"},
+        {"material_id": "A-M3", "locator": "安静と有插座の説明", "explanation_ja": "両項目が上位2位で、安静が有插座より13人多い。"}
+      ],
+      "rationale_ja": "表の人数差と調査記録を組み合わせると、甲=安静、乙=有插座となる。",
+      "distractor_rationales_ja": {},
+      "slot_distractor_rationales_ja": {
+        "S23": {"2": "有插座は安静より13人少ないため乙に入る。", "3": "表に39人と明記済み。", "4": "表に33人と明記済み。", "5": "上位2項目とはされていない。", "6": "上位2項目とはされていない。"},
+        "S24": {"1": "安静は人数が多い甲に入る。", "3": "表に39人と明記済み。", "4": "表に33人と明記済み。", "5": "上位2項目とはされていない。", "6": "上位2項目とはされていない。"}
+      }
+    },
+    {
+      "task_id": "A2b", "subsection": "A", "order": 7,
+      "prompt_ja": "図から読み取れることとして最も適当なものを選べ。",
+      "options": [
+        "不知道哪些区域可以自习的人最多。",
+        "觉得开放时间不合适的人不到20人。",
+        "担心没有座位的人比觉得开放时间不合适的人多。",
+        "离家太远的人超过30人。"
+      ],
+      "response_mode": "single_choice", "answer_slots": [{"slot_id": "S25", "answer_number": 25, "correct_option": 1}],
+      "option_reuse": "forbidden", "operations": ["compare"], "dependency_mode": "single_source",
+      "evidence": [{"material_id": "A-M4", "locator": "4本の棒", "explanation_ja": "46人が最大で、他は31・28・17人である。"}],
+      "rationale_ja": "最大値46人の項目を確認する。",
+      "distractor_rationales_ja": {"2": "31人である。", "3": "28人は31人より少ない。", "4": "17人である。"}, "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "A2c", "subsection": "A", "order": 9,
+      "prompt_ja": "試行前後の変化について正しいものを選べ。",
+      "options": [
+        "利用率が最も大きく上がったのは平日18—20時である。",
+        "周末下午的利用率在试行后下降了。",
+        "四个时间段的利用率都提高了20个百分点以上。",
+        "试行前利用率最低的是周末上午。"
+      ],
+      "response_mode": "single_choice", "answer_slots": [{"slot_id": "S26", "answer_number": 26, "correct_option": 1}],
+      "option_reuse": "forbidden", "operations": ["compare", "evaluate"], "dependency_mode": "single_source",
+      "evidence": [{"material_id": "A-M5", "locator": "試行前後4区分", "explanation_ja": "上昇幅は3、23、8、2ポイントで、平日18—20時が最大。"}],
+      "rationale_ja": "各時間帯の試行前後の差を比較する。",
+      "distractor_rationales_ja": {"2": "78%から80%へ上昇している。", "3": "20ポイント以上上昇したのは平日18—20時のみ。", "4": "試行前の最低は平日18—20時の35%。"}, "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "A3", "subsection": "A", "order": 11,
+      "prompt_ja": "館員の説明と一致するものを二つ選べ。",
+      "options": [
+        "去年收到的意见中，最多的是“座位总数太少”。",
+        "试行期间，图书馆把不同学习区域的规则集中说明。",
+        "试行后，周末下午的利用率比原来低。",
+        "图书馆准备把所有学习区域改成相同的形式。",
+        "试行后，18点以后的利用率有所上升。",
+        "图书馆认为使用者到馆后再选择区域就可以。",
+        "图书馆已经决定取消小组讨论区。",
+        "馆员认为增加座位数量是唯一需要解决的问题。"
+      ],
+      "response_mode": "multi_select", "answer_slots": [{"slot_id": "S27", "answer_number": 27, "correct_option": 2}, {"slot_id": "S28", "answer_number": 28, "correct_option": 5}],
+      "option_reuse": "forbidden", "operations": ["extract", "synthesize"], "dependency_mode": "single_source",
+      "evidence": [{"material_id": "A-M6", "locator": "第2〜4文", "explanation_ja": "区域ルールを一枚にまとめ、18時以降の利用率が上がったと説明している。"}],
+      "rationale_ja": "館員説明の施策と試行後の変化を確認する。",
+      "distractor_rationales_ja": {"1": "最も多かったのは区域の選び方が分からないという意見。", "3": "周末下午はもともと高いと述べるが低下とは言っていない。", "4": "区域を同じ形式にしない方針。", "6": "来館前に判断しやすくしたいとしている。", "7": "取消の記述はない。", "8": "座席数だけが問題ではないと明示。"}, "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B1", "subsection": "B", "order": 2,
+      "prompt_ja": "確認事項から分かることとして正しいものを二つ選べ。",
+      "options": [
+        "一个人使用个人静音席时必须提前预约。",
+        "三个人一起讨论时，应考虑预约小组学习室。",
+        "需要白板的人只能选择个人静音席。",
+        "小组学习室一个人也可以预约。",
+        "周末所有学习空间都开放到20点。",
+        "只要有插座，任何区域都可以六个人一起使用。",
+        "周末18点以后不能使用这些学习空间。",
+        "个人静音席没有空位时可以提前预约第二天的座位。"
+      ],
+      "response_mode": "multi_select", "answer_slots": [{"slot_id": "S29", "answer_number": 29, "correct_option": 2}, {"slot_id": "S30", "answer_number": 30, "correct_option": 7}],
+      "option_reuse": "forbidden", "operations": ["condition_match", "evaluate"], "dependency_mode": "single_source",
+      "evidence": [{"material_id": "B-M1", "locator": "小組学習室・週末閉館条件", "explanation_ja": "2—6人の小組室は要予約、週末は17時閉館。"}],
+      "rationale_ja": "利用人数・予約・週末時間の条件を確認する。",
+      "distractor_rationales_ja": {"1": "個人静音席は予約不可。", "3": "白板は小組学習室の設備として確認する。", "4": "小組学習室は2人以上。", "5": "週末は17時閉館。", "6": "人数上限は区域ごとに異なる。", "8": "個人静音席は予約できない。"}, "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B2a", "subsection": "B", "order": 5,
+      "prompt_ja": "林佳[31]、周明[32]の希望をすべて満たす区域を、それぞれ選べ。選択肢は繰り返し使用しない。",
+      "options": ["A区", "B区", "C区", "D区"],
+      "response_mode": "multi_slot_choice", "answer_slots": [{"slot_id": "S31", "answer_number": 31, "correct_option": 1}, {"slot_id": "S32", "answer_number": 32, "correct_option": 2}],
+      "option_reuse": "forbidden", "operations": ["condition_match", "integrate"], "dependency_mode": "cross_source",
+      "evidence": [
+        {"material_id": "B-M2", "locator": "林佳・周明の希望", "explanation_ja": "日時・人数・静音/討論・設備条件を示す。"},
+        {"material_id": "B-M3", "locator": "A〜D区の表", "explanation_ja": "各区域の時間・人数・設備・予約条件を示す。"}
+      ],
+      "rationale_ja": "林佳は平日18:30・個人静音・插座を満たすA区、周明は土曜10時・3人・白板を満たすB区。",
+      "distractor_rationales_ja": {},
+      "slot_distractor_rationales_ja": {
+        "S31": {"2": "小組室で完全静音の個人利用条件に合わない。", "3": "C区は平日17時まで。", "4": "小組室で個人利用条件に合わない。"},
+        "S32": {"1": "個人静音席で3人討論できない。", "3": "週末閉鎖。", "4": "3人利用は可能だが白板がない。"}
+      }
+    },
+    {
+      "task_id": "B2b", "subsection": "B", "order": 6,
+      "prompt_ja": "陳雨に適した区域を判断するため、「学习空间介绍」に追加する必要がある情報として最も適当なものを選べ。",
+      "options": ["每个区域的墙壁颜色", "每个区域去年使用过的人数", "每个区域是否方便轮椅进出", "每个区域离学校有多远"],
+      "response_mode": "single_choice", "answer_slots": [{"slot_id": "S33", "answer_number": 33, "correct_option": 3}],
+      "option_reuse": "forbidden", "operations": ["infer", "evaluate"], "dependency_mode": "cross_source",
+      "evidence": [{"material_id": "B-M2", "locator": "陳雨の希望", "explanation_ja": "車いすで進出しやすい区域を希望している。"}, {"material_id": "B-M3", "locator": "紹介表の項目", "explanation_ja": "現表にはバリアフリー情報がない。"}],
+      "rationale_ja": "陳雨の条件を照合するには車いすでの進出可否が必要。",
+      "distractor_rationales_ja": {"1": "希望条件と無関係。", "2": "希望条件と無関係。", "4": "図書館内の区域選択に必要な条件ではない。"}, "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B3a", "subsection": "B", "order": 8,
+      "prompt_ja": "利用流程から分かることとして最も適当なものを選べ。",
+      "options": [
+        "预约制学习室迟到不到15分钟时，也必须先到服务台。",
+        "预约制学习室迟到15分钟以上时，不能凭原预约直接入室。",
+        "没有预约的人可以直接出示学生证入室。",
+        "原预约被取消后，当天一定不能再使用学习室。"
+      ],
+      "response_mode": "single_choice", "answer_slots": [{"slot_id": "S34", "answer_number": 34, "correct_option": 2}],
+      "option_reuse": "forbidden", "operations": ["sequence", "infer"], "dependency_mode": "single_source",
+      "evidence": [{"material_id": "B-M4", "locator": "LATE→CANCEL→DESK", "explanation_ja": "15分以上遅れると原予約が取消され、サービス台で空室確認へ進む。"}],
+      "rationale_ja": "フローの15分条件と取消後の経路を読む。",
+      "distractor_rationales_ja": {"1": "15分未満なら予約碼で入室。", "3": "未予約なら先にオンライン予約。", "4": "取消後も空室確認の手続きがある。"}, "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B3b", "subsection": "B", "order": 10,
+      "prompt_ja": "甲[35]、乙[36]が次に取る行動として最も適当なものを、それぞれ選べ。選択肢は繰り返し使用しない。",
+      "options": ["そのまま部屋に入る", "予約码を示して入室する", "いったん帰宅して別の日に予約する", "サービス台で現在の空室を確認する", "当日の利用をあきらめる"],
+      "response_mode": "multi_slot_choice", "answer_slots": [{"slot_id": "S35", "answer_number": 35, "correct_option": 2}, {"slot_id": "S36", "answer_number": 36, "correct_option": 4}],
+      "option_reuse": "forbidden", "operations": ["sequence", "condition_match"], "dependency_mode": "cross_source",
+      "evidence": [{"material_id": "B-M4", "locator": "15分未満/以上の分岐", "explanation_ja": "10分遅れは予約碼入室、20分遅れは取消後に空室確認。"}, {"material_id": "B-M5", "locator": "甲乙の到着時刻", "explanation_ja": "甲は10分遅れ、乙は20分遅れ。"}],
+      "rationale_ja": "二つの到着時刻を同じフローチャートに適用する。",
+      "distractor_rationales_ja": {},
+      "slot_distractor_rationales_ja": {
+        "S35": {"1": "予約制なので予約碼確認が必要。", "3": "10分遅れでは予約は有効。", "4": "15分未満なのでサービス台経由ではない。", "5": "利用を断念する必要はない。"},
+        "S36": {"1": "20分遅れで原予約は無効。", "2": "原予約碼では直接入室できない。", "3": "まず現在の空室確認を行う。", "5": "空室があれば利用できる可能性がある。"}
+      }
+    }
+  ],
+  "quality_notes": {
+    "ambiguity_risk": "low",
+    "originality_note": "2026本試型の21〜36 surface grammarを維持しつつ、図書館学習スペースという原创題材・本文・数値・case・正誤関係で構成。",
+    "language_note": "中国語資料は現代簡体字を基本とし、日本語は設問指示に限定。",
+    "difficulty_note": "直接理解から資料照合・条件判断・フロー適用まで段階差を設ける。",
+    "source_integrity_note": "All scenario text and numerical data are synthetic/original for internal pilot use."
+  },
+  "workflow": {"state": "draft", "generation_mode": "manual_chat", "blueprint_version": "R8-2026-main-tsui-v3"}
+}
