@@ -10,6 +10,9 @@ from .io import load_json
 from .models import Item
 
 
+BLUEPRINT_VERSION = "R8-2026-main-tsui-v1"
+
+
 def create_q4_request(
     root: Path,
     topic: str,
@@ -30,7 +33,7 @@ def create_q4_request(
         "domain": domain,
         "notes": notes or "",
         "generation_mode": "manual_chat",
-        "blueprint_version": "R8-2026-v1",
+        "blueprint_version": BLUEPRINT_VERSION,
     }
 
     requests = root / "workspace" / "requests"
@@ -40,11 +43,13 @@ def create_q4_request(
 
     blueprint_path = root / "blueprints" / "common_test_chinese.yaml"
     template_path = root / "templates" / "q4.yaml"
+    direction_path = root / "docs" / "ITEM_WRITING_DIRECTION_2026.md"
     prompt_path = root / "prompts" / "generate_q4.md"
 
     prompt = Template(prompt_path.read_text(encoding="utf-8")).render(
         blueprint_yaml=blueprint_path.read_text(encoding="utf-8"),
         template_yaml=template_path.read_text(encoding="utf-8"),
+        direction_md=direction_path.read_text(encoding="utf-8"),
         item_spec_json=json.dumps(spec, ensure_ascii=False, indent=2),
     )
     request_path = requests / f"{item_id}.request.md"
@@ -70,7 +75,11 @@ def create_review_request(root: Path, item_path: Path) -> Path:
     item = Item.model_validate(load_json(item_path))
     blind_json = json.dumps(_blind_item_dict(item), ensure_ascii=False, indent=2)
     prompt_path = root / "prompts" / "review_q4.md"
-    prompt = Template(prompt_path.read_text(encoding="utf-8")).render(item_json=blind_json)
+    direction_path = root / "docs" / "ITEM_WRITING_DIRECTION_2026.md"
+    prompt = Template(prompt_path.read_text(encoding="utf-8")).render(
+        item_json=blind_json,
+        direction_md=direction_path.read_text(encoding="utf-8"),
+    )
     reviews = root / "workspace" / "reviews"
     reviews.mkdir(parents=True, exist_ok=True)
     out = reviews / f"{item.item_id}.review_request.md"
