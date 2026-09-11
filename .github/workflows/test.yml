@@ -16,12 +16,14 @@ jobs:
           cache: pip
       - name: Install
         run: pip install -e ".[dev,ui]"
+      - name: Lint
+        run: ruff check src tests
       - name: UI import smoke test
-        run: python -c "import tabito_itemgen.ui_app; import tabito_itemgen.ui_launcher"
+        run: python -c "import tabito_itemgen.ui_app; import tabito_itemgen.ui_workbench; import tabito_itemgen.ui_launcher"
       - name: Launch UI smoke test
         shell: bash
         run: |
-          streamlit run src/tabito_itemgen/ui_app.py \
+          streamlit run src/tabito_itemgen/ui_workbench.py \
             --server.headless true \
             --server.port 8501 \
             > /tmp/tabito-streamlit.log 2>&1 &
