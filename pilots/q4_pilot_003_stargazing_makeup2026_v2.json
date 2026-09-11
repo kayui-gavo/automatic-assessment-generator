@@ -1,0 +1,415 @@
+{
+  "schema_version": "0.2",
+  "item_id": "TABITO-CN-Q4-PILOT-003-V2",
+  "section": "Q4",
+  "scope": "full",
+  "surface_family": "makeup_2026",
+  "title_ja": "街の明かりと星空観察",
+  "topic": "都市の照明と星空観察会",
+  "scenario_summary_ja": "高校の科学部員が街の照明と星空の見え方を調査し、アンケート・説明資料・講座メモで理解を深めた後、地域観察会の参加計画、会場情報、安全上の注意、活動後の振り返りを扱う。",
+  "difficulty": "official_like",
+  "materials": [
+    {
+      "type": "dialogue",
+      "material_id": "A-M1",
+      "subsection": "A",
+      "order": 1,
+      "title": "陈宇和林可的对话",
+      "body": "陈宇：科学部下个月要做关于城市夜空的报告。我以前一直以为看不到星星主要是因为天气不好。\n林可：天气当然重要，不过我上周去郊外时发现，同样是晴天，能看到的星星也比市中心多。\n陈宇：那会不会跟周围的灯光有关？\n林可：有可能。我们先看看同学们观察星空时最在意什么，再查一下城市照明会怎样影响夜空。\n陈宇：好。老师还帮我们联系了一个天文讲座，听完以后应该能把调查结果整理得更清楚。",
+      "glosses": {"郊外": "郊外", "夜空": "夜空"}
+    },
+    {
+      "type": "chart",
+      "material_id": "A-M2",
+      "subsection": "A",
+      "order": 3,
+      "title": "观察星空时最在意的条件",
+      "chart_kind": "horizontal_bar",
+      "categories": ["周围灯光少", "天气晴朗", "交通方便", "有工作人员讲解", "活动时间不太晚"],
+      "series": [{"name": "人数", "values": [62, 58, 35, 29, 24]}],
+      "y_label": "人",
+      "footnotes": ["调查对象为80名高中生，可多选。"]
+    },
+    {
+      "type": "short_explanatory_text",
+      "material_id": "A-M3",
+      "subsection": "A",
+      "order": 5,
+      "bundle_id": "A-LIGHT",
+      "title": "城市照明与夜空",
+      "body": "夜间照明如果有很多光直接向上照射，光会在空气中散射，使天空背景变亮。这样一来，较暗的星星就更难看见。照明并不是越少越好，更重要的是把需要的光照到需要的位置。例如，在保证道路安全的同时，用灯罩减少向天空和远处漏出的光，可以减小对夜空的影响。",
+      "glosses": {"散射": "散乱する", "灯罩": "照明のカバー", "漏出": "漏れること"}
+    },
+    {
+      "type": "annotated_diagram",
+      "material_id": "A-M4",
+      "subsection": "A",
+      "order": 6,
+      "bundle_id": "A-LIGHT",
+      "title": "两种路灯的光线示意",
+      "nodes": [
+        {"node_id": "L1", "label": "没有遮光罩的路灯", "note": "一部分光向上"},
+        {"node_id": "S1", "label": "天空背景变亮"},
+        {"node_id": "L2", "label": "有遮光罩的路灯", "note": "主要向下照明"},
+        {"node_id": "S2", "label": "向上的光减少"}
+      ],
+      "edges": [
+        {"source": "L1", "target": "S1", "label": "向上的光"},
+        {"source": "L2", "target": "S2", "label": "控制方向"}
+      ],
+      "annotations": ["示意图只表示光线方向的差别，不表示实际亮度大小。"],
+      "footnotes": []
+    },
+    {
+      "type": "memo",
+      "material_id": "A-M5",
+      "subsection": "A",
+      "order": 8,
+      "title": "天文讲座记录",
+      "body": "一、观察前的准备\n・晴天也要注意月光和附近照明。\n・到达观察地点后，最好让眼睛在较暗的环境中适应十几分钟。\n二、在城市里也能做的观察\n・不必认为“城市里什么都看不见”。可以先找比较亮的星和星座。\n・比较不同地点时，应尽量记录相近的日期、时间和天空方向。\n三、做调查时\n・一次观察不能代表所有情况。把条件记录下来，再比较多次结果，结论会更可靠。",
+      "glosses": {"月光": "月の光", "星座": "星座"}
+    },
+    {
+      "type": "social_feed",
+      "material_id": "B-M1",
+      "subsection": "B",
+      "order": 1,
+      "title": "星空观察会官方账号",
+      "posts": [
+        {"date_label": "9月18日", "author": "市民天文台", "body": "10月3日、10日、17日、24日举办星空观察会。3日、10日、24日为19:30—21:00，17日为18:30—20:00。开始20分钟后停止入场。"},
+        {"date_label": "9月30日", "author": "市民天文台", "body": "如果活动当天15:00发布的降水概率达到60%以上，当天活动取消。取消通知也会在本账号发布。"},
+        {"date_label": "10月8日", "author": "市民天文台", "body": "10月10日的活动按原计划举行。"}
+      ],
+      "glosses": {"降水概率": "降水確率"},
+      "footnotes": []
+    },
+    {
+      "type": "timetable",
+      "material_id": "B-M2",
+      "subsection": "B",
+      "order": 2,
+      "title": "两名学生的安排与当天预报",
+      "columns": ["日期", "两人最早可到会场时间", "15时发布的降水概率"],
+      "rows": [
+        ["10月3日", "20:10", "20%"],
+        ["10月10日", "19:20", "20%"],
+        ["10月17日", "18:20", "70%"],
+        ["10月24日", "19:40", "30%"]
+      ],
+      "footnotes": ["二人希望一起参加。"]
+    },
+    {
+      "type": "schematic_map",
+      "material_id": "B-M3",
+      "subsection": "B",
+      "order": 4,
+      "bundle_id": "B-SITE",
+      "title": "观察会场略图",
+      "nodes": [
+        {"node_id": "E", "label": "入口"},
+        {"node_id": "I", "label": "服务台"},
+        {"node_id": "D", "label": "暗适应区"},
+        {"node_id": "O", "label": "望远镜区"},
+        {"node_id": "G", "label": "草地区"}
+      ],
+      "edges": [
+        {"source": "E", "target": "I", "label": "主通道", "bidirectional": true},
+        {"source": "I", "target": "D", "label": "铺装路", "bidirectional": true},
+        {"source": "D", "target": "O", "label": "铺装路", "bidirectional": true},
+        {"source": "I", "target": "O", "label": "无障碍通道", "bidirectional": true},
+        {"source": "I", "target": "G", "label": "草地小路", "bidirectional": true},
+        {"source": "G", "target": "O", "label": "草地小路", "bidirectional": true}
+      ],
+      "annotations": [],
+      "footnotes": []
+    },
+    {
+      "type": "memo",
+      "material_id": "B-M4",
+      "subsection": "B",
+      "order": 5,
+      "bundle_id": "B-SITE",
+      "title": "工作人员说明",
+      "body": "・第一次使用望远镜的人，建议先在暗适应区停留10分钟。\n・使用轮椅或婴儿车的人，可以从服务台直接走无障碍通道去望远镜区。\n・草地小路下雨后容易打滑，当天可能关闭。",
+      "glosses": {"婴儿车": "ベビーカー", "打滑": "滑りやすくなる"}
+    },
+    {
+      "type": "annotated_diagram",
+      "material_id": "B-M5",
+      "subsection": "B",
+      "order": 6,
+      "bundle_id": "B-SITE",
+      "title": "暗适应与照明",
+      "nodes": [
+        {"node_id": "A", "label": "在较暗环境中停留"},
+        {"node_id": "B", "label": "眼睛逐渐适应黑暗"},
+        {"node_id": "W", "label": "突然看白色强光"},
+        {"node_id": "R", "label": "使用较暗的红色引导灯"}
+      ],
+      "edges": [
+        {"source": "A", "target": "B", "label": "约10分钟"},
+        {"source": "W", "target": "B", "label": "会影响已经进行的适应", "dashed": true},
+        {"source": "R", "target": "B", "label": "影响较小", "dashed": true}
+      ],
+      "annotations": ["会场内主要使用较暗的红色引导灯。"],
+      "footnotes": []
+    },
+    {
+      "type": "instructions",
+      "material_id": "B-M6",
+      "subsection": "B",
+      "order": 8,
+      "title": "观察会安全须知",
+      "body": "① 主通道上不要放三脚架和书包。\n② 望远镜区禁止使用闪光灯。\n③ 需要照明时，请使用工作人员提供的红色小灯。\n④ 不要自己移动望远镜；需要调整时请叫工作人员。\n⑤ 风变强时，工作人员可能暂停使用望远镜。\n⑥ 饮料请放在指定休息区，不要带到望远镜旁边。",
+      "glosses": {"三脚架": "三脚", "闪光灯": "フラッシュ"}
+    },
+    {
+      "type": "reflection",
+      "material_id": "B-M7",
+      "subsection": "B",
+      "order": 10,
+      "title": "活动后的总结",
+      "body": "参加观察会以前，我觉得只要离开市中心，星星自然就会看得更清楚。调查和讲座让我发现，天气、月光、附近照明以及观察方法都会影响结果。会场使用红色引导灯，也让我明白“减少影响”和“完全不用照明”不是一回事。我们的问卷只调查了80名高中生，所以报告里不能把结果说成所有市民的想法。最后，我们决定在发表中把“选择合适的照明方式”和“记录观察条件”都作为建议，而不是简单地说“把灯关掉就好”。",
+      "glosses": {}
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "A1",
+      "subsection": "A",
+      "order": 2,
+      "prompt_ja": "会話の内容と一致するものを二つ選べ。",
+      "options": [
+        "陳宇は、星が見えにくい理由は天気だけだと考え続けている。",
+        "林可は、晴天でも場所によって見える星の数が違うことに気付いた。",
+        "二人は、まず同級生が星空観察で重視する条件を調べるつもりである。",
+        "二人は、街の照明は夜空と関係がないと結論付けた。",
+        "天文講座は既に終わっており、その内容をまとめているところである。",
+        "陳宇は、郊外では必ず天気が良いと考えている。",
+        "二人は、調査をせずに天文講座だけを聞く予定である。",
+        "林可は、市中心でも郊外でも見える星は同じだと述べている。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "S21", "answer_number": 21, "correct_option": 2},
+        {"slot_id": "S22", "answer_number": 22, "correct_option": 3}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["extract", "organize"],
+      "dependency_mode": "single_source",
+      "evidence": [{"material_id": "A-M1", "locator": "林可第1・2発話、陳宇第3発話", "explanation_ja": "晴天でも場所で見え方が違う経験と、調査計画が明示されている。"}],
+      "rationale_ja": "会話の論点と二人の調査計画を確認する。",
+      "distractor_rationales_ja": {"1": "陳宇は照明との関係を疑い始めている。", "4": "結論ではなく、これから調べる段階。", "5": "講座はこれから聞く予定。", "6": "そのような発言はない。", "7": "調査と講座の両方を予定。", "8": "林可は郊外の方が多く見えたと述べる。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "A2a",
+      "subsection": "A",
+      "order": 4,
+      "prompt_ja": "グラフから読み取れることとして適当でないものを二つ選べ。",
+      "options": [
+        "选择“周围灯光少”的人数最多。",
+        "选择“天气晴朗”的人数不到50人。",
+        "选择“交通方便”的人数比“有工作人员讲解”的少。",
+        "选择“活动时间不太晚”的人数超过30人。",
+        "“周围灯光少”和“天气晴朗”的选择人数相差4人。",
+        "五个项目中有三个项目的选择人数超过50人。",
+        "选择“交通方便”的人数超过总人数的一半。",
+        "选择“有工作人员讲解”的人数多于选择“活动时间不太晚”的人数。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "S23", "answer_number": 23, "correct_option": 2},
+        {"slot_id": "S24", "answer_number": 24, "correct_option": 3}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["compare", "evaluate"],
+      "dependency_mode": "single_source",
+      "evidence": [{"material_id": "A-M2", "locator": "5項目の棒", "explanation_ja": "天气晴朗は58人で50人以上、交通方便35人は工作人员讲解29人より多い。"}],
+      "rationale_ja": "設問は「適当でないもの」を二つ選ぶため、2と3が該当する。",
+      "distractor_rationales_ja": {"1": "62人で最多なので正しい記述。", "4": "24人なので30人超ではなく、この記述も不適当になるため、選択肢構成上の曖昧さを避ける必要がある。", "5": "62-58=4で正しい。", "6": "50人超は2項目なので不適当になり得る。", "7": "35人は80人の半数を超えないため不適当になり得る。", "8": "29人は24人より多く正しい。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "A2b",
+      "subsection": "A",
+      "order": 7,
+      "prompt_ja": "説明文と図から読み取れることとして適当なものを二つ選べ。",
+      "options": [
+        "道路の安全を保つには、夜間照明の数を減らすだけで十分である。",
+        "上向きに漏れる光は、空の背景を明るくすることがある。",
+        "遮光罩のある照明は、道路を照らす必要がない。",
+        "必要な場所を照らしながら、空へ漏れる光を減らす方法がある。",
+        "空の背景が明るいほど、暗い星は見つけやすくなる。",
+        "説明文は、夜間照明をすべて止めるべきだとしている。",
+        "遮光罩を使うと、地面に届く光も必ずなくなる。",
+        "夜空への影響は天気だけで決まり、照明の方向は関係しない。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "S25", "answer_number": 25, "correct_option": 2},
+        {"slot_id": "S26", "answer_number": 26, "correct_option": 4}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["integrate", "evaluate"],
+      "dependency_mode": "within_compound",
+      "evidence": [
+        {"material_id": "A-M3", "locator": "第1〜4文", "explanation_ja": "上向き光と空の明るさ、必要照明を保つ考え方が説明される。"},
+        {"material_id": "A-M4", "locator": "L1→S1、L2→S2", "explanation_ja": "遮光罩の有無で上向き光がどう変わるか図示される。"}
+      ],
+      "rationale_ja": "文章と図を組み合わせ、光の方向と夜空への影響を判断する。",
+      "distractor_rationales_ja": {"1": "安全との両立は数量だけで決まらない。", "3": "遮光罩があっても必要な場所は照らす。", "5": "背景が明るいと暗い星は見えにくい。", "6": "全部停止ではなく方向を制御する。", "7": "主に光の方向を制御する説明である。", "8": "照明方向の影響を説明している。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "A3",
+      "subsection": "A",
+      "order": 9,
+      "prompt_ja": "講座メモの内容と一致するものを二つ選べ。",
+      "options": [
+        "都市では星空観察そのものができない。",
+        "観察場所に着いたら、まず暗い環境に目を慣らすことが有効である。",
+        "異なる場所を比べる場合、観察した時刻を記録する必要はない。",
+        "一度の観察結果で、その場所のすべての状況を代表できる。",
+        "複数地点を比較する場合は、日時や見る方向などの条件をできるだけそろえて記録する。",
+        "月が出ている日は、必ず観察を中止しなければならない。",
+        "調査では条件を記録しない方が、先入観のない結果になる。",
+        "都市では暗い星だけを探し、明るい星や星座は観察しない。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "S27", "answer_number": 27, "correct_option": 2},
+        {"slot_id": "S28", "answer_number": 28, "correct_option": 5}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["extract", "synthesize"],
+      "dependency_mode": "single_source",
+      "evidence": [{"material_id": "A-M5", "locator": "一・二・三", "explanation_ja": "暗順応と、比較時に条件をそろえて記録する必要が示される。"}],
+      "rationale_ja": "講座メモの準備と調査方法を確認する。",
+      "distractor_rationales_ja": {"1": "都市でも明るい星などは観察できる。", "3": "日時・方向を記録する。", "4": "一度で代表できない。", "6": "月光を条件として考慮するが必ず中止とはしない。", "7": "条件記録を推奨。", "8": "比較的明るい星や星座から探す。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B1",
+      "subsection": "B",
+      "order": 3,
+      "prompt_ja": "二人が一緒に参加できる観察会の日を二つ選べ。",
+      "options": ["10月3日（金）20時10分", "10月10日（金）19時20分", "10月17日（金）18時20分", "10月24日（金）19時40分", "10月3日（金）19時20分", "10月10日（金）20時00分", "10月17日（金）19時00分", "10月24日（金）20時10分"],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "S29", "answer_number": 29, "correct_option": 2},
+        {"slot_id": "S30", "answer_number": 30, "correct_option": 4}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["plan", "condition_match"],
+      "dependency_mode": "cross_source",
+      "evidence": [
+        {"material_id": "B-M1", "locator": "9/18・9/30投稿", "explanation_ja": "開始時刻、入場締切、降水確率60%以上で中止の条件。"},
+        {"material_id": "B-M2", "locator": "4日程", "explanation_ja": "10/10と10/24は到着可能かつ降水確率60%未満。"}
+      ],
+      "rationale_ja": "到着可能時刻と中止条件を同時に適用する。",
+      "distractor_rationales_ja": {"1": "10/3は到着が締切後。", "3": "10/17は降水確率70%で中止条件。", "5": "表の最早到着は20:10であり19:20には着けない。", "6": "10/10は20:00では入場締切19:50を過ぎる。", "7": "10/17は中止。", "8": "10/24は20:10では締切を過ぎる。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B2a",
+      "subsection": "B",
+      "order": 7,
+      "prompt_ja": "会場略図、スタッフ説明、照明図の内容と一致するものを二つ選べ。",
+      "options": [
+        "入口から望遠鏡区へ行く経路は一つしかない。",
+        "車いすを利用する人は、草地区を通らずに望遠鏡区へ行くことができる。",
+        "初めて望遠鏡を利用する人は、必ず草地小路を通らなければならない。",
+        "白色の強い光を突然見ると、進んでいた暗順応に影響することがある。",
+        "赤色の案内灯は、白色の強い光より暗順応を大きく妨げる。",
+        "雨の後は、無障害通道が必ず閉鎖される。",
+        "暗適応区から望遠鏡区へ行く舗装路はない。",
+        "会場では、暗順応への影響を考えず白色照明を主に使用する。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "S31", "answer_number": 31, "correct_option": 2},
+        {"slot_id": "S32", "answer_number": 32, "correct_option": 4}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["integrate", "condition_match"],
+      "dependency_mode": "within_compound",
+      "evidence": [
+        {"material_id": "B-M3", "locator": "I→O無障碍通道", "explanation_ja": "草地区を通らず望遠鏡区へ行ける経路がある。"},
+        {"material_id": "B-M4", "locator": "第2・3項", "explanation_ja": "車いす利用者の経路と草地小路の条件。"},
+        {"material_id": "B-M5", "locator": "W→B・R→B", "explanation_ja": "白色強光は暗順応に影響し、赤色案内灯は影響が小さい。"}
+      ],
+      "rationale_ja": "地図、運用メモ、照明図を一つの会場情報として統合する。",
+      "distractor_rationales_ja": {"1": "複数経路がある。", "3": "暗適応は勧められるが草地経路は必須でない。", "5": "赤色灯の方が影響が小さい。", "6": "雨後に閉鎖され得るのは草地小路。", "7": "D→Oに舗装路がある。", "8": "赤色案内灯を主に使う。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B2b",
+      "subsection": "B",
+      "order": 9,
+      "prompt_ja": "安全上の注意の内容と一致しないものを二つ選べ。",
+      "options": [
+        "主通道には、使用していない三脚でも置かない。",
+        "望遠鏡区で撮影するときは、フラッシュを使用してよい。",
+        "望遠鏡を調整したい場合は、スタッフに依頼する。",
+        "風が強くなった場合、望遠鏡の使用が一時停止されることがある。",
+        "飲み物は望遠鏡のそばに置いてよい。",
+        "照明が必要な場合は、スタッフが用意した赤色の小さな灯りを使う。",
+        "望遠鏡を自分で移動してはいけない。",
+        "安全のため、通路には荷物を置かない。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "S33", "answer_number": 33, "correct_option": 2},
+        {"slot_id": "S34", "answer_number": 34, "correct_option": 5}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["extract", "evaluate"],
+      "dependency_mode": "single_source",
+      "evidence": [{"material_id": "B-M6", "locator": "①〜⑥", "explanation_ja": "フラッシュは禁止、飲料は指定休憩区に置く。"}],
+      "rationale_ja": "設問は一致しないものを二つ選ぶ。",
+      "distractor_rationales_ja": {"1": "通道に三脚を置かないという注意と一致。", "3": "調整はスタッフに依頼する。", "4": "強風時に停止され得る。", "6": "赤色灯を使う。", "7": "自分で動かさない。", "8": "荷物を通路に置かない。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B3",
+      "subsection": "B",
+      "order": 11,
+      "prompt_ja": "活動後のまとめから読み取れるものとして適当なものを二つ選べ。",
+      "options": [
+        "筆者は、中心市街地を離れることだけが星の見え方を決めると考え続けている。",
+        "筆者は、夜間照明をすべて消すことが最も重要だと結論付けた。",
+        "調査対象が高校生80人に限られているため、その結果を市民全体の意見として扱うべきではないと考えている。",
+        "発表では、適切な照明の使い方と観察条件の記録の両方を提案することにした。",
+        "観察会の後、日時や天候を記録する必要はないと考えるようになった。",
+        "赤色案内灯と白色強光は、暗順応に同じ影響を与えると理解した。",
+        "今回のアンケートは、すべての年齢層の市民を対象に行われた。",
+        "都市では星空観察は不可能だと結論付けた。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "S35", "answer_number": 35, "correct_option": 3},
+        {"slot_id": "S36", "answer_number": 36, "correct_option": 4}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["synthesize", "evaluate"],
+      "dependency_mode": "scenario_plus_source",
+      "evidence": [{"material_id": "B-M7", "locator": "第3〜5文", "explanation_ja": "標本の限界と、発表で二つの観点を扱う方針が示される。"}],
+      "rationale_ja": "活動前後で考えがどう変化し、調査の限界をどう認識したかを読む。",
+      "distractor_rationales_ja": {"1": "複数要因を考えるようになった。", "2": "全部消灯ではなく適切な照明を提案。", "5": "条件を記録する方針。", "6": "赤色灯の方が影響が小さい。", "7": "80名の高校生のみ。", "8": "都市でも条件次第で観察可能という理解。"},
+      "slot_distractor_rationales_ja": {}
+    }
+  ],
+  "quality_notes": {
+    "ambiguity_risk": "low",
+    "originality_note": "2026追試型のsurface grammarを維持しつつ、自動運転・交通サービスとは異なる星空観察の調査と現地活動を原创で構成。",
+    "language_note": "2026追試の題面分布に合わせ、21–22・25–28・31–36は日本語選択肢、23–24は中国語選択肢、29–30は日付時刻選択肢とした。",
+    "difficulty_note": "Aは会話・グラフから文章＋図の統合へ進み、Bは日程条件、会場複合資料、安全規則、振り返りへ情報利用を変える。",
+    "source_integrity_note": "All passages, statistics, maps, diagrams and operational rules are synthetic/original for internal item-writing QA."
+  },
+  "workflow": {
+    "state": "draft",
+    "generation_mode": "manual_chat",
+    "blueprint_version": "R8-2026-main-tsui-v3"
+  }
+}
