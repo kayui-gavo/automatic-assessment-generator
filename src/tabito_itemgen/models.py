@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, model_validator
 Difficulty = Literal["official_like", "easy", "medium", "hard"]
 Scope = Literal["full", "mini"]
 Subsection = Literal["A", "B"]
+SurfaceFamily = Literal["main_2026", "makeup_2026"]
 Operation = Literal[
     "extract",
     "compare",
@@ -253,7 +254,7 @@ class QualityNotes(BaseModel):
 class WorkflowMeta(BaseModel):
     state: Literal["draft", "reviewed", "approved"] = "draft"
     generation_mode: Literal["manual_chat"] = "manual_chat"
-    blueprint_version: str = "R8-2026-main-tsui-v2"
+    blueprint_version: str = "R8-2026-main-tsui-v3"
 
 
 class Item(BaseModel):
@@ -261,9 +262,11 @@ class Item(BaseModel):
     item_id: str
     section: Literal["Q4"]
     scope: Scope = "full"
+    surface_family: SurfaceFamily | None = None
     title_ja: str
     topic: str
     scenario_summary_ja: str
+    subsection_intros_ja: dict[Subsection, str] = Field(default_factory=dict)
     difficulty: Difficulty
     materials: list[Material] = Field(min_length=2, max_length=14)
     tasks: list[Task] = Field(min_length=2, max_length=14)
