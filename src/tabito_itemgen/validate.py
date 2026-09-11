@@ -36,7 +36,14 @@ def _validate_2026_surface_grammar(item: Item, raw: dict) -> tuple[list[str], li
     if item.scope != "full":
         return errors, warnings
 
+    workflow_version = raw.get("workflow", {}).get("blueprint_version")
     family = raw.get("surface_family")
+    if workflow_version != CURRENT_BLUEPRINT_VERSION and family is None:
+        warnings.append(
+            "legacy full Q4: 2026 v3 surface-family validation was not applied; regenerate before approval"
+        )
+        return errors, warnings
+
     if family not in {"main_2026", "makeup_2026"}:
         errors.append(
             "full Q4 requires surface_family='main_2026' or 'makeup_2026'; "
