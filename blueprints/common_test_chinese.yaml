@@ -1,0 +1,44 @@
+exam:
+  name: 共通テスト 中国語
+  duration_minutes: 80
+  total_score: 200
+  answer_count_reference: 50
+
+sections:
+  Q1:
+    construct: pronunciation_and_pinyin
+    score: 24
+  Q2:
+    construct: vocabulary_and_usage
+    score: 16
+  Q3:
+    construct: expression
+    score: 40
+  Q4:
+    construct: integrated_materials_reading
+    score: 60
+  Q5:
+    construct: long_reading
+    score: 60
+
+general_style:
+  target_population: Japanese high-school learners of Chinese
+  avoid_hsk_drill_feel: true
+  avoid_obscure_grammar: true
+  prefer_realistic_communication_contexts: true
+  require_unique_answer: true
+  instructions_language: Japanese
+  stimulus_language: Simplified Chinese
+
+originality:
+  copy_official_wording: false
+  direct_scenario_reskinning: false
+  principle: "Reproduce constructs and information-processing patterns, not official wording or scenarios."
+
+workflow:
+  generation_mode: manual_chat
+  required_states:
+    - draft
+    - reviewed
+    - approved
+  human_approval_required: true

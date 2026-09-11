@@ -1,0 +1,54 @@
+section: Q4
+construct: integrated_materials_reading
+
+stimulus:
+  material_count: [2, 4]
+  allowed_types:
+    - dialogue
+    - timetable
+    - notice
+    - poster
+    - table
+    - chart
+    - process
+    - short_explanatory_text
+  realistic_context: true
+  cross_material_dependency: true
+
+question_design:
+  question_count_default: 6
+  option_count: [4, 5]
+  cognitive_operations:
+    - extract
+    - compare
+    - condition_match
+    - integrate
+    - infer
+    - sequence
+  require_cross_material_questions: 1
+  avoid_single_keyword_matching_as_primary_skill: true
+
+distractors:
+  plausible: true
+  error_models:
+    - local_fact_only
+    - condition_ignored
+    - condition_reversed
+    - partial_match
+    - wrong_material_link
+    - unsupported_inference
+    - sequence_error
+  avoid_joke_options: true
+  avoid_grammatically_broken_options: true
+
+language:
+  simplified_chinese: true
+  natural_modern_chinese: true
+  avoid_needlessly_advanced_idioms: true
+  gloss_rare_words_when_needed: true
+
+quality:
+  answer_must_be_unique: true
+  every_question_needs_evidence: true
+  every_distractor_needs_rationale: true
+  no_direct_adaptation_of_official_question: true

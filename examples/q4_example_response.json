@@ -1,0 +1,75 @@
+{
+  "item_id": "TABITO-CN-Q4-EXAMPLE",
+  "section": "Q4",
+  "title_ja": "放課後イベントの選択",
+  "topic": "学校生活",
+  "difficulty": "medium",
+  "materials": [
+    {
+      "material_id": "A",
+      "type": "dialogue",
+      "title": "同級生の会話",
+      "content": "小林：我星期五四点以后有时间。\n王明：我五点以前必须回家。"
+    },
+    {
+      "material_id": "B",
+      "type": "timetable",
+      "title": "活动时间",
+      "content": "书法体验 15:30-16:20\n摄影讲座 16:10-16:50\n篮球交流 16:40-17:30"
+    }
+  ],
+  "questions": [
+    {
+      "question_id": "Q1",
+      "prompt_ja": "二人が一緒に参加できる活動として最も適当なものを選べ。",
+      "options": ["书法体验", "摄影讲座", "篮球交流", "どれにも参加できない"],
+      "correct_option": 2,
+      "operation": "integrate",
+      "evidence": {
+        "material_ids": ["A", "B"],
+        "explanation_ja": "小林は16時以降、王明は17時前まで参加可能なので、16:10-16:50の摄影讲座が条件を満たす。"
+      },
+      "rationale_ja": "二人の時間条件と活動時間を照合する。",
+      "distractor_rationales_ja": {
+        "1": "開始時刻が小林の参加可能時刻より早い。",
+        "3": "終了時刻が王明の帰宅条件を超える。",
+        "4": "摄影讲座に参加できるため誤り。"
+      }
+    },
+    {
+      "question_id": "Q2",
+      "prompt_ja": "王明について、資料Aから分かることを選べ。",
+      "options": ["17時までには帰る必要がある", "16時以降は時間がない", "金曜日は一日中忙しい", "小林より遅くまで学校にいられる"],
+      "correct_option": 1,
+      "operation": "extract",
+      "evidence": {"material_ids": ["A"], "explanation_ja": "『五点以前必须回家』に対応する。"},
+      "rationale_ja": "会話中の明示情報を読む。",
+      "distractor_rationales_ja": {"2": "その記述はない。", "3": "その記述はない。", "4": "比較できない。"}
+    },
+    {
+      "question_id": "Q3",
+      "prompt_ja": "資料Bの活動のうち、最も遅く始まるものを選べ。",
+      "options": ["书法体验", "摄影讲座", "篮球交流", "すべて同じ"],
+      "correct_option": 3,
+      "operation": "compare",
+      "evidence": {"material_ids": ["B"], "explanation_ja": "開始時刻16:40が最も遅い。"},
+      "rationale_ja": "開始時刻を比較する。",
+      "distractor_rationales_ja": {"1": "15:30開始。", "2": "16:10開始。", "4": "開始時刻は異なる。"}
+    },
+    {
+      "question_id": "Q4",
+      "prompt_ja": "小林が参加できる可能性がある活動をすべて考えると、該当する活動はいくつか。",
+      "options": ["1", "2", "3", "0"],
+      "correct_option": 2,
+      "operation": "condition_match",
+      "evidence": {"material_ids": ["A", "B"], "explanation_ja": "16時以降に開始・継続して参加できる活动は摄影讲座と篮球交流。"},
+      "rationale_ja": "時間条件を各活動に適用する。",
+      "distractor_rationales_ja": {"1": "摄影讲座と篮球交流の2つ。", "3": "书法体验は15:30開始。", "4": "該当活动がある。"}
+    }
+  ],
+  "quality_notes": {
+    "ambiguity_risk": "low",
+    "originality_note": "This is a synthetic example created only to demonstrate the JSON contract.",
+    "language_note": "Short example; production items should use richer materials and more authentic Chinese."
+  }
+}

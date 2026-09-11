@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.DS_Store
+
+# Generated outputs
+output/*
+!output/.gitkeep
+
+# Manual-chat transient exchange files
+workspace/requests/*
+!workspace/requests/.gitkeep
+workspace/responses/*
+!workspace/responses/.gitkeep
+workspace/reviews/*
+!workspace/reviews/.gitkeep
