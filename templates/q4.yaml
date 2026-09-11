@@ -1,15 +1,16 @@
 section: Q4
-construct: integrated_materials_reading
-baseline: R8-2026-main-tsui-v1
+construct: integrated_information_use
+baseline: R8-2026-main-tsui-v2
 
 source_priority:
-  primary_only_for_architecture:
+  normative_construct_boundary: 2026_problem_making_policy
+  primary_item_architecture:
     - 2026_main
     - 2026_makeup
   historical_reference_only: "2025 and earlier"
   rule: >-
-    Shared features of the 2026 main and makeup examinations define the required core.
-    Differences between them are valid design variation. Pre-2026 forms may support language-level
+    Shared features of the 2026 main and makeup examinations define hard constraints.
+    Differences between them define legitimate variation. Pre-2026 forms may support language-level
     and construct checks but must not become the default architecture.
 
 scope_profiles:
@@ -17,59 +18,70 @@ scope_profiles:
     answer_numbers: [21, 36]
     answer_slot_count: 16
     subsection_required: [A, B]
-    material_count_guideline: [6, 12]
-    task_count_guideline: [6, 10]
-    minimum_cross_material_tasks: 3
-    minimum_material_type_variety: 4
+    material_count_soft_guideline: [5, 11]
+    task_count_soft_guideline: [6, 11]
+    integration_expectation:
+      A: at_least_one_genuinely_integrative_task
+      B: at_least_one_genuinely_integrative_task
   mini:
-    answer_slot_count_guideline: [4, 8]
-    material_count_guideline: [2, 5]
-    task_count_guideline: [2, 5]
-    minimum_cross_material_tasks: 1
+    answer_slot_count_soft_guideline: [4, 8]
+    material_count_soft_guideline: [2, 5]
+    task_count_soft_guideline: [2, 5]
+
+hard_constraints:
+  - full_q4_uses_answer_numbers_21_through_36_exactly_once
+  - full_q4_has_both_A_and_B
+  - A_and_B_belong_to_one_continuing_purposeful_context
+  - answer_or_answer_set_is_unique_from_the_given_information
+  - materials_needed_for_answers_are_present_and_identifiable
+  - Chinese_is_natural_modern_simplified_Chinese
+  - Japanese_instructions_are_natural_exam_Japanese
+  - official_wording_data_topics_and_distinctive_sequences_are_not_copied
 
 scenario_architecture:
   principle: >-
-    One coherent real-life or inquiry-oriented purpose develops over time. Materials are introduced
-    because the people in the scenario need them to understand, compare, plan, select, explain,
-    evaluate, or act. Tasks and materials may alternate as the scenario progresses.
+    One coherent real-life or inquiry-oriented purpose develops over time. A material should appear
+    because the people in the scenario need it to understand, compare, organize, plan, select,
+    explain, evaluate, act, or reflect. Material variety is a consequence of the scenario, not a quota.
   shared_2026_trajectory:
-    - establish_a_concrete_purpose_or_question
-    - read_or_listen_to_contextual_language_material
-    - move_into_structured_or_quantitative_information
-    - compare_or_integrate_multiple_sources
-    - advance_the_scenario_into_a_new_practical_context
-    - apply_information_to_conditions_rules_profiles_routes_or_processes
-    - finish_with_integrated_judgment_or_reflection
+    - establish_a_concrete_purpose_question_or_problem
+    - build_context_through_language_and_information
+    - introduce_structured_quantitative_visual_or_explanatory_information_as_needed
+    - require_comparison_organization_or_integration_at_meaningful_points
+    - move_from_A_to_a_later_or_recontextualized_stage_B
+    - use_information_for_application_planning_case_reasoning_rules_or_synthesis
   subsection_A:
-    role: investigate_receive_understand_compare
-    expected_functions:
-      - establish_context_from_language
-      - read_structured_or_quantitative_information
-      - compare_or_integrate_sources
-      - identify_relevant_evidence
-      - build_knowledge_needed_for_the_later_stage
+    role: establish_investigate_understand_compare_organize
+    allowed_functions:
+      - establish_context_from_dialogue_or_other_language_material
+      - verify_statements_against_data
+      - compare_or_integrate_related_sources
+      - connect_explanatory_text_with_visual_or_structured_information
+      - read_notes_or_hierarchical_summaries
+      - build_information_needed_for_later_use
   subsection_B:
-    role: apply_information_in_a_later_context_and_synthesize
-    expected_functions:
+    role: recontextualize_apply_or_synthesize
+    allowed_functions:
       - use_information_for_a_later_action_or_plan
       - match_conditions_to_profiles_rules_or_constraints
-      - read_routes_schedules_notices_or_operational_information
+      - read_routes_schedules_social_updates_or_operational_information
       - follow_or_evaluate_a_process
       - make_a_contextualized_decision
-      - synthesize_the_scenario_at_the_end
-  allowed_variation_from_2026_pair:
-    - A_may_be_everyday_consultation_or_inquiry_research
-    - B_may_be_service_participation_fieldwork_planning_or_real_world_application
-    - quantitative_materials_may_be_tables_charts_schedules_maps_or_diagrams
-    - final_tasks_may_use_case_matching_process_reasoning_or_reflective_synthesis
+      - verify_action_rules
+      - synthesize_or_reflect_after_the_activity
+  important_correction:
+    - B_does_not_have_to_end_in_practical_action
+    - reflective_synthesis_is_valid_because_it_occurs_in_the_2026_makeup_exam
   forbidden_shortcuts:
-    - six_independent_questions_with_decorative_materials
+    - independent_questions_connected_only_by_topic
+    - decorative_materials_not_needed_for_any_answer
     - one_long_passage_plus_unrelated_chart
     - direct_reskin_of_2026_main_pet_center_scenario
     - direct_reskin_of_2026_makeup_autonomous_driving_scenario
     - copying_the_exact_material_sequence_of_either_2026_exam
     - reviving_a_pre2026_default_pattern_when_it_conflicts_with_2026_direction
     - all_questions_answerable_by_single_keyword_matching
+    - satisfying_material_type_quotas_without_a_natural_information_need
 
 material_types:
   text:
@@ -79,26 +91,33 @@ material_types:
     - short_explanatory_text
     - profile
     - checklist
+    - memo
+    - reflection
+    - interview
+    - instructions
   structured:
     - table
     - timetable
     - chart
     - flowchart
-  future_extension_candidates:
-    - map
+    - social_feed
+    - schematic_map
     - annotated_diagram
-    - social_media_feed
+  grouping:
+    bundle_id: >-
+      Optional. Use the same bundle_id when several material objects together form one compound
+      source, e.g. explanatory text + diagram or route map + field notes + system diagram.
 
 response_modes:
   single_choice:
     slots: 1
   multi_select:
     slots: [2, 3]
-    preferred_options: [6, 8]
-    note: "Two-answer selection is prominent in both 2026 primary references."
+    typical_2026_use: "Two-answer selection is prominent in both 2026 primary references."
   multi_slot_choice:
     slots: [2, 3]
     option_reuse_rule_must_be_explicit: true
+    typical_use: paired_blanks_profiles_or_cases_sharing_one_option_set
 
 cognitive_operations:
   - extract
@@ -108,17 +127,29 @@ cognitive_operations:
   - infer
   - sequence
   - evaluate
+  - organize
+  - plan
+  - synthesize
 
-quality_rules:
-  unique_answer_or_answer_set: true
+information_dependency_modes:
+  single_source: answer_is_determined_from_one_material
+  within_compound: answer_requires_multiple_components_of_one_bundle
+  cross_source: answer_requires_distinct_sources_or_bundles
+  scenario_plus_source: answer_requires_context_carried_from_the_scenario_plus_a_material
+
+quality_guidance:
   evidence_locator_required: true
   distractor_error_path_required: true
-  at_least_three_cross_material_tasks_for_full: true
-  visual_or_structured_material_required_for_full: true
+  one_integrative_task_per_subsection_for_full: true
+  material_type_variety_is_soft_not_a_quota: true
+  direct_extraction_is_allowed_but_should_not_dominate: true
   scenario_must_progress_not_merely_change_materials: true
-  later_tasks_should_recontextualize_information: true
-  direct_data_reading_should_not_dominate_the_whole_section: true
+  later_tasks_should_recontextualize_apply_or_synthesize_information: true
+  quantitative_tasks_should_test_information_processing_not_heavy_arithmetic: true
+  multi_select_should_be_used_when_multiple_statements_need_independent_verification: true
   avoid_needlessly_advanced_idioms: true
+  gloss_low_frequency_domain_words_when_needed: true
   natural_modern_simplified_chinese: true
   natural_japanese_exam_instructions: true
   answer_position_distribution_should_not_be_obviously_patterned: true
+  synthetic_statistics_must_not_be_falsely_attributed_to_real_institutions: true

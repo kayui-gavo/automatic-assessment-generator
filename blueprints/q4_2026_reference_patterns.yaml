@@ -1,0 +1,154 @@
+baseline_version: R8-2026-main-tsui-v2
+purpose: >-
+  Structural metadata extracted from the two Tier-1 Q4 papers. This file contains no official
+  passages or option text. It exists to distinguish shared hard facts from paper-specific variation.
+
+shared_hard_facts:
+  score: 60
+  answer_numbers: [21, 36]
+  answer_slot_count: 16
+  subsections: [A, B]
+  continuing_context: true
+  heterogeneous_information_sources: true
+  multi_answer_selection_is_substantial: true
+  information_use_changes_as_section_progresses: true
+
+shared_tendencies_not_hard_quotas:
+  - contextual_dialogue_or_language_material_near_the_start
+  - quantitative_visual_or_structured_information_in_A
+  - B_recontextualizes_the_topic_in_a_later_activity_or_situation
+  - direct_comprehension_and_higher_integration_coexist
+  - multiple_statements_are_often_checked_individually_in_multi_select_tasks
+  - later_questions_often_require_condition_rule_case_or_synthesis_reasoning
+
+main_2026:
+  scenario_family: everyday_consultation_to_service_casework
+  subsection_A:
+    - answer_numbers: [21, 22]
+      response_pattern: multi_select_two
+      information_family: dialogue
+      main_operation: contextual_comprehension
+    - answer_numbers: [23, 24]
+      response_pattern: paired_slots_shared_options
+      information_family: quantitative_table
+      main_operation: interpret_items_from_data_and_descriptions
+    - answer_numbers: [25]
+      response_pattern: single_choice
+      information_family: chart
+      main_operation: data_interpretation
+    - answer_numbers: [26]
+      response_pattern: single_choice
+      information_family: two_related_charts
+      main_operation: compare_trends_across_visuals
+    - answer_numbers: [27, 28]
+      response_pattern: multi_select_two
+      information_family: explanatory_institutional_text
+      main_operation: content_verification
+  subsection_B:
+    - answer_numbers: [29, 30]
+      response_pattern: multi_select_two
+      information_family: checklist
+      main_operation: apply_requirements
+    - answer_numbers: [31, 32]
+      response_pattern: paired_slots_shared_options
+      information_family: profiles_plus_preference_conditions
+      main_operation: condition_matching
+    - answer_numbers: [33]
+      response_pattern: single_choice
+      information_family: profiles_plus_missing_information
+      main_operation: identify_needed_information
+    - answer_numbers: [34]
+      response_pattern: single_choice
+      information_family: flowchart_plus_explanation
+      main_operation: infer_general_prevention_rule
+    - answer_numbers: [35, 36]
+      response_pattern: paired_case_slots
+      information_family: flowchart_plus_cases
+      main_operation: apply_process_to_cases
+  do_not_copy:
+    - pet_consultation
+    - animal_protection_center
+    - adoption_profiles
+    - pet_risk_flowchart_sequence
+
+makeup_2026:
+  scenario_family: inquiry_research_to_field_application_and_reflection
+  subsection_A:
+    - answer_numbers: [21, 22]
+      response_pattern: multi_select_two
+      information_family: discussion_dialogue
+      main_operation: organize_positions_and_concerns
+    - answer_numbers: [23, 24]
+      response_pattern: multi_select_two
+      information_family: survey_chart
+      main_operation: verify_quantitative_statements
+    - answer_numbers: [25, 26]
+      response_pattern: multi_select_two
+      information_family: explanatory_text_plus_annotated_diagram
+      main_operation: integrate_prose_and_diagram
+    - answer_numbers: [27, 28]
+      response_pattern: multi_select_two
+      information_family: hierarchical_memo
+      main_operation: read_structured_summary
+  subsection_B:
+    - answer_numbers: [29, 30]
+      response_pattern: multi_select_two
+      information_family: social_feed_plus_calendar_time_conditions
+      main_operation: practical_schedule_planning
+    - answer_numbers: [31, 32]
+      response_pattern: multi_select_two
+      information_family: route_map_plus_notes_plus_system_diagram
+      main_operation: integrate_route_operational_and_system_information
+    - answer_numbers: [33, 34]
+      response_pattern: multi_select_two
+      information_family: safety_flyer
+      main_operation: verify_action_rules
+    - answer_numbers: [35, 36]
+      response_pattern: multi_select_two
+      information_family: reflection_text_after_discussion
+      main_operation: synthesize_and_verify_reflection
+  do_not_copy:
+    - autonomous_driving_research
+    - municipal_driverless_bus
+    - exact_social_feed_to_route_map_sequence
+    - autonomous_vehicle_safety_flyer
+
+variation_space_supported_by_the_pair:
+  scenario_mode:
+    - everyday_consultation_or_service
+    - inquiry_or_research
+    - planning_or_field_activity
+    - another_original_purposeful_context_consistent_with_the_shared_construct
+  B_function:
+    - practical_application
+    - condition_or_profile_matching
+    - route_schedule_or_rule_use
+    - case_or_process_application
+    - reflective_synthesis
+  response_pattern:
+    - multi_select_two
+    - paired_slots_shared_options
+    - single_choice
+  information_family:
+    - dialogue
+    - explanatory_text
+    - memo_or_reflection
+    - table_or_timetable
+    - chart
+    - checklist_or_profile
+    - social_feed
+    - schematic_map
+    - annotated_diagram
+    - flowchart
+    - flyer_or_notice
+
+do_not_infer_as_hard_rules:
+  - exact_number_of_materials
+  - exact_number_of_material_types
+  - exactly_three_cross_source_tasks
+  - mandatory_flowchart
+  - mandatory_map
+  - mandatory_table
+  - B_must_always_be_practical_action
+  - final_task_must_always_be_case_matching
+  - every_two_answer_slot_pair_must_use_the_same_response_mode

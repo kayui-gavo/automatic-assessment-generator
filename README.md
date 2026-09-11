@@ -2,36 +2,46 @@
 
 旅人教育の内部教研向けに、**共通テスト中国語の原创問題を短時間で作成・独立審査・題庫化・組版するための命題支援ツール**。
 
-現在の v0.2 は第4問を優先している。API は不要で、ChatGPT Plus を manual LLM backend として使う。
+現在は第4問（Q4）を優先している。API は不要で、ChatGPT Plus を manual LLM backend として使う。
 
-## 命題ブループリント
+## Current baseline
 
-命題方向の第一級ブループリントは、**2026（令和8年度）本試験と2026追・再試験の2セット**。
+命題方向は次の順序で扱う。
 
-- 2026本試と2026追試は同格の primary references
-- 両者の共通点を「2026型の核」とする
-- 両者の差を「許容される設計の幅」とする
-- **2025以前は historical reference only**
-- 旧年度は語彙・文法レベル、安定した測定能力、誤答肢、日本語設問表現の確認には使うが、2026の構造を上書きしない
-- 旧年度と2026が衝突する場合は必ず2026を優先する
+1. **Tier 0** — 2026大学入試センター問題作成方針：測る能力の境界
+2. **Tier 1** — 2026本試験 + 2026追・再試験：中国語Q4の同格primary blueprint
+3. **Tier 2** — 2025以前：語彙・文法レベル、誤答肢、日本語設問等の歴史的参考のみ
 
-詳細は `docs/ITEM_WRITING_DIRECTION_2026.md` と `docs/EXAM_SPEC_2026.md`。
+現在の blueprint version は：
 
-## v0.2 で重要になったこと
+```text
+R8-2026-main-tsui-v2
+```
 
-v0.1 は「2–4資料 + 6個の普通MCQ」という抽象化が強すぎ、実際の共通テストQ4を表現できなかった。v0.2 では 2026 本試・追試を参照基準として、full Q4 を次のように扱う。
+2026本試・追試の**共通点だけを hard core** とし、両者の違いは正当な variation として扱う。片方だけにある flowchart / map / 実務行動 / reflection 等を全セットの必須テンプレートにはしない。
 
-- A / B の二段階
-- 解答番号 21–36 の16 answer slots
-- `single_choice` / `multi_select` / `multi_slot_choice`
-- dialogue / table / timetable / chart / profile / checklist / flowchart 等の構造化資料
-- 情報取得→比較/統合→後半の実際的な計画・条件照合・ルール/プロセス適用・総合判断という進行
-- 生成者の正答を見せない blind independent review
-- review answer と answer key の自動照合
-- approved bank との軽量類似度チェック
-- 表・グラフ・フローチャート対応 LaTeX renderer
+詳細：
 
-詳しい旧版の問題点は `docs/AUDIT_v0.1.md` を参照。
+- `docs/EXAM_SPEC_2026.md`
+- `docs/ITEM_WRITING_DIRECTION_2026.md`
+- `blueprints/q4_2026_reference_patterns.yaml`
+- `docs/AUDIT_v0.2_2026_BASELINE.md`
+
+## v0.3 で重要になったこと
+
+v0.2 は production architecture としては成立したが、「公式事実」と「内部heuristic」を混同していた。
+
+v0.3 では：
+
+- 2026本試・追試を同格のdual baselineとして全promptへ注入
+- arbitraryな「3 cross-material tasks」「4 material types」hard ruleを廃止
+- `single_source / within_compound / cross_source / scenario_plus_source` で情報依存を表現
+- compound source用 `bundle_id` を追加
+- 追試に必要な `social_feed / schematic_map / annotated_diagram / memo / reflection` 等を原生サポート
+- Bを「必ず実務行動」とせず、再文脈化・適用・総合・reflectionまで許容
+- `official_like` をfull Q4のdefault difficultyにし、内部難度を均一化しない
+- blind reviewとrevisionにも同じ2026 baseline contextを渡す
+- example fixture と gold benchmark を分離
 
 ## Setup
 
@@ -48,21 +58,31 @@ pytest
 
 ```bash
 tabito-itemgen new-item \
-  --topic "地域イベント" \
-  --difficulty medium \
-  --domain daily_life \
+  --topic "地域施設の利用改善" \
   --scope full
 ```
 
-必要なら自由メモも渡せる。
+full Q4 の default difficulty は `official_like`。
+
+必要なら：
 
 ```bash
 tabito-itemgen new-item \
-  --topic "オープンキャンパス" \
-  --notes "大学案内の換皮ではなく、情報取得→比較→後続行動が自然につながる構成"
+  --topic "学校の国際交流企画" \
+  --difficulty hard \
+  --domain school_life \
+  --notes "公式問題の場面換皮ではなく、情報収集から後半の判断へ自然に用途が変わる構成"
 ```
 
-`workspace/requests/*.request.md` を ChatGPT Plus にそのまま渡し、返答 JSON を保存する。生成 request には2026 dual-baselineの命題方針が自動的に埋め込まれる。
+`workspace/requests/*.request.md` を ChatGPT Plus にそのまま渡し、返答 JSON を保存する。
+
+生成requestには自動的に以下が入る。
+
+- overall blueprint
+- 2026本試・追試の構造メタデータ
+- Q4 template
+- detailed item-writing direction
+- item spec
 
 ### 2. draft に取り込んで検証
 
@@ -71,16 +91,23 @@ tabito-itemgen import-response response.json
 tabito-itemgen validate item_bank/draft/TABITO-CN-Q4-....json
 ```
 
-full Q4 では特に以下を機械チェックする。
+full Q4 では特に：
 
-- answer number 21–36 がちょうど1回ずつあるか
-- A/B 両方が存在するか
-- cross-material task が最低3つあるか
-- structured/visual material があるか
+- answer number 21–36 がちょうど1回ずつか
+- A/B 両方があるか
+- A/Bそれぞれに genuinely integrative な task があるか
+- `dependency_mode` と evidence が矛盾していないか
+- compound source の `bundle_id` が成立しているか
+- structured/visual information があるか
+- 飾り資料が多すぎないか
+- direct extraction が大半を占めていないか
+- multi-select が2026型として十分存在するか
 - evidence locator があるか
-- answer-position の極端な偏り
-- distractor rationale の不足
-- multi-slot task では各 answer slot ごとの誤答理由が揃っているか
+- distractor rationale が揃っているか
+
+を確認する。
+
+material type の数や cross-source task の数は、公式根拠のない固定quotaとしては扱わない。
 
 ### 3. ブラインド独立審査
 
@@ -88,9 +115,17 @@ full Q4 では特に以下を機械チェックする。
 tabito-itemgen review-request item_bank/draft/TABITO-CN-Q4-....json
 ```
 
-生成される review request からは、**正答・evidence・解説・生成者自己評価を自動的に除去**してある。reviewer には同時に2026本試・追試ベースの命題方向が渡される。できれば生成時とは別 Chat に渡す。
+review packet からは：
 
-返ってきた review JSON を保存後：
+- correct answer
+- evidence
+- rationale
+- distractor rationale
+- generator self-assessment
+
+を除去する。一方で、2026 dual-baseline の命題基準は reviewer に渡す。
+
+review JSON を保存後：
 
 ```bash
 tabito-itemgen import-review review.json
@@ -100,7 +135,7 @@ tabito-itemgen review-check \
   --review workspace/reviews/TABITO-CN-Q4-....review.json
 ```
 
-reviewer が独立に解いた答えと author key が食い違えば FAIL になる。
+reviewer の独立解答と author key が不一致なら FAIL。
 
 ### 4. 必要なら修訂
 
@@ -109,6 +144,8 @@ tabito-itemgen revision-request \
   --item item_bank/draft/TABITO-CN-Q4-....json \
   --review workspace/reviews/TABITO-CN-Q4-....review.json
 ```
+
+revision prompt にも generation と同じ blueprint / reference patterns / template / item-writing direction が入る。
 
 ### 5. 類似度を確認して approve
 
@@ -119,7 +156,7 @@ tabito-itemgen approve revised_item.json \
   --review workspace/reviews/TABITO-CN-Q4-....review.json
 ```
 
-`approve` は、通常は blind review が `pass` で、独立解答が key と一致しない限り通らない。緊急時のみ明示的 override を使う。
+`approve` は blind review gate を通常必須とする。schema/validatorを通っても、人間が内容を確認せずにapproveしない。
 
 ### 6. 学生版 / 教師版を組版
 
@@ -127,39 +164,58 @@ tabito-itemgen approve revised_item.json \
 tabito-itemgen render item_bank/approved/TABITO-CN-Q4-....json --compile
 ```
 
-`output/<item_id>/` に student / teacher の TeX と PDF ができる。
+`output/<item_id>/` に student / teacher の TeX / PDF を生成する。
+
+現在のrendererは：
+
+- text / dialogue / memo / reflection
+- table / timetable
+- bar / horizontal-bar / stacked-bar / line chart
+- flowchart
+- social feed
+- schematic map
+- annotated diagram
+
+を扱う。
+
+教師版には正答・根拠・解説・情報依存・誤答肢理由も出す。
 
 ## Repository
 
 ```text
-blueprints/          試験全体の versioned blueprint
-templates/           Q4 の具体的生成制約
+blueprints/          versioned blueprint + 2026 structural reference metadata
+templates/           Q4 generation constraints
 prompts/             generate / blind review / revise
-docs/                exam spec・命題方向・設計監査
-examples/            schema-valid examples
+docs/                exam spec, item-writing direction, audits
+examples/            schema/regression fixtures; NOT gold content
+benchmarks/          future human-approved gold exemplars
 workspace/           manual ChatGPT handoff
-item_bank/draft/     未承認
-item_bank/approved/  使用可能
-item_bank/rejected/  不採用
+item_bank/draft/     unapproved candidates
+item_bank/approved/  usable items
+item_bank/rejected/  rejected items
 src/                 CLI / schema / validation / rendering
 tests/               regression tests
 output/              generated TeX/PDF
 ```
 
+## Examples are not gold items
+
+`examples/q4_example_response.json` はschemaとrendererの回帰用fixtureであり、命題品質の見本ではない。
+
+本当に質が確認された問題だけを将来 `benchmarks/` に入れる。
+
 ## まだやらないこと
 
-現段階では API、LangChain、vector DB、fine-tuning、IRT、Web UI を優先しない。まず実際の候補問題を生成し、**教研担当者の修正時間がどこで発生するか**を確認してから自動化範囲を増やす。
+現段階では API、LangChain、vector DB、fine-tuning、IRT、Web UI を優先しない。
+
+まず実際の full Q4 を5セット程度生成し、**人間がどこを何分直したか**を記録する。その結果から v0.3/v0.4 の開発優先順位を決める。
 
 ## 次の優先順位
 
-1. 2026本試・追試 dual baseline で full Q4 を5セット生成して human QA
-2. prompt/schema の返工原因を記録
-3. 2026追試で重要な地図・複合図など、現schemaで表現しにくい資料形式を必要に応じて追加
-4. renderer のページ分割・図表品質を本番レベルへ
-5. `used_in` と模試 assembly
+1. 2026 dual baselineで real full Q4 を5セット生成して content QA
+2. 返工理由と修正時間を記録
+3. 最も頻発する品質欠陥をprompt/schema/validatorへ反映
+4. renderer の本番版面改善
+5. `used_in` と模試assembly
 6. Q5 pipeline
 7. Q1/Q2/Q3
-
-### v0.3 content-QA pilot の追加ルール
-
-5セットの評価では、**2026本試だけに似ているかではなく、本試・追試の両方から抽出した共有能力構造に合っているか**を判定する。特に、2026追試で目立つ「日時・経路・運行条件・地図/図・注意事項を使った実際的判断」も、必要に応じて命題レパートリーに含める。ただし自動運転・自治体交通の換皮は禁止する。

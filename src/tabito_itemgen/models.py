@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-Difficulty = Literal["easy", "medium", "hard"]
+Difficulty = Literal["official_like", "easy", "medium", "hard"]
 Scope = Literal["full", "mini"]
 Subsection = Literal["A", "B"]
 Operation = Literal[
@@ -15,8 +15,12 @@ Operation = Literal[
     "infer",
     "sequence",
     "evaluate",
+    "organize",
+    "plan",
+    "synthesize",
 ]
 ResponseMode = Literal["single_choice", "multi_select", "multi_slot_choice"]
+DependencyMode = Literal["single_source", "within_compound", "cross_source", "scenario_plus_source"]
 
 
 class TextMaterial(BaseModel):
@@ -27,10 +31,15 @@ class TextMaterial(BaseModel):
         "short_explanatory_text",
         "profile",
         "checklist",
+        "memo",
+        "reflection",
+        "interview",
+        "instructions",
     ]
     material_id: str
     subsection: Subsection
     order: int = Field(ge=1)
+    bundle_id: str | None = None
     title: str | None = None
     body: str
     glosses: dict[str, str] = Field(default_factory=dict)
@@ -41,6 +50,7 @@ class TableMaterial(BaseModel):
     material_id: str
     subsection: Subsection
     order: int = Field(ge=1)
+    bundle_id: str | None = None
     title: str | None = None
     columns: list[str] = Field(min_length=2, max_length=10)
     rows: list[list[str]] = Field(min_length=1)
@@ -64,8 +74,9 @@ class ChartMaterial(BaseModel):
     material_id: str
     subsection: Subsection
     order: int = Field(ge=1)
+    bundle_id: str | None = None
     title: str | None = None
-    chart_kind: Literal["bar", "line"]
+    chart_kind: Literal["bar", "horizontal_bar", "stacked_bar", "line"]
     categories: list[str] = Field(min_length=2, max_length=12)
     series: list[ChartSeries] = Field(min_length=1, max_length=4)
     y_label: str | None = None
@@ -82,6 +93,8 @@ class ChartMaterial(BaseModel):
 class FlowNode(BaseModel):
     node_id: str
     label: str
+    x: float | None = None
+    y: float | None = None
 
 
 class FlowEdge(BaseModel):
@@ -95,9 +108,10 @@ class FlowchartMaterial(BaseModel):
     material_id: str
     subsection: Subsection
     order: int = Field(ge=1)
+    bundle_id: str | None = None
     title: str | None = None
-    nodes: list[FlowNode] = Field(min_length=2, max_length=16)
-    edges: list[FlowEdge] = Field(min_length=1, max_length=24)
+    nodes: list[FlowNode] = Field(min_length=2, max_length=20)
+    edges: list[FlowEdge] = Field(min_length=1, max_length=30)
     footnotes: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -111,8 +125,70 @@ class FlowchartMaterial(BaseModel):
         return self
 
 
+class SocialPost(BaseModel):
+    date_label: str | None = None
+    author: str | None = None
+    body: str
+
+
+class SocialFeedMaterial(BaseModel):
+    type: Literal["social_feed"]
+    material_id: str
+    subsection: Subsection
+    order: int = Field(ge=1)
+    bundle_id: str | None = None
+    title: str | None = None
+    posts: list[SocialPost] = Field(min_length=2, max_length=20)
+    glosses: dict[str, str] = Field(default_factory=dict)
+    footnotes: list[str] = Field(default_factory=list)
+
+
+class SchematicNode(BaseModel):
+    node_id: str
+    label: str
+    x: float | None = None
+    y: float | None = None
+    note: str | None = None
+
+
+class SchematicEdge(BaseModel):
+    source: str
+    target: str
+    label: str | None = None
+    bidirectional: bool = False
+    dashed: bool = False
+
+
+class SchematicMaterial(BaseModel):
+    type: Literal["schematic_map", "annotated_diagram"]
+    material_id: str
+    subsection: Subsection
+    order: int = Field(ge=1)
+    bundle_id: str | None = None
+    title: str | None = None
+    nodes: list[SchematicNode] = Field(min_length=2, max_length=24)
+    edges: list[SchematicEdge] = Field(default_factory=list, max_length=36)
+    annotations: list[str] = Field(default_factory=list)
+    footnotes: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_edges(self) -> "SchematicMaterial":
+        node_ids = {node.node_id for node in self.nodes}
+        if len(node_ids) != len(self.nodes):
+            raise ValueError("schematic node_id values must be unique")
+        for edge in self.edges:
+            if edge.source not in node_ids or edge.target not in node_ids:
+                raise ValueError("schematic edge references an unknown node")
+        return self
+
+
 Material = Annotated[
-    TextMaterial | TableMaterial | ChartMaterial | FlowchartMaterial,
+    TextMaterial
+    | TableMaterial
+    | ChartMaterial
+    | FlowchartMaterial
+    | SocialFeedMaterial
+    | SchematicMaterial,
     Field(discriminator="type"),
 ]
 
@@ -139,6 +215,7 @@ class Task(BaseModel):
     answer_slots: list[AnswerSlot] = Field(min_length=1, max_length=3)
     option_reuse: Literal["allowed", "forbidden"] = "forbidden"
     operations: list[Operation] = Field(min_length=1, max_length=3)
+    dependency_mode: DependencyMode | None = None
     evidence: list[EvidenceRef] = Field(min_length=1)
     rationale_ja: str
     distractor_rationales_ja: dict[str, str] = Field(default_factory=dict)
@@ -170,12 +247,13 @@ class QualityNotes(BaseModel):
     originality_note: str
     language_note: str
     difficulty_note: str
+    source_integrity_note: str = "synthetic/original internal material unless otherwise stated"
 
 
 class WorkflowMeta(BaseModel):
     state: Literal["draft", "reviewed", "approved"] = "draft"
     generation_mode: Literal["manual_chat"] = "manual_chat"
-    blueprint_version: str = "R8-2026-main-tsui-v1"
+    blueprint_version: str = "R8-2026-main-tsui-v2"
 
 
 class Item(BaseModel):
@@ -187,7 +265,7 @@ class Item(BaseModel):
     topic: str
     scenario_summary_ja: str
     difficulty: Difficulty
-    materials: list[Material] = Field(min_length=2, max_length=12)
+    materials: list[Material] = Field(min_length=2, max_length=14)
     tasks: list[Task] = Field(min_length=2, max_length=14)
     quality_notes: QualityNotes
     workflow: WorkflowMeta = Field(default_factory=WorkflowMeta)

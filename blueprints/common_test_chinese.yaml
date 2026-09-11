@@ -2,25 +2,41 @@ exam:
   name: 共通テスト 中国語
   reference_year: 2026
   reference_label: R8
-  blueprint_version: R8-2026-main-tsui-v1
+  blueprint_version: R8-2026-main-tsui-v2
   duration_minutes: 80
   total_score: 200
   answer_numbers: [1, 50]
 
 reference_policy:
+  tier_0_normative_policy:
+    name: R8 / 2026 Common Test problem-making policy for non-English foreign languages
+    role: construct_boundary_only
+    url: https://www.dnc.ac.jp/news/albums/abm.php?d=355&f=abm00004500.pdf
+    principles:
+      - understand_information_and_intent_according_to_purpose_situation
+      - organize_understood_information_and_judge_what_to_take_up
+      - assess_language_knowledge_and_skills_supporting_communication
+      - consider_students_who_begin_non_english_foreign_languages_in_high_school
+    must_not_define:
+      - q4_surface_architecture
+      - exact_material_sequence
+      - exact_response_mode_distribution
+
   tier_1_primary_blueprints:
     - id: R8_2026_main
       name: 2026 本試験 中国語
-      authority: primary
+      authority: co_equal_primary
       url: https://www.dnc.ac.jp/kyotsu/kakomondai/r8/r8_honshiken_mondai.html
     - id: R8_2026_makeup
       name: 2026 追・再試験 中国語
-      authority: primary
+      authority: co_equal_primary
       url: https://www.dnc.ac.jp/kyotsu/kakomondai/r8/r8_tuisaishiken_mondai.html
+
   interpretation_rule: >-
-    The 2026 main and 2026 makeup examinations are co-equal primary design references.
-    Features shared by both define the core 2026 direction; differences between the two define
-    legitimate variation inside that direction. Do not treat either one as a surface template.
+    The 2026 main and makeup examinations are co-equal item-writing references.
+    Features shared by both define the hard 2026 core. Differences between them define legitimate
+    variation. Do not infer a mandatory surface pattern from a feature that appears in only one paper.
+
   tier_2_historical_reference:
     years: "2025 and earlier"
     authority: secondary_only
@@ -35,7 +51,8 @@ reference_policy:
       - restore_an_older_item_pattern_because_it_was_common_before_2026
       - average_old_and_new_structures_into_a_hybrid_blueprint
       - use_pre2026_surface_architecture_as_the_default_generation_template
-  conflict_rule: "2026 main/makeup evidence always takes precedence over 2025-and-earlier patterns."
+
+  conflict_rule: "Tier-1 evidence overrides pre-2026 patterns; Tier-0 constrains the construct but not the surface form."
 
 sections:
   Q1:
@@ -48,20 +65,34 @@ sections:
     construct: expression
     score: 40
   Q4:
-    construct: integrated_materials_reading
+    construct: integrated_information_use
     score: 60
     answer_numbers: [21, 36]
-    functional_phases:
-      A: investigate_receive_understand_compare
-      B: apply_information_in_a_later_context_and_synthesize
-    primary_2026_direction:
-      - one_continuing_purposeful_scenario
-      - heterogeneous_realistic_materials
-      - tasks_and_materials_can_interleave_as_the_scenario_progresses
-      - progression_from_basic_comprehension_to_data_reading_and_integration
-      - later_application_to_planning_matching_rules_processes_or_decisions
-      - substantial_use_of_multi_select_or_multi_slot_answers
-      - information_processing_over_keyword_matching
+    hard_core_2026:
+      - exactly_16_answer_slots_for_full_q4
+      - two_subsections_A_and_B
+      - one_continuing_purposeful_context
+      - heterogeneous_information_sources
+      - substantial_multi_answer_selection
+      - information_processing_beyond_keyword_matching
+      - progression_in_how_information_is_used
+    functional_range:
+      A:
+        - establish_context
+        - investigate
+        - understand
+        - compare
+        - organize_information
+      B:
+        - recontextualize_information
+        - apply_conditions_or_rules
+        - plan_or_select
+        - interpret_routes_processes_or_cases
+        - synthesize_or_reflect
+    non_hard_tendencies:
+      - tasks_and_materials_often_interleave_as_the_scenario_progresses
+      - quantitative_or_visual_information_is_common
+      - later_tasks_often_require_more_contextualized_use_of_information
   Q5:
     construct: long_reading
     score: 60
@@ -72,10 +103,11 @@ general_style:
   instructions_language: Japanese
   stimulus_language: Simplified Chinese
   avoid_hsk_drill_feel: true
-  avoid_obscure_grammar: true
-  prefer_realistic_communication_contexts: true
-  require_unique_answer: true
+  avoid_obscure_grammar_for_its_own_sake: true
+  prefer_realistic_or_inquiry_based_contexts: true
+  require_unique_answer_or_answer_set: true
   gloss_rare_or_domain_specific_words: true
+  do_not_turn_information_processing_into_heavy_arithmetic: true
 
 originality:
   copy_official_wording: false
@@ -83,9 +115,11 @@ originality:
   copy_official_material_sequence: false
   copy_2026_main_pet_architecture: false
   copy_2026_makeup_autonomous_driving_architecture: false
+  invented_real_world_attribution: false
   principle: >-
-    Reproduce the shared 2026 constructs and information-processing trajectory, not official
-    wording, topic, characters, data, or distinctive material sequence.
+    Reproduce the shared 2026 constructs and information-use trajectory, not official wording,
+    topic, characters, data, or distinctive material sequence. A new item should create a different
+    information journey even when it measures similar abilities.
 
 workflow:
   generation_mode: manual_chat
@@ -94,6 +128,9 @@ workflow:
   human_approval_required: true
 
 sources:
+  normative:
+    - name: R8 / 2026 problem-making policy
+      url: https://www.dnc.ac.jp/news/albums/abm.php?d=355&f=abm00004500.pdf
   primary:
     - name: R8 / 2026 main examination, Chinese
       url: https://www.dnc.ac.jp/kyotsu/kakomondai/r8/r8_honshiken_mondai.html

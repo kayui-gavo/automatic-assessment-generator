@@ -1,108 +1,124 @@
 # Common Test Chinese Q4 reference spec (R8 / 2026)
 
-This file records the **functional structure** used to constrain internal original-item generation. It is not a template for copying official content.
+This file records the **functional structure** used to constrain internal original-item generation. It intentionally stores structure rather than official passages/options.
 
-## Source hierarchy
+Current blueprint version: `R8-2026-main-tsui-v2`.
 
-The authoritative design baseline is the pair:
+## Reference hierarchy
 
-1. **R8 / 2026 main examination, Chinese**
-2. **R8 / 2026 makeup/re-examination, Chinese**
+### Tier 0 — normative construct boundary
 
-They are co-equal Tier-1 references.
+The 2026 DNC problem-making policy for non-English foreign languages emphasizes:
 
-- Features shared by both define the core 2026 direction.
-- Differences between them define legitimate variation within that direction.
-- 2025 and earlier examinations are Tier-2 historical references only. They may inform language level, stable constructs, distractor conventions and wording, but must not override the 2026 pair.
+- understanding information, main points, details and speaker/writer intent according to purpose/situation;
+- organizing understood information and deciding what/how to take up;
+- assessing the language knowledge/skills supporting communication;
+- considering examinees who may begin non-English foreign-language study only in high school.
 
-If an older recurring pattern conflicts with the 2026 main/makeup direction, **2026 wins**.
+This constrains **what should be measured**, not the exact Q4 surface form.
 
-## Official 2026 reference points
+### Tier 1 — co-equal item-writing blueprints
 
-- The Chinese examination has 50 answer numbers in total and Q4 is worth 60 points.
-- In both the 2026 main and makeup examinations, Q4 spans answer numbers **21–36**, i.e. 16 answer slots.
-- Both divide Q4 into **A and B** within a continuing scenario.
-- Both move beyond a single passage and use heterogeneous materials.
-- Both make substantial use of multiple-answer selection and tasks that require checking several statements or conditions.
+1. R8 / 2026 main examination, Chinese
+2. R8 / 2026 makeup/re-examination, Chinese
 
-## Shared functional trajectory
+Shared features define the hard 2026 core. Differences define legitimate variation.
 
-The topics differ strongly, but the information-processing trajectory is similar:
+### Tier 2 — 2025 and earlier
+
+Historical reference only: language level, stable constructs, distractor conventions, Japanese instruction wording and longitudinal continuity. Pre-2026 architecture never overrides Tier 1.
+
+## Hard facts shared by both 2026 Q4 papers
+
+- 60 points.
+- Answer numbers 21–36: 16 answer slots.
+- Two subsections, A and B.
+- One continuing context/purpose across the section.
+- Heterogeneous information sources rather than one long passage only.
+- Substantial use of multiple-answer selection.
+- Tasks require more than vocabulary/keyword matching: statement verification, comparison, organization, integration or contextual judgment.
+- The role of information changes as the scenario develops.
+
+These are the strongest candidates for hard constraints.
+
+## What is **not** a hard fact
+
+Do not infer the following as mandatory merely because it appears in one paper or one internal prototype:
+
+- an exact number of materials;
+- four or more material types;
+- exactly three cross-source tasks;
+- mandatory flowchart, map, table or chart;
+- B must always end in practical action;
+- the final task must always be case matching;
+- a fixed single-choice/multi-select ratio beyond the clear prominence of multi-answer selection.
+
+## Main examination: structural profile
+
+The main paper moves from an everyday consultation into quantitative/statistical and institutional information, then recontextualizes the topic into service participation, profile/condition matching and process/case reasoning.
+
+Useful abstractions:
+
+- contextual dialogue comprehension;
+- table/graph interpretation;
+- comparison across related visuals;
+- explanatory/institutional text comprehension;
+- checklist application;
+- profile + preference matching;
+- identifying missing decision-relevant information;
+- process/flow application to cases.
+
+Do **not** copy the pet/animal-protection/adoption sequence.
+
+## Makeup examination: structural profile
+
+The makeup paper moves from inquiry/discussion into survey data, explanatory text + diagram and structured notes, then recontextualizes the topic into practical schedule planning, map/system interpretation, safety-rule verification and finally reflective synthesis.
+
+Useful abstractions:
+
+- organizing viewpoints/concerns from dialogue;
+- verifying statements against quantitative data;
+- integrating prose with diagrams;
+- reading hierarchical notes;
+- combining date/time/weather/crowding information;
+- integrating route, reservation, operational and system information;
+- interpreting action/safety rules;
+- synthesizing a reflection after presentation/discussion.
+
+Do **not** copy the autonomous-driving / municipal-bus sequence.
+
+## Correct A/B abstraction
+
+The earlier internal shorthand “A = receive, B = act” is too narrow.
+
+Use:
 
 ```text
-concrete purpose / question / situation
-        ↓
-contextual language material establishes the problem
-        ↓
-structured / quantitative / explanatory information
-        ↓
-comparison and integration across information sources
-        ↓
-scenario advances into a new practical context
-        ↓
-planning / matching / rules / routes / procedures / cases
-        ↓
-integrated decision or synthesis
+A = establish context / investigate / understand / compare / organize
+
+B = recontextualize / apply / plan / match / reason about cases or rules / synthesize / reflect
 ```
 
-### 2026 main: what to abstract
+The key change is **information use**, not necessarily physical action.
 
-The main examination uses a pet-related consultation and then develops toward statistics, institutional information, volunteering, adoption/profile matching and process/case judgment.
+## Compound sources
 
-Abstract the abilities, not the topic or sequence:
+Official-style tasks may combine several visible components into one functional source unit, e.g. prose + diagram or route map + notes + system diagram.
 
-- interpret positions and conditions in realistic dialogue
-- read and compare tables / graphs
-- extract claims from explanatory or institutional text
-- match conditions against checklists and profiles
-- apply a process or flow to concrete cases
+Internal representation uses `bundle_id` to distinguish:
 
-### 2026 makeup: what to abstract
+- `within_compound` integration inside one source bundle;
+- `cross_source` integration across independent sources/bundles.
 
-The makeup examination uses inquiry into autonomous driving and then develops through discussion, survey data, explanatory diagrams/notes, practical travel planning, route/system information, safety rules and reflection.
+This prevents the validator from treating every multi-component official-style source as arbitrary “cross-material reasoning”.
 
-Abstract the abilities, not the topic or sequence:
+## Machine-readable structural metadata
 
-- organize viewpoints and concerns from dialogue
-- test statements against quantitative data
-- integrate prose with diagrams
-- read hierarchical notes
-- combine date/time/weather/crowding conditions for planning
-- integrate route, reservation and operational information
-- transform safety notices into practical action
-- synthesize the inquiry in a final reflection
+See:
 
-## Internal abstraction
+`blueprints/q4_2026_reference_patterns.yaml`
 
-Do not reproduce either official scenario or its distinctive material sequence. Preserve the shared 2026 assessment pattern:
-
-```text
-A: investigate / receive / understand / compare
-        ↓
-information becomes progressively more structured or integrated
-        ↓
-B: apply the acquired information in a later practical context
-        ↓
-condition matching / planning / rule or process application / synthesis
-```
-
-A and B should differ in **function**, not merely in topic subsection labels. B should not feel like “more of A”.
-
-## What 2025 and earlier may still contribute
-
-Historical items may be consulted for:
-
-- long-term language difficulty calibration
-- recurring vocabulary/grammar expectations
-- distractor plausibility
-- Japanese exam-instruction conventions
-- stable construct continuity
-
-They must not be used to:
-
-- define the default Q4 architecture
-- restore an older format because it used to be frequent
-- dilute the 2026 direction into a cross-year average
+It records the answer-number / response-pattern / information-family structure of both 2026 Q4 papers without storing copyrighted passages.
 
 ## Sources
 
@@ -110,7 +126,7 @@ They must not be used to:
   https://www.dnc.ac.jp/kyotsu/kakomondai/r8/r8_honshiken_mondai.html
 - University Entrance Examination Center, R8 makeup/re-examination questions:  
   https://www.dnc.ac.jp/kyotsu/kakomondai/r8/r8_tuisaishiken_mondai.html
+- University Entrance Examination Center, R8 problem-making policy:  
+  https://www.dnc.ac.jp/news/albums/abm.php?d=355&f=abm00004500.pdf
 
-For the detailed internal item-writing interpretation, see `docs/ITEM_WRITING_DIRECTION_2026.md`.
-
-When a new examination year is adopted as the baseline, add a new version rather than silently editing historical assumptions.
+For detailed internal interpretation, see `docs/ITEM_WRITING_DIRECTION_2026.md`.

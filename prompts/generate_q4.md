@@ -1,46 +1,87 @@
-# TABITO 共通テスト中国語 Q4 生成タスク v0.2.1
+# TABITO 共通テスト中国語 Q4 生成タスク v0.3
 
 旅人教育の内部教研用に、共通テスト中国語 第4問の**原创候補問題**を作成する。
-これは「中国語の読解問題を6問作る」タスクではない。下記 Blueprint / Q4 Template / 2026 Item-Writing Direction / Item Spec に従い、
-**一つの現実的な状況が進行し、その中で複数形式の資料を読み、情報を整理・比較・統合して判断する問題群**を作ること。
 
-## ソース優先順位 — 最重要
+このタスクの基準は、**2026本試験と2026追・再試験を同格のTier-1ブループリント**とする。2025以前は歴史的参考にすぎず、2026型の構造を上書きしてはならない。
 
-1. **2026 本試験と2026 追・再試験を同格の第一級ブループリントとする。**
-2. 両者に共通する特徴は2026型Q4の核、両者の差は許容される変化幅として扱う。
-3. **2025以前は歴史的参考に限定する。** 語彙・文法レベル、安定した測定能力、誤答肢、日本語設問表現の確認には使えるが、2026の構造を上書きしてはならない。
-4. 旧年度に多かった形式を「昔よく出たから」という理由で復活させない。
-5. 2026本試だけ、または追試だけを表面テンプレート化しない。
+重要なのは「資料を何種類置くか」ではなく、**一つの目的・課題が進行する中で、受験者が中国語で得た情報を理解・比較・整理し、後の局面で再利用・適用・統合すること**である。
 
-## 絶対条件
+## 命題原則
 
-1. 2026本試・追試の**共有する情報処理構造**を再現し、公式の文章・話題・人物・数値・資料順序をコピーしない。
-2. 2026本試の「ペット相談→資料→譲渡/ケース判断」や、2026追試の「自動運転研究→実証/交通計画→現地資料」のような固有シナリオを別テーマに置換しただけの問題は禁止。
-3. scope=full の場合、解答番号21〜36を**ちょうど1回ずつ**使い、16 answer slots を作る。
-4. A/Bの二段階を持たせる。Aは情報を受け取って理解・比較・調査する局面、Bは後続の実際的文脈で情報を利用して選択・計画・判断・統合する局面を中心にする。
-5. fullでは6〜12資料程度を目安にし、少なくとも4種類の資料形式を用いる。表・時刻表・グラフ・フローチャート等の構造化資料を必ず含める。
-6. 少なくとも3 tasks は2資料以上を本当に組み合わせないと解けないようにする。資料は飾りにしない。
-7. single_choice だけにしない。multi_select または multi_slot_choice を少なくとも2 tasks 含める。2026型では「二つ選べ」を有効に使ってよいが、形式だけを真似しない。
-8. 問題の流れは、単純理解 → 数値/条件比較 → 複数資料統合 → 後半の実際的適用へと**認知操作が深まる**ようにする。
-9. BはAの追加読解ではなく、情報の機能が変わる局面にする。予定、条件照合、人物/サービス選択、ルール適用、経路、手順、ケース判断、振り返り等を優先する。
-10. 数量資料は複雑な計算問題にしない。比較・増減・割合・大小関係・条件との組合せを中心にする。
-11. 正答（または正答集合）は一意。選択肢は文法的に自然で、誤答は明確な「読み違いの経路」を持つ。
-12. 中国語は自然な現代簡体字。日本の高校で中国語を学ぶ受験生を想定し、専門語・低頻度語は必要に応じて glosses に注を付ける。
-13. 日本語の設問文は大学入試として簡潔・自然にする。説明口調・AI口調は禁止。
-14. evidence は「資料ID」だけでは不足。locator に、該当発話・表セル・グラフ系列・条件等を人間が確認できる粒度で書く。
-15. JSON以外を出力しない。Markdown fence、前置き、後書きは禁止。
+1. 2026本試・追試の**共通点**だけを hard core として扱う。片方にしかない表面的特徴を必須化しない。
+2. 2026本試のペット相談・保護センター・譲渡・リスクフローを別テーマに置換しただけの問題は禁止。
+3. 2026追試の自動運転研究・SNS運行情報・交通略図・安全チラシを別テーマに置換しただけの問題も禁止。
+4. full Q4 は A/B の二部構成、解答番号21〜36を**ちょうど1回ずつ**使用する。
+5. AとBは同じ目的・活動の続きだが、情報の使い方を変える。Aは状況把握・調査・比較・整理を中心にし、Bは再文脈化・適用・計画・条件照合・ケース判断・振り返り等へ進める。
+6. **Bを必ず実務行動で終わらせる必要はない。** 2026追試のような反省・総合理解も正当な終盤形式である。
+7. 資料数・資料タイプ数を満たすために素材を増やさない。各資料にはシナリオ上の「読む理由」が必要である。
+8. full では A・B それぞれに少なくとも1つ、単純な一資料の語句一致では解けない統合的 task を置く。
+9. multi_select は2026両試験で重要だが、形式だけを真似しない。複数の記述を個別に検証させる必要があるときに使う。
+10. 数値資料は計算力ではなく中国語での情報処理を測る。比較・割合・増減・条件判断を中心にし、重い計算を要求しない。
+11. 中国語は自然な現代簡体字。専門語・低頻度語は必要に応じて glosses を付ける。HSK練習問題のような文法ドリル感を避ける。
+12. 日本語の設問文は大学入試として簡潔・自然にする。説明口調・AI口調は禁止。
+13. 正答または正答集合は一意。誤答肢は、部分一致・条件取り違え・範囲の読み違い・因果逆転・過剰推論など、現実的な誤読経路を持たせる。
+14. 統計・制度・組織名を使う場合、架空の数値を実在機関の公式データのように見せない。内部原创の synthetic data ならその前提で設計する。
+15. evidence は資料IDだけでなく locator に、該当発話・表セル・投稿・図の関係・条件等を人間が確認できる粒度で記す。
+16. JSON以外を出力しない。Markdown fence、前置き、後書きは禁止。
+
+## Difficulty
+
+`difficulty = official_like` の場合、16 answer slots 全体を均一な「中」にしない。2026本試・追試のように、直接理解・資料読解・比較・統合・適用が混在する**内部勾配**を作る。LLMの難度ラベルを実測難度とは扱わない。
+
+## 複合資料と dependency_mode
+
+各 task に `dependency_mode` を明示する。
+
+- `single_source`: 1資料だけで答えが確定する。
+- `within_compound`: 1つの複合資料、または同じ `bundle_id` の複数コンポーネントを組み合わせる。
+- `cross_source`: 別資料・別bundleを組み合わせないと答えが確定しない。
+- `scenario_plus_source`: それまでのシナリオ文脈と新しい資料を併用する。
+
+説明文＋図、交通略図＋現地メモ＋システム図など、複数オブジェクトで一つの資料単位を構成する場合は同じ `bundle_id` を付ける。
+
+## 使用可能な資料型
+
+text:
+- dialogue
+- notice
+- poster
+- short_explanatory_text
+- profile
+- checklist
+- memo
+- reflection
+- interview
+- instructions
+
+structured / visual:
+- table
+- timetable
+- chart (`bar`, `horizontal_bar`, `stacked_bar`, `line`)
+- flowchart
+- social_feed
+- schematic_map
+- annotated_diagram
+
+`social_feed` は複数投稿を時系列に持つ。`schematic_map` / `annotated_diagram` は node と edge で構成し、必要なら x/y を指定する。
 
 ## Blueprint
 
 {{ blueprint_yaml }}
 
+## 2026 Q4 Reference Patterns
+
+以下は本試・追試の**構造メタデータ**であり、内容をコピーするためのものではない。
+
+{{ reference_patterns_yaml }}
+
 ## Q4 Template
 
 {{ template_yaml }}
 
-## 2026 Item-Writing Direction
+## Detailed Item-Writing Direction
 
-{{ direction_md }}
+{{ item_writing_direction }}
 
 ## Item Spec
 
@@ -48,22 +89,32 @@
 
 ## JSON設計上の注意
 
-- schema_version: "0.2"
-- scope: full / mini
-- materials と tasks は subsection(A/B) と order を持つ。order は同じ subsection 内で重複させない。
-- material type は schema で定義された形式を使う。
+- `schema_version`: `"0.2"`
+- `scope`: `full` / `mini`
+- `difficulty`: `official_like` / `easy` / `medium` / `hard`
+- `workflow.blueprint_version`: `"R8-2026-main-tsui-v2"`
+- materials と tasks は subsection(A/B) と order を持つ。同じ subsection 内で order を重複させない。
+- 必要に応じて material に `bundle_id` を付ける。
 - task.response_mode:
-  - single_choice: answer_slots は1個
-  - multi_select: 同一選択肢群から複数正答。answer_slots は2〜3個
-  - multi_slot_choice: 複数の空所・ケース等を別々に解答。answer_slots は2〜3個
-- answer_slots の各要素:
-  - slot_id
-  - answer_number
-  - correct_option (1始まり)
+  - `single_choice`: answer_slots は1個
+  - `multi_select`: 同一選択肢群から複数正答。answer_slots は2〜3個
+  - `multi_slot_choice`: 複数空所・複数ケース等を別々に解答。answer_slots は2〜3個
 - fullの場合 answer_number は21〜36をちょうど一度ずつ使用。
-- operations は task ごとに1〜3個。
-- single_choice / multi_select では distractor_rationales_ja を用い、**正答以外の全選択肢番号**をキーにする。
-- multi_slot_choice では slot_distractor_rationales_ja を用い、各 slot_id ごとに、その slot の正答以外の全選択肢番号の誤り理由を書く。
-- quality_notes.ambiguity_risk は原則 low。high の問題は納品しない。
+- operations は task ごとに1〜3個。`organize` / `plan` / `synthesize` も使用できる。
+- `dependency_mode` は全taskで明示する。
+- single_choice / multi_select では `distractor_rationales_ja` に正答以外の全選択肢の誤り理由を書く。
+- multi_slot_choice では `slot_distractor_rationales_ja` に各slotごとの誤答理由を書く。
+- `quality_notes.ambiguity_risk` は原則 low。high の問題は納品しない。
+- `quality_notes.source_integrity_note` に、資料が synthetic/original か、公的資料を参照した場合はその扱いを簡潔に書く。
 
-内部で十分に検討してから、最終JSONだけを返すこと。
+出力前に、次を内部確認すること：
+
+- A/Bが本当に一つの活動としてつながっているか
+- 2026本試または追試の出来事の並びを換皮していないか
+- 2025以前の旧型が無意識に標準形として復活していないか
+- 各資料が少なくとも一つの設問またはシナリオ進行に必要か
+- A/Bそれぞれに統合的な情報処理があるか
+- 後半が「同じ読解の続き」だけになっていないか
+- 正答集合に曖昧さがないか
+
+最終JSONだけを返すこと。
