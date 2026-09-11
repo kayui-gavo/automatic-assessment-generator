@@ -1,8 +1,11 @@
 exam:
   name: 共通テスト 中国語
+  reference_year: 2026
+  reference_label: R8
+  blueprint_version: R8-2026-v1
   duration_minutes: 80
   total_score: 200
-  answer_count_reference: 50
+  answer_numbers: [1, 50]
 
 sections:
   Q1:
@@ -17,28 +20,39 @@ sections:
   Q4:
     construct: integrated_materials_reading
     score: 60
+    answer_numbers: [21, 36]
+    functional_phases:
+      A: receive_understand_compare
+      B: apply_select_decide
   Q5:
     construct: long_reading
     score: 60
 
 general_style:
   target_population: Japanese high-school learners of Chinese
+  communication_oriented: true
+  instructions_language: Japanese
+  stimulus_language: Simplified Chinese
   avoid_hsk_drill_feel: true
   avoid_obscure_grammar: true
   prefer_realistic_communication_contexts: true
   require_unique_answer: true
-  instructions_language: Japanese
-  stimulus_language: Simplified Chinese
+  gloss_rare_or_domain_specific_words: true
 
 originality:
   copy_official_wording: false
   direct_scenario_reskinning: false
-  principle: "Reproduce constructs and information-processing patterns, not official wording or scenarios."
+  copy_official_material_sequence: false
+  principle: "Reproduce constructs and information-processing patterns, not official wording, topic, or distinctive scenario architecture."
 
 workflow:
   generation_mode: manual_chat
-  required_states:
-    - draft
-    - reviewed
-    - approved
+  required_states: [draft, reviewed, approved]
+  blind_independent_review_required: true
   human_approval_required: true
+
+sources:
+  - name: R8 main examination, Chinese
+    url: https://www.dnc.ac.jp/kyotsu/kakomondai/r8/r8_honshiken_mondai.html
+  - name: R6 Chinese item-writing committee self-evaluation
+    url: https://www.dnc.ac.jp/albums/abm.php?d=677&f=abm00004608.pdf&n=R6%E6%9C%AC%E8%A9%A6%E9%A8%93_%E4%B8%AD%E5%9B%BD%E8%AA%9E_%E8%87%AA%E5%B7%B1%E8%A9%95%E4%BE%A1.pdf
