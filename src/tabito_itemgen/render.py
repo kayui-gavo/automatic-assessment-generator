@@ -13,6 +13,15 @@ from .models import (
     TableMaterial,
     TextMaterial,
 )
+from .presentation import (
+    owner_task_for_order,
+    question_number,
+    subsection_intro,
+    subquestion_index,
+    task_groups,
+    tasks_for_subsection,
+    timeline,
+)
 
 
 def latex_escape(text: str) -> str:
@@ -32,8 +41,8 @@ def latex_escape(text: str) -> str:
 
 
 def _answer_boxes(task) -> str:
-    return r" \;・\; ".join(
-        rf"\fbox{{\rule{{0pt}}{{1.55em}}\hspace{{0.45em}}{slot.answer_number}\hspace{{0.45em}}}}"
+    return r" \quad ".join(
+        rf"\fbox{{\rule{{0pt}}{{1.45em}}\hspace{{0.42em}}{slot.answer_number}\hspace{{0.42em}}}}"
         for slot in task.answer_slots
     )
 
@@ -41,7 +50,7 @@ def _answer_boxes(task) -> str:
 def _material_title(material) -> str:
     if not material.title:
         return ""
-    return rf"\textbf{{{latex_escape(material.title)}}}\par\medskip "
+    return rf"\textbf{{{latex_escape(material.title)}}}\par\smallskip "
 
 
 def _text_material(material: TextMaterial) -> str:
@@ -49,12 +58,12 @@ def _text_material(material: TextMaterial) -> str:
     glosses = ""
     if material.glosses:
         glosses = (r"\\" + "\n") + r"\quad ".join(
-            rf"\footnotesize *{latex_escape(word)}：{latex_escape(note)}"
+            rf"\scriptsize *{latex_escape(word)}：{latex_escape(note)}"
             for word, note in material.glosses.items()
         )
     return (
         "\\Needspace{6\\baselineskip}\n"
-        "\\begin{minipage}{0.94\\linewidth}\n"
+        "\\begin{minipage}{0.96\\linewidth}\n"
         + _material_title(material)
         + "{\\zhfont "
         + body
@@ -72,7 +81,7 @@ def _table_material(material: TableMaterial) -> str:
         " & ".join(latex_escape(cell) for cell in row) + r" \\ \hline"
         for row in material.rows
     )
-    notes = "\\\n".join(rf"\footnotesize {latex_escape(note)}" for note in material.footnotes)
+    notes = "\\\n".join(rf"\scriptsize {latex_escape(note)}" for note in material.footnotes)
     return (
         "\\Needspace{8\\baselineskip}\n"
         + _material_title(material)
@@ -91,7 +100,7 @@ def _table_material(material: TableMaterial) -> str:
 def _chart_material(material: ChartMaterial) -> str:
     plots: list[str] = []
     line_styles = ["solid,mark=*", "dashed,mark=square*", "dotted,mark=triangle*"]
-    fills = ["black!15", "black!35", "black!55", "black!75"]
+    fills = ["black!20", "black!42", "black!62", "black!78"]
     horizontal = material.chart_kind == "horizontal_bar"
 
     for index, series in enumerate(material.series):
@@ -118,7 +127,7 @@ def _chart_material(material: ChartMaterial) -> str:
     if horizontal:
         axis_style = (
             rf"xbar,symbolic y coords={{{symbols}}},ytick=data,xlabel={{{axis_label}}},"
-            "y tick label style={font=\\small}"
+            "y tick label style={font=\\small},grid=major"
         )
     else:
         bar_style = (
@@ -128,16 +137,16 @@ def _chart_material(material: ChartMaterial) -> str:
         )
         axis_style = (
             rf"{bar_style}symbolic x coords={{{symbols}}},xtick=data,"
-            rf"x tick label style={{rotate=30,anchor=east}},ylabel={{{axis_label}}}"
+            rf"x tick label style={{rotate=25,anchor=east,font=\\small}},ylabel={{{axis_label}}},grid=major"
         )
 
-    notes = "\\\n".join(rf"\footnotesize {latex_escape(note)}" for note in material.footnotes)
+    notes = "\\\n".join(rf"\scriptsize {latex_escape(note)}" for note in material.footnotes)
     return (
         "\\Needspace{12\\baselineskip}\n"
         + _material_title(material)
         + "\\begin{center}\n"
         + "\\begin{tikzpicture}\n"
-        + rf"\begin{{axis}}[width=0.9\linewidth,height=6cm,{axis_style},legend style={{at={{(0.5,-0.28)}},anchor=north,legend columns=-1}}]"
+        + rf"\begin{{axis}}[width=0.9\linewidth,height=5.8cm,{axis_style},axis line style={{black!55}},grid style={{black!10}},legend style={{at={{(0.5,-0.25)}},anchor=north,legend columns=-1,draw=none}}]"
         + "\n"
         + "\n".join(plots)
         + "\n\\end{axis}\n\\end{tikzpicture}\n"
@@ -172,7 +181,7 @@ def _flowchart_material(material: FlowchartMaterial) -> str:
             rf"\draw[->,>=stealth] ({latex_escape(edge.source)}) --{label} ({latex_escape(edge.target)});"
         )
 
-    notes = "\\\n".join(rf"\footnotesize {latex_escape(note)}" for note in material.footnotes)
+    notes = "\\\n".join(rf"\scriptsize {latex_escape(note)}" for note in material.footnotes)
     return (
         "\\Needspace{12\\baselineskip}\n"
         + _material_title(material)
@@ -194,21 +203,21 @@ def _social_feed_material(material: SocialFeedMaterial) -> str:
         meta = " / ".join(latex_escape(part) for part in meta_parts)
         body = latex_escape(post.body).replace("\n", r"\\" + "\n")
         blocks.append(
-            "\\noindent\\fbox{\\begin{minipage}{0.91\\linewidth}\n"
+            "\\noindent\\fbox{\\begin{minipage}{0.92\\linewidth}\n"
             + (rf"\textbf{{{meta}}}\par " if meta else "")
             + "{\\zhfont "
             + body
             + "}\n"
-            + "\\end{minipage}}\\par\\vspace{0.35em}\n"
+            + "\\end{minipage}}\\par\\vspace{0.3em}\n"
         )
 
     glosses = ""
     if material.glosses:
         glosses = r"\quad ".join(
-            rf"\footnotesize *{latex_escape(word)}：{latex_escape(note)}"
+            rf"\scriptsize *{latex_escape(word)}：{latex_escape(note)}"
             for word, note in material.glosses.items()
         ) + "\n"
-    notes = "\\\n".join(rf"\footnotesize {latex_escape(note)}" for note in material.footnotes)
+    notes = "\\\n".join(rf"\scriptsize {latex_escape(note)}" for note in material.footnotes)
     return (
         "\\Needspace{10\\baselineskip}\n"
         + _material_title(material)
@@ -247,8 +256,8 @@ def _schematic_material(material: SchematicMaterial) -> str:
             rf"\draw[{arrow}{dash}] ({latex_escape(edge.source)}) --{label} ({latex_escape(edge.target)});"
         )
 
-    annotations = "\\\n".join(rf"\footnotesize {latex_escape(note)}" for note in material.annotations)
-    footnotes = "\\\n".join(rf"\footnotesize {latex_escape(note)}" for note in material.footnotes)
+    annotations = "\\\n".join(rf"\scriptsize {latex_escape(note)}" for note in material.annotations)
+    footnotes = "\\\n".join(rf"\scriptsize {latex_escape(note)}" for note in material.footnotes)
     return (
         "\\Needspace{12\\baselineskip}\n"
         + _material_title(material)
@@ -298,17 +307,10 @@ def _task_block(task, teacher: bool) -> str:
         rf"\noindent\optnum{{{index + 1}}}\quad {latex_escape(option)}\par"
         for index, option in enumerate(task.options)
     ]
-    boxes = _answer_boxes(task)
-    answer_line = (
-        r"\par\hfill " + boxes + r"\par"
-        if len(task.answer_slots) >= 3
-        else (r" \hfill " + boxes + r"\par")
-    )
     block = (
-        "\\Needspace{10\\baselineskip}\n\\vspace{0.9em}\n"
-        + rf"\noindent\textbf{{{latex_escape(task.task_id)}}}\quad {latex_escape(task.prompt_ja)}"
-        + answer_line
-        + "\n\\vspace{0.45em}\n"
+        "\\Needspace{8\\baselineskip}\n"
+        + rf"\noindent {latex_escape(task.prompt_ja)}\hfill {_answer_boxes(task)}\par"
+        + "\\vspace{0.35em}\n"
         + "\n".join(labels)
         + "\n"
     )
@@ -324,7 +326,7 @@ def _task_block(task, teacher: bool) -> str:
         distractors = _teacher_distractors(task)
         block += (
             "\\begin{quote}\\small\n"
-            + rf"\textbf{{正答}} {latex_escape(answers)}\par "
+            + rf"\textbf{{{latex_escape(task.task_id)} / 正答}} {latex_escape(answers)}\par "
             + rf"\textbf{{情報依存}} {latex_escape(dependency)}\par "
             + rf"\textbf{{根拠}} {latex_escape(evidence)}\par "
             + rf"\textbf{{解説}} {latex_escape(task.rationale_ja)}\par "
@@ -334,45 +336,72 @@ def _task_block(task, teacher: bool) -> str:
     return block
 
 
+def _font_setup() -> str:
+    return r"""
+\IfFontExistsTF{TeX Gyre Termes}{\setmainfont{TeX Gyre Termes}}{\setmainfont{Times New Roman}}
+\IfFontExistsTF{Noto Serif CJK JP}
+  {\setCJKmainfont{Noto Serif CJK JP}}
+  {\IfFontExistsTF{Hiragino Mincho ProN}{\setCJKmainfont{Hiragino Mincho ProN}}{\setCJKmainfont{Songti SC}}}
+\IfFontExistsTF{Noto Serif CJK SC}
+  {\newCJKfontfamily\zhfont{Noto Serif CJK SC}}
+  {\IfFontExistsTF{Songti SC}{\newCJKfontfamily\zhfont{Songti SC}}{\newCJKfontfamily\zhfont{STSong}}}
+"""
+
+
 def render_item_tex(item: Item, out_dir: Path, teacher: bool = False) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     tex = r"""\documentclass[11pt,a4paper]{article}
-\usepackage[margin=18mm]{geometry}
+\usepackage[margin=18mm,top=16mm,bottom=18mm]{geometry}
 \usepackage{fontspec}
 \usepackage{xeCJK}
 \usepackage{array,tabularx}
 \usepackage{needspace}
 \usepackage{tikz}
 \usepackage{pgfplots}
+\usepackage{xcolor}
 \pgfplotsset{compat=1.18}
-\setmainfont{Liberation Serif}
-\setCJKmainfont{Noto Serif CJK JP}
-\newCJKfontfamily\zhfont{Noto Serif CJK SC}
+"""
+    tex += _font_setup()
+    tex += r"""
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0pt}
+\setlength{\fboxsep}{3pt}
 \newcommand{\optnum}[1]{\raisebox{0.1ex}{\textcircled{\scriptsize #1}}}
 \pagestyle{plain}
 \begin{document}
 """
     edition = "【教師用】" if teacher else ""
-    tex += rf"\noindent\textbf{{中国語}}\hfill {edition}\par\vspace{{0.8em}}" + "\n"
+    tex += rf"\noindent\textbf{{中国語}}\hfill {edition}\par\vspace{{0.55em}}" + "\n"
     tex += rf"\noindent{{\Large\textbf{{第4問}}}}\quad 次の問い（A・B）に答えよ。（配点 60）\par" + "\n"
-    tex += (
-        rf"\vspace{{0.5em}}\noindent\textbf{{旅人教育 オリジナル模試}}\quad {latex_escape(item.title_ja)}\par"
-        + "\n"
-    )
+    tex += "\\vspace{0.35em}\\hrule\\vspace{0.85em}\n"
 
     for subsection in ("A", "B"):
-        tex += rf"\vspace{{1.2em}}\noindent{{\large\textbf{{{subsection}}}}}\par\vspace{{0.5em}}" + "\n"
-        blocks: list[tuple[int, str]] = []
-        for material in item.materials:
-            if material.subsection == subsection:
-                blocks.append((material.order, _material_block(material)))
-        for task in item.tasks:
-            if task.subsection == subsection:
-                blocks.append((task.order, _task_block(task, teacher)))
-        for _, block in sorted(blocks, key=lambda pair: pair[0]):
-            tex += block + "\n"
+        tasks = tasks_for_subsection(item, subsection)
+        if not tasks:
+            continue
+        groups = task_groups(item, subsection)
+        introduced: set[str] = set()
+        current_qno: int | None = None
+
+        tex += rf"\Needspace{{8\baselineskip}}\noindent{{\large\textbf{{{subsection}}}}}\quad {latex_escape(subsection_intro(item, subsection))}\par\vspace{{0.65em}}" + "\n"
+
+        for order, kind, block in timeline(item, subsection):
+            owner = block if kind == "task" else owner_task_for_order(tasks, order)
+            qno = question_number(item.surface_family, subsection, owner)
+            if qno != current_qno:
+                tex += rf"\Needspace{{6\baselineskip}}\vspace{{0.55em}}\noindent\textbf{{問 {qno}}}\par\vspace{{0.25em}}" + "\n"
+                current_qno = qno
+
+            if owner.task_id not in introduced:
+                sub_index = subquestion_index(item, owner)
+                if sub_index is not None:
+                    tex += rf"\noindent\textbf{{（{sub_index}）}}\par\vspace{{0.15em}}" + "\n"
+                introduced.add(owner.task_id)
+
+            if kind == "material":
+                tex += _material_block(block) + "\n"
+            else:
+                tex += _task_block(block, teacher) + "\n"
 
     tex += "\\end{document}\n"
     suffix = "teacher" if teacher else "student"

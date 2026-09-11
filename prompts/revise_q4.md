@@ -1,4 +1,4 @@
-# TABITO 共通テスト中国語 Q4 修訂タスク v0.4
+# TABITO 共通テスト中国語 Q4 修訂タスク v0.4.1
 
 候補問題とブラインド独立審査結果を照合し、必要箇所を修訂する。
 
@@ -10,6 +10,12 @@
 - `makeup_2026`：追試型
 
 修訂のために一般的な「多資料読解」に戻してはならない。
+
+### 冊子導入
+- `subsection_intros_ja.A/B` を維持または改善する。
+- 誰が何の目的で資料を読むかを自然に示す。
+- 答え・結論・資料の読み方を先に説明しすぎない。
+- BはAの言換えだけにせず、情報の用途や場面の変化を示す。
 
 ### 共通A 21〜28
 - 21・22：中国語会話文 + 二つ選べ
@@ -28,7 +34,7 @@
 
 ## 修訂原則
 
-- `item_id` / `schema_version` / `scope` / answer_number は維持する。
+- `item_id` / `schema_version` / `scope` / `surface_family` / answer_number は維持する。
 - `workflow.blueprint_version` は `R8-2026-main-tsui-v3`。
 - high issue は必ず解消する。
 - reviewer とkeyが不一致なら、keyだけ変更せず資料・設問・選択肢の曖昧さを直す。
