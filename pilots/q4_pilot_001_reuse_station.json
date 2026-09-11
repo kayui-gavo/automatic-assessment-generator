@@ -1,0 +1,460 @@
+{
+  "schema_version": "0.2",
+  "item_id": "TABITO-CN-Q4-PILOT-001",
+  "section": "Q4",
+  "scope": "full",
+  "title_ja": "学校リユースステーションの試行",
+  "topic": "校内リユース活動",
+  "scenario_summary_ja": "環境委員の生徒が校内で物品交換の試行を計画し、事前調査から当日の運営、終了後の改善案まで検討する。",
+  "difficulty": "official_like",
+  "materials": [
+    {
+      "type": "dialogue",
+      "material_id": "A-M1",
+      "subsection": "A",
+      "order": 1,
+      "title": "环境委员的讨论",
+      "body": "美咲：上次有人说家里有不用的文具和书，可是不知道学校到底需不需要。\n陈伟：我也听说有人觉得参加交换活动手续太麻烦。我们先做个调查吧。\n美咲：好。比起一下子收很多东西，我更希望大家觉得参加起来很方便。\n陈伟：那调查里除了想要什么，也问问大家为什么不愿意把闲置物品拿出来。",
+      "glosses": {
+        "闲置": "使わずに置いてある",
+        "手续": "手続き"
+      }
+    },
+    {
+      "type": "chart",
+      "material_id": "A-M2",
+      "subsection": "A",
+      "order": 3,
+      "bundle_id": "A-SURVEY",
+      "title": "不愿参加物品交换的原因",
+      "chart_kind": "horizontal_bar",
+      "categories": ["手续麻烦", "不知道学校需要什么", "担心不卫生", "没有时间"],
+      "series": [
+        {
+          "name": "人数",
+          "values": [42, 36, 28, 24]
+        }
+      ],
+      "y_label": "人",
+      "footnotes": []
+    },
+    {
+      "type": "memo",
+      "material_id": "A-M3",
+      "subsection": "A",
+      "order": 4,
+      "bundle_id": "A-SURVEY",
+      "title": "调查说明",
+      "body": "调查对象：回答“家里有还能使用但暂时不用的物品”的120名学生。\n回答方法：可以选择一个以上的原因。",
+      "glosses": {}
+    },
+    {
+      "type": "table",
+      "material_id": "A-M4",
+      "subsection": "A",
+      "order": 6,
+      "title": "希望得到的物品和可以提供的物品",
+      "columns": ["类别", "希望得到", "可以提供"],
+      "rows": [
+        ["文具", "48", "25"],
+        ["参考书", "35", "44"],
+        ["运动用品", "22", "18"],
+        ["小型生活用品", "30", "33"]
+      ],
+      "footnotes": ["同一名学生可以回答多个类别。"]
+    },
+    {
+      "type": "short_explanatory_text",
+      "material_id": "A-M5",
+      "subsection": "A",
+      "order": 8,
+      "title": "试行方案草案",
+      "body": "试行期间只接收清洁、没有明显破损、拿到后可以马上使用的物品。为了让参加者容易判断，活动开始前会公布可以接收和不能接收的具体例子。募集数量有限时，优先宣传“希望得到”的人数明显多于“可以提供”的类别。食品、化妆品和需要插电或电池的设备不在本次范围内。",
+      "glosses": {
+        "破损": "破損",
+        "范围": "範囲"
+      }
+    },
+    {
+      "type": "instructions",
+      "material_id": "B-M1",
+      "subsection": "B",
+      "order": 1,
+      "title": "捐赠规则",
+      "body": "① 每人每天最多捐赠三件。\n② 只接收清洁、完整、可以马上使用的物品。\n③ 接收类别：书籍・文具、运动用品、小型生活用品。\n④ 食品、化妆品、带电池或需要插电的设备不接收。\n⑤ 成套物品按一件计算，但配件必须齐全。",
+      "glosses": {
+        "捐赠": "寄付する・提供する",
+        "齐全": "そろっている"
+      }
+    },
+    {
+      "type": "social_feed",
+      "material_id": "B-M2",
+      "subsection": "B",
+      "order": 2,
+      "title": "学校账号的通知",
+      "posts": [
+        {
+          "date_label": "周二 18:00",
+          "author": "リユース係",
+          "body": "周三A站（书籍・文具）按平时时间13:00—17:00接收。"
+        },
+        {
+          "date_label": "周三 14:20",
+          "author": "リユース係",
+          "body": "C站（小型生活用品）因教室调整，今天15:30结束接收。"
+        },
+        {
+          "date_label": "周三 15:00",
+          "author": "リユース係",
+          "body": "B站（运动用品）今天接收到17:00，但16:00—16:30志愿者交接，暂停登记。"
+        },
+        {
+          "date_label": "周三 17:30",
+          "author": "リユース係",
+          "body": "周四三个站都恢复13:00—17:00的通常时间。"
+        }
+      ],
+      "glosses": {
+        "交接": "引き継ぎ",
+        "暂停": "一時停止する"
+      },
+      "footnotes": []
+    },
+    {
+      "type": "annotated_diagram",
+      "material_id": "B-M3",
+      "subsection": "B",
+      "order": 4,
+      "title": "三个接收站",
+      "nodes": [
+        {"node_id": "A", "label": "A站", "x": 0, "y": 0, "note": "书籍・文具／正门旁"},
+        {"node_id": "B", "label": "B站", "x": 5, "y": 0, "note": "运动用品／体育馆入口"},
+        {"node_id": "C", "label": "C站", "x": 10, "y": 0, "note": "小型生活用品／家政楼1层"}
+      ],
+      "edges": [],
+      "annotations": ["不同类别的物品要到对应的接收站登记。"],
+      "footnotes": []
+    },
+    {
+      "type": "profile",
+      "material_id": "B-M4",
+      "subsection": "B",
+      "order": 5,
+      "title": "三名学生准备带来的物品",
+      "body": "林：一盒彩色铅笔，未使用，包装完整。\n王：一个小型收纳盒，用过几次，已经洗干净，没有破损。\n赵：一盏插电式台灯，能正常使用，外观也很干净。",
+      "glosses": {
+        "收纳盒": "収納ボックス",
+        "台灯": "卓上ライト"
+      }
+    },
+    {
+      "type": "reflection",
+      "material_id": "B-M5",
+      "subsection": "B",
+      "order": 8,
+      "title": "试行结束后的记录",
+      "body": "试行结束后，美咲写道：‘文具很快就被换走了，后来还有人说想参加，可是没有合适的文具可换。小型生活用品到最后还剩下一些。每天问得最多的是“这个东西到底能不能捐”。我们把可以和不可以的具体例子贴出来以后，这类问题明显少了。临时停收的时候，提前看学校账号的同学也很少白跑一趟。下次我想把“募集什么”和“怎么参加”说明得更清楚，不一定要增加更多类别。’",
+      "glosses": {
+        "白跑一趟": "無駄足になる"
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "A1",
+      "subsection": "A",
+      "order": 2,
+      "prompt_ja": "会話の内容と一致するものを二つ選べ。",
+      "options": [
+        "他们想先了解学生为什么不参加物品交换。",
+        "他们已经决定只接收参考书。",
+        "美咲认为收到的物品越多越好。",
+        "他们希望让学生觉得参加起来更方便。",
+        "问卷只调查以前参加过交换活动的人。",
+        "他们打算取消这次试行活动。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "S21", "answer_number": 21, "correct_option": 1},
+        {"slot_id": "S22", "answer_number": 22, "correct_option": 4}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["extract", "organize"],
+      "dependency_mode": "single_source",
+      "evidence": [
+        {"material_id": "A-M1", "locator": "陈伟第1・2発話、美咲第2発話", "explanation_ja": "参加しない理由を調べ、参加しやすさを重視すると述べている。"}
+      ],
+      "rationale_ja": "会話で明示された調査目的と美咲の考えを確認する。",
+      "distractor_rationales_ja": {
+        "2": "参考書だけに限定するとは述べていない。",
+        "3": "美咲は量より参加しやすさを重視している。",
+        "5": "過去の参加者だけを対象にするとは述べていない。",
+        "6": "試行を中止する話はない。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "A2",
+      "subsection": "A",
+      "order": 5,
+      "prompt_ja": "調査結果について正しいものを二つ選べ。",
+      "options": [
+        "‘手续麻烦’を選んだ人数が最も多い。",
+        "‘没有时间’を選んだ人数は‘担心不卫生’より多い。",
+        "回答者は一人につき一つの理由しか選べない。",
+        "調査には、家に使っていない物がない生徒も含まれている。",
+        "‘不知道学校需要什么’は‘担心不卫生’より8人多い。",
+        "この図だけから全校生徒の参加率が分かる。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "S23", "answer_number": 23, "correct_option": 1},
+        {"slot_id": "S24", "answer_number": 24, "correct_option": 5}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["compare", "integrate"],
+      "dependency_mode": "within_compound",
+      "evidence": [
+        {"material_id": "A-M2", "locator": "4本の棒の値", "explanation_ja": "42が最大で、36と28の差は8である。"},
+        {"material_id": "A-M3", "locator": "調査対象・回答方法", "explanation_ja": "対象は闲置物品を持つ120人で、複数回答可である。"}
+      ],
+      "rationale_ja": "グラフの数値と調査条件を合わせて各記述を検証する。",
+      "distractor_rationales_ja": {
+        "2": "24人は28人より少ない。",
+        "3": "複数回答が認められている。",
+        "4": "調査対象は使用可能な闲置物品があると答えた生徒に限られる。",
+        "6": "全校生徒を母集団とする参加率は示されていない。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "A3",
+      "subsection": "A",
+      "order": 7,
+      "prompt_ja": "「希望得到」の人数が「可以提供」の人数を最も大きく上回る品目を選べ。",
+      "options": ["文具", "参考书", "运动用品", "小型生活用品"],
+      "response_mode": "single_choice",
+      "answer_slots": [
+        {"slot_id": "S25", "answer_number": 25, "correct_option": 1}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["compare"],
+      "dependency_mode": "single_source",
+      "evidence": [
+        {"material_id": "A-M4", "locator": "各行の希望得到−可以提供", "explanation_ja": "文具は48−25=23で差が最大である。"}
+      ],
+      "rationale_ja": "各カテゴリーの希望数と提供可能数の差を比較する。",
+      "distractor_rationales_ja": {
+        "2": "参考书は提供可能数の方が9多い。",
+        "3": "差は4である。",
+        "4": "提供可能数の方が3多い。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "A4",
+      "subsection": "A",
+      "order": 9,
+      "prompt_ja": "試行前の準備として、資料全体からみて適当なものを二つ選べ。",
+      "options": [
+        "参考书の提供を最優先で増やす。",
+        "文具の提供を重点的に呼びかける。",
+        "希望人数の少ない运动用品は最初から受け付けない。",
+        "使用可能なら、汚れていても受け付ける。",
+        "受け付けられる物と受け付けられない物の具体例を事前に示す。",
+        "品数を増やすため、電気製品も受け付ける。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "S26", "answer_number": 26, "correct_option": 2},
+        {"slot_id": "S27", "answer_number": 27, "correct_option": 5}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["integrate", "evaluate"],
+      "dependency_mode": "cross_source",
+      "evidence": [
+        {"material_id": "A-M1", "locator": "美咲・陈伟の発話", "explanation_ja": "何が必要か分からないという声を把握している。"},
+        {"material_id": "A-M4", "locator": "文具の行", "explanation_ja": "文具は希望48に対し提供可能25で不足が大きい。"},
+        {"material_id": "A-M5", "locator": "具体例の公開・重点募集・対象外品", "explanation_ja": "判断例の公開と不足カテゴリーの重点募集が方針に合う。"}
+      ],
+      "rationale_ja": "需要と供給の差、および参加しやすくするための説明方針を合わせて判断する。",
+      "distractor_rationales_ja": {
+        "1": "参考书は提供可能数が希望数を上回る。",
+        "3": "希望が相対的に少ないことだけを理由に対象外とする方針ではない。",
+        "4": "清潔であることが受入条件である。",
+        "6": "電気製品は本試行の対象外である。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B1",
+      "subsection": "B",
+      "order": 3,
+      "prompt_ja": "学校账号の通知の内容と一致するものを二つ選べ。",
+      "options": [
+        "周三15:40，小型生活用品可以在C站登记。",
+        "周三16:10，运动用品不能马上在B站登记。",
+        "周三A站一整天都停止接收。",
+        "周四三个站都在13:00—17:00接收。",
+        "周三16:30以后，B站仍然暂停登记。",
+        "周三17:00以后，C站会重新开始接收。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "S28", "answer_number": 28, "correct_option": 2},
+        {"slot_id": "S29", "answer_number": 29, "correct_option": 4}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["extract", "sequence"],
+      "dependency_mode": "single_source",
+      "evidence": [
+        {"material_id": "B-M2", "locator": "周三15:00・17:30の投稿", "explanation_ja": "B站は16:00—16:30停止、木曜は3站とも通常時間に戻る。"}
+      ],
+      "rationale_ja": "時刻と各受付の臨時変更を正確に照合する。",
+      "distractor_rationales_ja": {
+        "1": "C站は周三15:30で終了する。",
+        "3": "A站は13:00—17:00通常通りである。",
+        "5": "B站の停止は16:30までである。",
+        "6": "C站が同日再開するとは書かれていない。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B2",
+      "subsection": "B",
+      "order": 6,
+      "prompt_ja": "三人の物品について、持ち込む先として最も適当なものをそれぞれ選べ。",
+      "options": ["A站", "B站", "C站", "本次不能接收"],
+      "response_mode": "multi_slot_choice",
+      "answer_slots": [
+        {"slot_id": "S30", "answer_number": 30, "correct_option": 1},
+        {"slot_id": "S31", "answer_number": 31, "correct_option": 3},
+        {"slot_id": "S32", "answer_number": 32, "correct_option": 4}
+      ],
+      "option_reuse": "allowed",
+      "operations": ["condition_match", "integrate"],
+      "dependency_mode": "cross_source",
+      "evidence": [
+        {"material_id": "B-M1", "locator": "②③④", "explanation_ja": "受入条件と対象外品を確認する。"},
+        {"material_id": "B-M3", "locator": "A/B/C各站の担当カテゴリー", "explanation_ja": "受入可能なカテゴリーの受付先を確認する。"},
+        {"material_id": "B-M4", "locator": "林・王・赵の各物品", "explanation_ja": "状態と品目を規則に照合する。"}
+      ],
+      "rationale_ja": "物品の状態とカテゴリーを受入規則・受付区分に照合する。",
+      "distractor_rationales_ja": {},
+      "slot_distractor_rationales_ja": {
+        "S30": {
+          "2": "文具はB站の対象ではない。",
+          "3": "文具はC站の対象ではない。",
+          "4": "未使用で完全な文具は受入可能である。"
+        },
+        "S31": {
+          "1": "小型生活用品はA站の対象ではない。",
+          "2": "小型生活用品はB站の対象ではない。",
+          "4": "清潔で破損のない収纳盒は受入可能である。"
+        },
+        "S32": {
+          "1": "台灯は文具ではなく、さらに插電設備は対象外である。",
+          "2": "台灯は运动用品ではなく、插電設備は対象外である。",
+          "3": "小型生活用品に見えても、插電設備は明示的に対象外である。"
+        }
+      }
+    },
+    {
+      "task_id": "B3",
+      "subsection": "B",
+      "order": 7,
+      "prompt_ja": "周三16:10、小林が清潔で破損のない羽毛球拍を持ってきた。最も適当な対応を選べ。",
+      "options": [
+        "A站へ持って行く。",
+        "B站ですぐに登记する。",
+        "16:30まで待ってからB站で登记する。",
+        "C站へ持って行く。"
+      ],
+      "response_mode": "single_choice",
+      "answer_slots": [
+        {"slot_id": "S33", "answer_number": 33, "correct_option": 3}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["condition_match", "plan"],
+      "dependency_mode": "cross_source",
+      "evidence": [
+        {"material_id": "B-M1", "locator": "②③", "explanation_ja": "清潔で使用可能な运动用品は受入可能。"},
+        {"material_id": "B-M2", "locator": "周三15:00の投稿", "explanation_ja": "B站は16:00—16:30登记停止。"},
+        {"material_id": "B-M3", "locator": "B站", "explanation_ja": "运动用品の受付先はB站。"}
+      ],
+      "rationale_ja": "物品自体は受入可能だが、該当受付が一時停止中なので16:30まで待つ。",
+      "distractor_rationales_ja": {
+        "1": "A站は书籍・文具の受付である。",
+        "2": "16:10はB站の暂停登记時間内である。",
+        "4": "C站は小型生活用品の受付である。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B4",
+      "subsection": "B",
+      "order": 9,
+      "prompt_ja": "次の①〜③の課題に対応する改善案を、それぞれ選べ。①文具不足　②受入可否への質問　③臨時停止時の無駄足",
+      "options": [
+        "试行前重点募集文具。",
+        "增加可以接收的电器种类。",
+        "公布可以接收和不能接收的具体例子。",
+        "临时停收时只在现场张贴通知。",
+        "提醒参加者查看学校账号的最新通知。",
+        "减少所有关于活动的说明。"
+      ],
+      "response_mode": "multi_slot_choice",
+      "answer_slots": [
+        {"slot_id": "S34", "answer_number": 34, "correct_option": 1},
+        {"slot_id": "S35", "answer_number": 35, "correct_option": 3},
+        {"slot_id": "S36", "answer_number": 36, "correct_option": 5}
+      ],
+      "option_reuse": "forbidden",
+      "operations": ["synthesize", "evaluate", "plan"],
+      "dependency_mode": "cross_source",
+      "evidence": [
+        {"material_id": "A-M4", "locator": "文具の行", "explanation_ja": "文具は需要に対して提供が不足している。"},
+        {"material_id": "B-M2", "locator": "臨時変更の投稿", "explanation_ja": "学校账号で時間変更を知らせている。"},
+        {"material_id": "B-M5", "locator": "文具不足・具体例・学校账号に関する振り返り", "explanation_ja": "三つの課題と有効だった対応が明示されている。"}
+      ],
+      "rationale_ja": "事前調査と試行後の振り返りを結び付け、各課題に直接対応する改善案を選ぶ。",
+      "distractor_rationales_ja": {},
+      "slot_distractor_rationales_ja": {
+        "S34": {
+          "2": "文具不足の解決にならず、電器は対象外である。",
+          "3": "受入可否の質問への対策であり、文具不足への直接対応ではない。",
+          "4": "臨時停止の伝達方法であり、文具不足とは関係しない。",
+          "5": "臨時情報の確認には有効だが、文具不足への対策ではない。",
+          "6": "情報を減らすことは不足解消につながらない。"
+        },
+        "S35": {
+          "1": "文具不足への対策であり、受入可否の質問への直接対応ではない。",
+          "2": "対象品を増やすことは質問を減らす根拠がない。",
+          "4": "現場だけの掲示では受入可否の事前理解を助けない。",
+          "5": "臨時情報には有効だが、品目判断の疑問には直接対応しない。",
+          "6": "説明を減らすと判断がさらに難しくなる。"
+        },
+        "S36": {
+          "1": "文具不足への対策である。",
+          "2": "臨時停止の無駄足を防ぐ方法ではない。",
+          "3": "品目判断には有効だが、受付時間変更の確認には直接対応しない。",
+          "4": "現場だけの掲示では来校前に停止を知ることができない。",
+          "6": "情報を減らすと臨時変更を知りにくくなる。"
+        }
+      }
+    }
+  ],
+  "quality_notes": {
+    "ambiguity_risk": "low",
+    "originality_note": "2026本試のペット・譲渡・フロー、追試の自動運転・交通計画とは異なる情報経路を採用し、校内リユース活動の調査→試行→改善を一つの目的で接続した。",
+    "language_note": "中国語は学校活動で自然に使える現代簡体字を中心とし、低頻度語には注を付した。",
+    "difficulty_note": "前半に直接理解と数値比較、後半に規則・臨時情報・カテゴリーの統合、最後に調査と振り返りの統合を置いた。",
+    "source_integrity_note": "全資料・数値・団体・運用条件は本パイロット用の原创 synthetic material。"
+  },
+  "workflow": {
+    "state": "draft",
+    "generation_mode": "manual_chat",
+    "blueprint_version": "R8-2026-main-tsui-v2"
+  }
+}
