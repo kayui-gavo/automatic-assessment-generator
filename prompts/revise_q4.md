@@ -1,4 +1,4 @@
-# TABITO 共通テスト中国語 Q4 修訂タスク v0.3
+# TABITO 共通テスト中国語 Q4 修訂タスク v0.3.1
 
 候補問題とブラインド独立審査結果を照合し、必要な箇所だけを修訂する。
 
@@ -19,6 +19,7 @@
 - `dependency_mode` が実際の evidence dependency と一致するよう修正する。
 - `bundle_id` は説明文＋図、地図＋メモ＋システム図など、本当に一つの複合資料を構成する場合だけ使う。
 - 2026本試・追試の surface reskin を避ける。レビュー修正の結果、公式問題の出来事の順序へ近づけない。
+- 下記 Generation Profile は逐問配列を意図的に除いている。修訂時に公式の設問順序を復元・模倣しない。
 - 架空統計を実在機関の公式データのように見せない。
 - JSONのみを返す。
 
@@ -26,9 +27,9 @@
 
 {{ blueprint_yaml }}
 
-## 2026 Q4 Reference Patterns
+## 2026 Q4 Generation Profile
 
-{{ reference_patterns_yaml }}
+{{ generation_profile_yaml }}
 
 ## Q4 Template
 
