@@ -54,13 +54,32 @@ def validate_item_file(path: Path) -> tuple[Item | None, list[str], list[str]]:
                 warnings.append(f"subsection {subsection} has only {subsection_slots} answer slots")
 
     for task in item.tasks:
-        distractor_keys = set(task.distractor_rationales_ja.keys())
-        expected = _expected_distractor_keys(task)
-        if distractor_keys != expected:
-            warnings.append(
-                f"{task.task_id}: distractor rationale keys {sorted(distractor_keys)} "
-                f"!= expected {sorted(expected)}"
-            )
+        if task.response_mode == "multi_slot_choice":
+            slot_ids = {slot.slot_id for slot in task.answer_slots}
+            rationale_slot_ids = set(task.slot_distractor_rationales_ja)
+            if rationale_slot_ids != slot_ids:
+                warnings.append(
+                    f"{task.task_id}: slot distractor rationale ids {sorted(rationale_slot_ids)} "
+                    f"!= expected {sorted(slot_ids)}"
+                )
+            for slot in task.answer_slots:
+                keys = set(task.slot_distractor_rationales_ja.get(slot.slot_id, {}))
+                expected = {
+                    str(i) for i in range(1, len(task.options) + 1) if i != slot.correct_option
+                }
+                if keys != expected:
+                    warnings.append(
+                        f"{task.task_id}/{slot.slot_id}: distractor rationale keys {sorted(keys)} "
+                        f"!= expected {sorted(expected)}"
+                    )
+        else:
+            distractor_keys = set(task.distractor_rationales_ja.keys())
+            expected = _expected_distractor_keys(task)
+            if distractor_keys != expected:
+                warnings.append(
+                    f"{task.task_id}: distractor rationale keys {sorted(distractor_keys)} "
+                    f"!= expected {sorted(expected)}"
+                )
         if any(not evidence.locator.strip() for evidence in task.evidence):
             errors.append(f"{task.task_id}: evidence locator must not be empty")
         if task.response_mode == "multi_select" and len(task.options) < 6:
