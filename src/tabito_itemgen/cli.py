@@ -21,6 +21,7 @@ def cmd_new_item(args: argparse.Namespace) -> int:
         domain=args.domain,
         scope=args.scope,
         notes=args.notes,
+        surface_family=args.family,
     )
     print(item_id)
     print(f"request: {request_path}")
@@ -188,10 +189,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--difficulty",
         choices=["official_like", "easy", "medium", "hard"],
         default="official_like",
-        help="official_like keeps a mixed difficulty gradient instead of flattening the whole Q4",
     )
     command.add_argument("--domain", default="auto")
     command.add_argument("--scope", choices=["full", "mini"], default="full")
+    command.add_argument(
+        "--family",
+        choices=["main_2026", "makeup_2026"],
+        default="main_2026",
+        help="2026 Q4 surface family to reproduce with original content",
+    )
     command.add_argument("--notes", default=None)
     command.set_defaults(func=cmd_new_item)
 
