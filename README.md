@@ -1,19 +1,25 @@
-# TABITO 共通テスト中国語 命題支援ツール
+# TABITO Common Test Chinese Item Generator
 
-旅人教育の内部教研用。**v0.1 は共通テスト中国語 第4問（複合資料読解）に限定**し、ChatGPT Plus を手動生成エンジンとして利用する。
+旅人教育の内部教研向けに、**共通テスト中国語の原创問題を短時間で作成・独立審査・題庫化・組版するための命題支援ツール**。
 
-このプロジェクトの目的は研究用の自動採点基盤を作ることではなく、教研担当者が高品質な原创問題を短時間で作り、审题し、题库化し、学生版・教师版へ整形できるようにすること。
+現在の v0.2 は第4問を優先している。API は不要で、ChatGPT Plus を manual LLM backend として使う。
 
-## v0.1 の設計方針
+## v0.2 で重要になったこと
 
-- API 不要。ChatGPT Plus との手動往復を前提にする。
-- 真题の文章や场景をコピーしない。再現するのは能力・资料结构・判断形式。
-- LLM に全部任せず、Blueprint / Template / JSON Schema を固定する。
-- 生成物は必ず draft から始め、人間が approve する。
-- Python は「正誤判断」ではなく、形式・構造・整合性チェックを担当する。
-- Q4 が安定してから Q1/Q2/Q3/Q5 を追加する。
+v0.1 は「2–4資料 + 6個の普通MCQ」という抽象化が強すぎ、実際の共通テストQ4を表現できなかった。v0.2 では 2026 本試を参照基準として、full Q4 を次のように扱う。
 
-## セットアップ
+- A / B の二段階
+- 解答番号 21–36 の16 answer slots
+- `single_choice` / `multi_select` / `multi_slot_choice`
+- dialogue / table / timetable / chart / profile / checklist / flowchart 等の構造化資料
+- 生成者の正答を見せない blind independent review
+- review answer と answer key の自動照合
+- approved bank との軽量類似度チェック
+- 表・グラフ・フローチャート対応 LaTeX renderer
+
+詳しい旧版の問題点は `docs/AUDIT_v0.1.md`、試験構造の基準は `docs/EXAM_SPEC_2026.md` を参照。
+
+## Setup
 
 ```bash
 python3 -m venv .venv
@@ -22,123 +28,119 @@ pip install -e ".[dev]"
 pytest
 ```
 
-## 最短ワークフロー
+## 最短の実務フロー
 
-### 1. 新規 Q4 の生成依頼を作る
+### 1. 生成依頼を作る
 
 ```bash
 tabito-itemgen new-item \
-  --topic "学校文化祭" \
+  --topic "地域イベント" \
   --difficulty medium \
-  --domain school_life
+  --domain daily_life \
+  --scope full
 ```
 
-`workspace/requests/` に以下ができる。
-
-- `*.spec.json`
-- `*.request.md`
-
-`request.md` を ChatGPT Plus にそのまま渡す。
-
-### 2. ChatGPT の JSON を保存する
-
-ChatGPT の返答を例えば：
-
-```text
-workspace/responses/TABITO-CN-Q4-xxxx.json
-```
-
-として保存。
-
-### 3. draft に取り込む
+必要なら自由メモも渡せる。
 
 ```bash
-tabito-itemgen import-response workspace/responses/TABITO-CN-Q4-xxxx.json
+tabito-itemgen new-item \
+  --topic "オープンキャンパス" \
+  --notes "大学案内の換皮ではなく、情報取得→比較→後続行動が自然につながる構成"
 ```
 
-### 4. 自動チェック
+`workspace/requests/*.request.md` を ChatGPT Plus にそのまま渡し、返答 JSON を保存する。
+
+### 2. draft に取り込んで検証
 
 ```bash
-tabito-itemgen validate item_bank/draft/TABITO-CN-Q4-xxxx.json
+tabito-itemgen import-response response.json
+tabito-itemgen validate item_bank/draft/TABITO-CN-Q4-....json
 ```
 
-現在は主に以下を检查する。
+full Q4 では特に以下を機械チェックする。
 
-- JSON / Pydantic schema
-- 资料 ID / 设问 ID の重複
-- correct_option の範囲
-- 选项重复
-- evidence が存在する资料を参照しているか
-- Q4 に複数资料統合問題が最低1問あるか
-- 正答位置の極端な偏り
-- cognitive operation の種類
+- answer number 21–36 がちょうど1回ずつあるか
+- A/B 両方が存在するか
+- cross-material task が最低3つあるか
+- structured/visual material があるか
+- evidence locator があるか
+- answer-position の極端な偏り
 - distractor rationale の不足
+- multi-slot task では各 answer slot ごとの誤答理由が揃っているか
 
-### 5. 独立审题 Prompt を作る
+### 3. ブラインド独立審査
 
 ```bash
-tabito-itemgen review-request item_bank/draft/TABITO-CN-Q4-xxxx.json
+tabito-itemgen review-request item_bank/draft/TABITO-CN-Q4-....json
 ```
 
-生成された `workspace/reviews/*.review_request.md` を**できれば別 Chat**に渡す。
+生成される review request からは、**正答・evidence・解説・生成者自己評価を自動的に除去**してある。できれば生成時とは別 Chat に渡す。
 
-返ってきた JSON を保存後：
+返ってきた review JSON を保存後：
 
 ```bash
 tabito-itemgen import-review review.json
+
+tabito-itemgen review-check \
+  --item item_bank/draft/TABITO-CN-Q4-....json \
+  --review workspace/reviews/TABITO-CN-Q4-....review.json
 ```
 
-### 6. 修订依頼を作る
+reviewer が独立に解いた答えと author key が食い違えば FAIL になる。
+
+### 4. 必要なら修訂
 
 ```bash
 tabito-itemgen revision-request \
-  --item item_bank/draft/TABITO-CN-Q4-xxxx.json \
-  --review workspace/reviews/TABITO-CN-Q4-xxxx.review.json
+  --item item_bank/draft/TABITO-CN-Q4-....json \
+  --review workspace/reviews/TABITO-CN-Q4-....review.json
 ```
 
-### 7. 教研确认後 approve
+### 5. 類似度を確認して approve
 
 ```bash
-tabito-itemgen approve revised_item.json
+tabito-itemgen similarity revised_item.json
+
+tabito-itemgen approve revised_item.json \
+  --review workspace/reviews/TABITO-CN-Q4-....review.json
 ```
 
-### 8. 学生版 / 教师版 LaTeX を生成
+`approve` は、通常は blind review が `pass` で、独立解答が key と一致しない限り通らない。緊急時のみ明示的 override を使う。
+
+### 6. 学生版 / 教師版を組版
 
 ```bash
-tabito-itemgen render item_bank/approved/TABITO-CN-Q4-xxxx.json
+tabito-itemgen render item_bank/approved/TABITO-CN-Q4-....json --compile
 ```
 
-XeLaTeX が使える环境なら：
+`output/<item_id>/` に student / teacher の TeX と PDF ができる。
 
-```bash
-tabito-itemgen render item_bank/approved/TABITO-CN-Q4-xxxx.json --compile
-```
-
-## ディレクトリ
+## Repository
 
 ```text
-blueprints/          共通テスト中国語全体の命題方針
-templates/           各大問の具体的な生成制約
-prompts/             ChatGPT Plus 用 prompt
-workspace/requests/  生成依頼
-workspace/responses/ ChatGPT 返答の一時保存
-workspace/reviews/   独立审题・修订依頼
-item_bank/draft/     未承認题
-item_bank/approved/  授业・模试で使ってよい题
-item_bank/rejected/  不採用题
-src/                 CLI / validator / renderer
-output/              LaTeX / PDF
+blueprints/          試験全体の versioned blueprint
+templates/           Q4 の具体的生成制約
+prompts/             generate / blind review / revise
+docs/                exam spec と設計監査
+examples/            schema-valid examples
+workspace/           manual ChatGPT handoff
+item_bank/draft/     未承認
+item_bank/approved/  使用可能
+item_bank/rejected/  不採用
+src/                 CLI / schema / validation / rendering
+tests/               regression tests
+output/              generated TeX/PDF
 ```
 
-## v0.2 候補
+## まだやらないこと
 
-優先順位は实际使用後に決めるが、現時点では：
+現段階では API、LangChain、vector DB、fine-tuning、IRT、Web UI を優先しない。まず実際の候補問題を生成し、**教研担当者の修正時間がどこで発生するか**を確認してから自動化範囲を増やす。
 
-1. Q4 の资料 renderer（表・時間表・簡易チャート）
-2. 題庫内 n-gram 重複チェック
-3. 使用履歴 `used_in` と重复出题防止
-4. 模試単位の assembly
-5. Q5 长文 pipeline
+## 次の優先順位
+
+1. 実際に full Q4 を3–5セット生成して human QA
+2. prompt/schema の返工原因を記録
+3. renderer のページ分割・図表品質を本番レベルへ
+4. `used_in` と模試 assembly
+5. Q5 pipeline
 6. Q1/Q2/Q3
-
-API backend、Web UI、vector DB、fine-tuning、IRT は当面対象外。
