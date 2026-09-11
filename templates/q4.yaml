@@ -1,11 +1,23 @@
 section: Q4
 construct: integrated_materials_reading
+baseline: R8-2026-main-tsui-v1
+
+source_priority:
+  primary_only_for_architecture:
+    - 2026_main
+    - 2026_makeup
+  historical_reference_only: "2025 and earlier"
+  rule: >-
+    Shared features of the 2026 main and makeup examinations define the required core.
+    Differences between them are valid design variation. Pre-2026 forms may support language-level
+    and construct checks but must not become the default architecture.
+
 scope_profiles:
   full:
     answer_numbers: [21, 36]
     answer_slot_count: 16
     subsection_required: [A, B]
-    material_count_guideline: [6, 10]
+    material_count_guideline: [6, 12]
     task_count_guideline: [6, 10]
     minimum_cross_material_tasks: 3
     minimum_material_type_variety: 4
@@ -17,26 +29,46 @@ scope_profiles:
 
 scenario_architecture:
   principle: >-
-    One coherent real-life scenario should develop over time. Materials are introduced because
-    the people in the scenario need them to understand, compare, decide, explain, or act.
+    One coherent real-life or inquiry-oriented purpose develops over time. Materials are introduced
+    because the people in the scenario need them to understand, compare, plan, select, explain,
+    evaluate, or act. Tasks and materials may alternate as the scenario progresses.
+  shared_2026_trajectory:
+    - establish_a_concrete_purpose_or_question
+    - read_or_listen_to_contextual_language_material
+    - move_into_structured_or_quantitative_information
+    - compare_or_integrate_multiple_sources
+    - advance_the_scenario_into_a_new_practical_context
+    - apply_information_to_conditions_rules_profiles_routes_or_processes
+    - finish_with_integrated_judgment_or_reflection
   subsection_A:
-    role: receive_understand_compare
+    role: investigate_receive_understand_compare
     expected_functions:
       - establish_context_from_language
-      - read_structured_information
+      - read_structured_or_quantitative_information
       - compare_or_integrate_sources
       - identify_relevant_evidence
+      - build_knowledge_needed_for_the_later_stage
   subsection_B:
-    role: apply_select_decide
+    role: apply_information_in_a_later_context_and_synthesize
     expected_functions:
-      - use_information_for_a_later_action
-      - match_conditions_to_profiles_or_rules
+      - use_information_for_a_later_action_or_plan
+      - match_conditions_to_profiles_rules_or_constraints
+      - read_routes_schedules_notices_or_operational_information
       - follow_or_evaluate_a_process
       - make_a_contextualized_decision
+      - synthesize_the_scenario_at_the_end
+  allowed_variation_from_2026_pair:
+    - A_may_be_everyday_consultation_or_inquiry_research
+    - B_may_be_service_participation_fieldwork_planning_or_real_world_application
+    - quantitative_materials_may_be_tables_charts_schedules_maps_or_diagrams
+    - final_tasks_may_use_case_matching_process_reasoning_or_reflective_synthesis
   forbidden_shortcuts:
     - six_independent_questions_with_decorative_materials
     - one_long_passage_plus_unrelated_chart
-    - direct_reskin_of_recent_official_pet_center_scenario
+    - direct_reskin_of_2026_main_pet_center_scenario
+    - direct_reskin_of_2026_makeup_autonomous_driving_scenario
+    - copying_the_exact_material_sequence_of_either_2026_exam
+    - reviving_a_pre2026_default_pattern_when_it_conflicts_with_2026_direction
     - all_questions_answerable_by_single_keyword_matching
 
 material_types:
@@ -52,6 +84,10 @@ material_types:
     - timetable
     - chart
     - flowchart
+  future_extension_candidates:
+    - map
+    - annotated_diagram
+    - social_media_feed
 
 response_modes:
   single_choice:
@@ -59,6 +95,7 @@ response_modes:
   multi_select:
     slots: [2, 3]
     preferred_options: [6, 8]
+    note: "Two-answer selection is prominent in both 2026 primary references."
   multi_slot_choice:
     slots: [2, 3]
     option_reuse_rule_must_be_explicit: true
@@ -78,6 +115,9 @@ quality_rules:
   distractor_error_path_required: true
   at_least_three_cross_material_tasks_for_full: true
   visual_or_structured_material_required_for_full: true
+  scenario_must_progress_not_merely_change_materials: true
+  later_tasks_should_recontextualize_information: true
+  direct_data_reading_should_not_dominate_the_whole_section: true
   avoid_needlessly_advanced_idioms: true
   natural_modern_simplified_chinese: true
   natural_japanese_exam_instructions: true
