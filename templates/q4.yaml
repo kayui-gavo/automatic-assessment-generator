@@ -1,54 +1,84 @@
 section: Q4
 construct: integrated_materials_reading
+scope_profiles:
+  full:
+    answer_numbers: [21, 36]
+    answer_slot_count: 16
+    subsection_required: [A, B]
+    material_count_guideline: [6, 10]
+    task_count_guideline: [6, 10]
+    minimum_cross_material_tasks: 3
+    minimum_material_type_variety: 4
+  mini:
+    answer_slot_count_guideline: [4, 8]
+    material_count_guideline: [2, 5]
+    task_count_guideline: [2, 5]
+    minimum_cross_material_tasks: 1
 
-stimulus:
-  material_count: [2, 4]
-  allowed_types:
+scenario_architecture:
+  principle: >-
+    One coherent real-life scenario should develop over time. Materials are introduced because
+    the people in the scenario need them to understand, compare, decide, explain, or act.
+  subsection_A:
+    role: receive_understand_compare
+    expected_functions:
+      - establish_context_from_language
+      - read_structured_information
+      - compare_or_integrate_sources
+      - identify_relevant_evidence
+  subsection_B:
+    role: apply_select_decide
+    expected_functions:
+      - use_information_for_a_later_action
+      - match_conditions_to_profiles_or_rules
+      - follow_or_evaluate_a_process
+      - make_a_contextualized_decision
+  forbidden_shortcuts:
+    - six_independent_questions_with_decorative_materials
+    - one_long_passage_plus_unrelated_chart
+    - direct_reskin_of_recent_official_pet_center_scenario
+    - all_questions_answerable_by_single_keyword_matching
+
+material_types:
+  text:
     - dialogue
-    - timetable
     - notice
     - poster
-    - table
-    - chart
-    - process
     - short_explanatory_text
-  realistic_context: true
-  cross_material_dependency: true
+    - profile
+    - checklist
+  structured:
+    - table
+    - timetable
+    - chart
+    - flowchart
 
-question_design:
-  question_count_default: 6
-  option_count: [4, 5]
-  cognitive_operations:
-    - extract
-    - compare
-    - condition_match
-    - integrate
-    - infer
-    - sequence
-  require_cross_material_questions: 1
-  avoid_single_keyword_matching_as_primary_skill: true
+response_modes:
+  single_choice:
+    slots: 1
+  multi_select:
+    slots: [2, 3]
+    preferred_options: [6, 8]
+  multi_slot_choice:
+    slots: [2, 3]
+    option_reuse_rule_must_be_explicit: true
 
-distractors:
-  plausible: true
-  error_models:
-    - local_fact_only
-    - condition_ignored
-    - condition_reversed
-    - partial_match
-    - wrong_material_link
-    - unsupported_inference
-    - sequence_error
-  avoid_joke_options: true
-  avoid_grammatically_broken_options: true
+cognitive_operations:
+  - extract
+  - compare
+  - condition_match
+  - integrate
+  - infer
+  - sequence
+  - evaluate
 
-language:
-  simplified_chinese: true
-  natural_modern_chinese: true
+quality_rules:
+  unique_answer_or_answer_set: true
+  evidence_locator_required: true
+  distractor_error_path_required: true
+  at_least_three_cross_material_tasks_for_full: true
+  visual_or_structured_material_required_for_full: true
   avoid_needlessly_advanced_idioms: true
-  gloss_rare_words_when_needed: true
-
-quality:
-  answer_must_be_unique: true
-  every_question_needs_evidence: true
-  every_distractor_needs_rationale: true
-  no_direct_adaptation_of_official_question: true
+  natural_modern_simplified_chinese: true
+  natural_japanese_exam_instructions: true
+  answer_position_distribution_should_not_be_obviously_patterned: true
