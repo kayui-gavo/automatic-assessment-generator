@@ -1,7 +1,28 @@
-baseline_version: R8-2026-main-tsui-v2
+baseline_version: R8-2026-main-tsui-v3
 purpose: >-
   Structural metadata extracted from the two Tier-1 Q4 papers. This file contains no official
-  passages or option text. It exists to distinguish shared hard facts from paper-specific variation.
+  passages or option text. It exists to preserve the actual 2026 surface grammar while keeping
+  generated content original.
+
+surface_reproduction_policy:
+  reproduce:
+    - A_B_split
+    - answer_numbers_21_through_36
+    - family_specific_answer_slot_grouping
+    - material_to_question_connection_pattern
+    - high_density_of_choose_two_tasks
+    - Japanese_instruction_Chinese_stimulus_relationship
+    - observed_option_language_role_when_it_is_part_of_the_exam_face
+  keep_original:
+    - topic
+    - characters_and_institution_names
+    - stimulus_wording
+    - numerical_values
+    - option_wording
+    - exact_case_logic
+  warning: >-
+    Anti-reskin policy must not erase the 2026 item grammar. A generic multi-source reading set is
+    not sufficient merely because it measures similar constructs.
 
 shared_hard_facts:
   score: 60
@@ -13,13 +34,18 @@ shared_hard_facts:
   multi_answer_selection_is_substantial: true
   information_use_changes_as_section_progresses: true
 
-shared_tendencies_not_hard_quotas:
-  - contextual_dialogue_or_language_material_near_the_start
-  - quantitative_visual_or_structured_information_in_A
-  - B_recontextualizes_the_topic_in_a_later_activity_or_situation
-  - direct_comprehension_and_higher_integration_coexist
-  - multiple_statements_are_often_checked_individually_in_multi_select_tasks
-  - later_questions_often_require_condition_rule_case_or_synthesis_reasoning
+shared_surface_grammar:
+  subsection_A_answer_numbers: [21, 28]
+  subsection_B_answer_numbers: [29, 36]
+  subsection_A_stages:
+    - answer_numbers: [21, 22]
+      role: dialogue_content_comprehension
+      response_pattern: multi_select_two
+    - answer_numbers: [23, 26]
+      role: survey_quantitative_visual_or_explanatory_information
+    - answer_numbers: [27, 28]
+      role: lecture_explanation_or_structured_memo
+      response_pattern: multi_select_two
 
 main_2026:
   scenario_family: everyday_consultation_to_service_casework
@@ -28,43 +54,53 @@ main_2026:
       response_pattern: multi_select_two
       information_family: dialogue
       main_operation: contextual_comprehension
+      option_language_tendency: Japanese
     - answer_numbers: [23, 24]
       response_pattern: paired_slots_shared_options
       information_family: quantitative_table
       main_operation: interpret_items_from_data_and_descriptions
+      option_language_tendency: Chinese_or_labels
     - answer_numbers: [25]
       response_pattern: single_choice
       information_family: chart
       main_operation: data_interpretation
+      option_language_tendency: Chinese
     - answer_numbers: [26]
       response_pattern: single_choice
       information_family: two_related_charts
       main_operation: compare_trends_across_visuals
+      option_language_tendency: Chinese
     - answer_numbers: [27, 28]
       response_pattern: multi_select_two
       information_family: explanatory_institutional_text
       main_operation: content_verification
+      option_language_tendency: Japanese
   subsection_B:
     - answer_numbers: [29, 30]
       response_pattern: multi_select_two
       information_family: checklist
       main_operation: apply_requirements
+      option_language_tendency: Japanese
     - answer_numbers: [31, 32]
       response_pattern: paired_slots_shared_options
       information_family: profiles_plus_preference_conditions
       main_operation: condition_matching
+      option_language_tendency: Chinese_labels_or_entities
     - answer_numbers: [33]
       response_pattern: single_choice
       information_family: profiles_plus_missing_information
       main_operation: identify_needed_information
+      option_language_tendency: Japanese
     - answer_numbers: [34]
       response_pattern: single_choice
       information_family: flowchart_plus_explanation
       main_operation: infer_general_prevention_rule
+      option_language_tendency: Chinese
     - answer_numbers: [35, 36]
       response_pattern: paired_case_slots
       information_family: flowchart_plus_cases
       main_operation: apply_process_to_cases
+      option_language_tendency: classification_labels
   do_not_copy:
     - pet_consultation
     - animal_protection_center
@@ -146,9 +182,7 @@ do_not_infer_as_hard_rules:
   - exact_number_of_materials
   - exact_number_of_material_types
   - exactly_three_cross_source_tasks
-  - mandatory_flowchart
-  - mandatory_map
-  - mandatory_table
+  - mandatory_flowchart_for_makeup_family
+  - mandatory_map_for_main_family
   - B_must_always_be_practical_action
-  - final_task_must_always_be_case_matching
-  - every_two_answer_slot_pair_must_use_the_same_response_mode
+  - every_two_answer_slot_pair_must_use_the_same_option_language
