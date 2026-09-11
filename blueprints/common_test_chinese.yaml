@@ -2,7 +2,7 @@ exam:
   name: 共通テスト 中国語
   reference_year: 2026
   reference_label: R8
-  blueprint_version: R8-2026-main-tsui-v2
+  blueprint_version: R8-2026-main-tsui-v3
   duration_minutes: 80
   total_score: 200
   answer_numbers: [1, 50]
@@ -17,10 +17,6 @@ reference_policy:
       - organize_understood_information_and_judge_what_to_take_up
       - assess_language_knowledge_and_skills_supporting_communication
       - consider_students_who_begin_non_english_foreign_languages_in_high_school
-    must_not_define:
-      - q4_surface_architecture
-      - exact_material_sequence
-      - exact_response_mode_distribution
 
   tier_1_primary_blueprints:
     - id: R8_2026_main
@@ -33,9 +29,10 @@ reference_policy:
       url: https://www.dnc.ac.jp/kyotsu/kakomondai/r8/r8_tuisaishiken_mondai.html
 
   interpretation_rule: >-
-    The 2026 main and makeup examinations are co-equal item-writing references.
-    Features shared by both define the hard 2026 core. Differences between them define legitimate
-    variation. Do not infer a mandatory surface pattern from a feature that appears in only one paper.
+    The 2026 main and makeup examinations are co-equal current blueprints. Their shared A-section
+    grammar and their two observable B-section families should be preserved in full mock generation.
+    Originality applies to content, wording, data, cases and answer logic; it does not require
+    abandoning the 2026 student-facing item scaffold.
 
   tier_2_historical_reference:
     years: "2025 and earlier"
@@ -50,9 +47,8 @@ reference_policy:
       - override_2026_main_or_makeup_structure
       - restore_an_older_item_pattern_because_it_was_common_before_2026
       - average_old_and_new_structures_into_a_hybrid_blueprint
-      - use_pre2026_surface_architecture_as_the_default_generation_template
 
-  conflict_rule: "Tier-1 evidence overrides pre-2026 patterns; Tier-0 constrains the construct but not the surface form."
+  conflict_rule: "Tier-1 determines current Q4 surface architecture; Tier-0 constrains the construct; Tier-2 is reference-only."
 
 sections:
   Q1:
@@ -68,31 +64,25 @@ sections:
     construct: integrated_information_use
     score: 60
     answer_numbers: [21, 36]
-    hard_core_2026:
-      - exactly_16_answer_slots_for_full_q4
-      - two_subsections_A_and_B
-      - one_continuing_purposeful_context
-      - heterogeneous_information_sources
-      - substantial_multi_answer_selection
-      - information_processing_beyond_keyword_matching
-      - progression_in_how_information_is_used
-    functional_range:
+    full_surface_core:
       A:
-        - establish_context
-        - investigate
-        - understand
-        - compare
-        - organize_information
+        answer_numbers: [21, 28]
+        q1: "21-22 dialogue + choose two"
+        q2: "23-26 research/data documents"
+        q3: "27-28 lecture/summary/memo + choose two"
       B:
-        - recontextualize_information
-        - apply_conditions_or_rules
-        - plan_or_select
-        - interpret_routes_processes_or_cases
-        - synthesize_or_reflect
-    non_hard_tendencies:
-      - tasks_and_materials_often_interleave_as_the_scenario_progresses
-      - quantitative_or_visual_information_is_common
-      - later_tasks_often_require_more_contextualized_use_of_information
+        answer_numbers: [29, 36]
+        allowed_families:
+          - main_2026
+          - makeup_2026
+    main_2026_B:
+      q1: "29-30 checklist/conditions + choose two"
+      q2: "31-33 profile/candidate matching + infer missing information"
+      q3: "34-36 rule/flow/process + principle + two case applications"
+    makeup_2026_B:
+      q1: "29-30 chronological operational information + plan/time selection"
+      q2: "31-34 compound operational sources + practical document"
+      q3: "35-36 reflection/summary + choose two"
   Q5:
     construct: long_reading
     score: 60
@@ -104,22 +94,21 @@ general_style:
   stimulus_language: Simplified Chinese
   avoid_hsk_drill_feel: true
   avoid_obscure_grammar_for_its_own_sake: true
-  prefer_realistic_or_inquiry_based_contexts: true
   require_unique_answer_or_answer_set: true
   gloss_rare_or_domain_specific_words: true
   do_not_turn_information_processing_into_heavy_arithmetic: true
+  preserve_exam_like_information_density: true
 
 originality:
   copy_official_wording: false
-  direct_scenario_reskinning: false
-  copy_official_material_sequence: false
-  copy_2026_main_pet_architecture: false
-  copy_2026_makeup_autonomous_driving_architecture: false
-  invented_real_world_attribution: false
+  copy_official_data: false
+  copy_official_cases: false
+  light_paraphrase_official_passages: false
+  noun_swap_reskin: false
+  preserve_selected_2026_surface_family: true
   principle: >-
-    Reproduce the shared 2026 constructs and information-use trajectory, not official wording,
-    topic, characters, data, or distinctive material sequence. A new item should create a different
-    information journey even when it measures similar abilities.
+    Reproduce the 2026 Q4 item grammar and document-to-question relationships, while creating new
+    scenario content, source text, numerical data, examples, cases, distractors and answer logic.
 
 workflow:
   generation_mode: manual_chat
