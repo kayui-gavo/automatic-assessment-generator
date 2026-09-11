@@ -15,6 +15,8 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,ui]"
+      - name: UI import smoke test
+        run: python -c "import tabito_itemgen.ui_app; import tabito_itemgen.ui_launcher"
       - name: Test
         run: pytest -q
