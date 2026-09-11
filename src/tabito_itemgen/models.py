@@ -141,7 +141,8 @@ class Task(BaseModel):
     operations: list[Operation] = Field(min_length=1, max_length=3)
     evidence: list[EvidenceRef] = Field(min_length=1)
     rationale_ja: str
-    distractor_rationales_ja: dict[str, str]
+    distractor_rationales_ja: dict[str, str] = Field(default_factory=dict)
+    slot_distractor_rationales_ja: dict[str, dict[str, str]] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def validate_answers(self) -> "Task":
