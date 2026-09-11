@@ -1,0 +1,104 @@
+baseline_version: R8-2026-main-tsui-v2
+purpose: >-
+  Generation-safe abstraction of the 2026 main + makeup Q4 pair. Unlike the detailed reference
+  patterns file, this profile intentionally omits the official per-answer-number sequence so the
+  generator learns the design space without being nudged toward a surface interpolation or reskin.
+
+hard_core:
+  score: 60
+  answer_numbers: [21, 36]
+  answer_slot_count: 16
+  subsections: [A, B]
+  one_continuing_purposeful_context: true
+  heterogeneous_information_sources: true
+  substantial_multi_answer_selection: true
+  information_processing_beyond_keyword_matching: true
+  information_use_changes_as_the_section_progresses: true
+
+functional_range:
+  A:
+    - establish_context
+    - investigate
+    - understand
+    - verify
+    - compare
+    - organize
+    - integrate
+  B:
+    - recontextualize
+    - apply_conditions_or_rules
+    - plan
+    - match
+    - reason_about_routes_processes_or_cases
+    - synthesize
+    - reflect
+
+observed_information_families:
+  - dialogue_or_discussion
+  - explanatory_text
+  - memo_or_reflection
+  - table_or_timetable
+  - chart_or_related_charts
+  - checklist_or_profile
+  - notice_flyer_or_instructions
+  - social_timeline
+  - schematic_map_or_route_information
+  - annotated_or_system_diagram
+  - flow_or_process_information
+
+observed_response_patterns:
+  - single_choice
+  - multi_select_two
+  - paired_or_multi_slot_shared_options
+
+information_dependency_modes:
+  - single_source
+  - within_compound
+  - cross_source
+  - scenario_plus_source
+
+quality_shape:
+  - direct_comprehension_and_deeper_processing_should_coexist
+  - material_variety_should_follow_the_scenario_not_a_quota
+  - at_least_one_genuinely_integrative_task_in_each_subsection_for_internal_QA
+  - numerical_information_should_test_reading_judgment_not_heavy_arithmetic
+  - multi_select_should_require_independent_verification_of_multiple_statements
+  - later_tasks_should_recontextualize_apply_or_synthesize_information
+  - reflective_synthesis_is_as_valid_as_practical_action_when_the_scenario_supports_it
+
+variation_space:
+  scenario_mode:
+    - everyday_consultation_or_service
+    - inquiry_or_research
+    - planning_or_field_activity
+    - another_original_purposeful_context
+  ending_mode:
+    - practical_decision
+    - condition_or_profile_matching
+    - route_schedule_or_rule_use
+    - process_or_case_application
+    - integrated_summary
+    - reflective_synthesis
+  source_composition:
+    - independent_sources
+    - compound_source_bundle
+    - chronological_information_stream
+    - mixed_text_visual_structured_information
+
+anti_reskin_rules:
+  - do_not_copy_the_event_sequence_of_either_2026_official_paper
+  - do_not_copy_the_role_sequence_of_official_materials
+  - do_not_copy_the_same_final_judgment_pattern_only_with_new_nouns
+  - do_not_create_a_hybrid_by_alternating_main_like_and_makeup_like_blocks
+  - create_a_new_information_journey_that_only_shares_the_underlying_constructs
+
+not_hard_rules:
+  - exact_material_count
+  - exact_material_type_count
+  - exact_cross_source_task_count
+  - mandatory_map
+  - mandatory_flowchart
+  - mandatory_chart
+  - B_must_end_in_action
+  - final_task_must_be_case_matching
+  - exact_response_mode_distribution

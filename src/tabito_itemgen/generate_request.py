@@ -15,6 +15,7 @@ BLUEPRINT_VERSION = "R8-2026-main-tsui-v2"
 def _reference_context(root: Path) -> dict[str, str]:
     return {
         "blueprint_yaml": (root / "blueprints" / "common_test_chinese.yaml").read_text(encoding="utf-8"),
+        "generation_profile_yaml": (root / "blueprints" / "q4_2026_generation_profile.yaml").read_text(encoding="utf-8"),
         "reference_patterns_yaml": (root / "blueprints" / "q4_2026_reference_patterns.yaml").read_text(encoding="utf-8"),
         "template_yaml": (root / "templates" / "q4.yaml").read_text(encoding="utf-8"),
         "item_writing_direction": (root / "docs" / "ITEM_WRITING_DIRECTION_2026.md").read_text(encoding="utf-8"),
@@ -61,11 +62,19 @@ def create_q4_request(
 
 def _blind_item_dict(item: Item) -> dict:
     data = item.model_dump()
+    # Keep only content a candidate/reviewer needs to solve and inspect the item.
+    # Internal authoring labels can bias the reviewer even when the answer key is hidden.
     data.pop("quality_notes", None)
     data.pop("workflow", None)
+    data.pop("scenario_summary_ja", None)
+    data.pop("difficulty", None)
+    data.pop("topic", None)
+    for material in data["materials"]:
+        material.pop("bundle_id", None)
     for task in data["tasks"]:
         for slot in task["answer_slots"]:
             slot.pop("correct_option", None)
+        task.pop("dependency_mode", None)
         task.pop("evidence", None)
         task.pop("rationale_ja", None)
         task.pop("distractor_rationales_ja", None)
