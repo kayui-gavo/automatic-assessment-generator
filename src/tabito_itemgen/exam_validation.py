@@ -90,7 +90,11 @@ def _validate_q3(section: Q3Section) -> ValidationResult:
             errors.append(f"{task.task_id}: missing distractor rationales for {sorted(missing_reasons)}")
 
         if task.direction == "ja_to_zh":
-            missing_pinyin = [index for index, option in enumerate(task.options, start=1) if not _has_tone_mark(option)]
+            missing_pinyin = [
+                index
+                for index, option in enumerate(task.options, start=1)
+                if not _has_tone_mark(option)
+            ]
             if missing_pinyin:
                 errors.append(
                     f"{task.task_id}: ja_to_zh options without tone-marked pinyin: {missing_pinyin}"
@@ -111,11 +115,29 @@ def _validate_q5(section: Q5Section) -> ValidationResult:
     warnings: list[str] = []
     if len(section.originality_statement.strip()) < 10:
         errors.append("Q5 originality_statement is too short")
+
+    paragraph_map = {paragraph.paragraph_id: paragraph.text_zh for paragraph in section.paragraphs}
     anchored = {anchor.anchor_id for anchor in section.anchors}
     referenced = {anchor for task in section.tasks for anchor in task.anchor_refs}
     unused = sorted(anchored - referenced)
     if unused:
         warnings.append(f"Q5 anchors not referenced by any task: {unused}")
+
+    for anchor in section.anchors:
+        text = paragraph_map[anchor.paragraph_id]
+        if anchor.marker_label and anchor.marker_label not in text:
+            errors.append(
+                f"Q5 anchor {anchor.anchor_id}: marker_label {anchor.marker_label!r} is not visible in paragraph {anchor.paragraph_id}"
+            )
+        if anchor.source_excerpt and anchor.source_excerpt not in text:
+            errors.append(
+                f"Q5 anchor {anchor.anchor_id}: source_excerpt is not present in paragraph {anchor.paragraph_id}"
+            )
+        if not anchor.marker_label and not anchor.source_excerpt:
+            warnings.append(
+                f"Q5 anchor {anchor.anchor_id}: no visible marker_label/source_excerpt; booklet linkage may be unclear"
+            )
+
     if not any(task.operation == "whole_text_consistency" for task in section.tasks):
         errors.append("Q5 requires a whole-text consistency task")
     if not any(
@@ -219,13 +241,18 @@ def validate_exam(manifest_path: Path) -> ValidationResult:
             continue
         if section.section != ref.section:
             errors.append(f"{ref.section}: file contains section={section.section}")
+        actual_id = section_id(section)
+        if actual_id != ref.section_id:
+            errors.append(
+                f"{ref.section}: section id {actual_id!r} does not match manifest {ref.section_id!r}"
+            )
         loaded[ref.section] = section
         numbers = section_answer_numbers(section)
         expected = list(range(ref.answer_start, ref.answer_end + 1))
         if numbers != expected:
             errors.append(f"{ref.section}: expected answer numbers {expected}, got {numbers}")
         all_numbers.extend(numbers)
-        all_ids.append(section_id(section))
+        all_ids.append(actual_id)
         choice_positions.extend(_choice_position_answers(section))
         fingerprint = section_fingerprint(section)
         if ref.fingerprint and ref.fingerprint != fingerprint:
