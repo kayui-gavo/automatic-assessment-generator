@@ -38,22 +38,15 @@ def q1(section_id: str) -> Q1Section:
     ]
     tasks = [
         Q1PhoneticCountTask(
-            task_id="Q1-A",
-            subsection="A",
-            order=1,
-            target="initial",
+            task_id="Q1-A", subsection="A", order=1, target="initial",
             prompt_ja="見出し語と声母が同じものはいくつあるか。",
-            headword=PinyinWord(label="見出し", hanzi="开", pinyin="kāi"),
-            candidates=words,
+            headword=PinyinWord(label="見出し", hanzi="开", pinyin="kāi"), candidates=words,
             options=count_options,
             answer_slot=AnswerSlot(slot_id="Q1-1", answer_number=1, correct_option=3),
             rationale_ja="kで始まる語が三つある。",
         ),
         Q1PhoneticCountTask(
-            task_id="Q1-B",
-            subsection="B",
-            order=2,
-            target="final",
+            task_id="Q1-B", subsection="B", order=2, target="final",
             prompt_ja="声調を除き、見出し語と韻母が同じものはいくつあるか。",
             headword=PinyinWord(label="見出し", hanzi="忙", pinyin="máng"),
             candidates=[
@@ -67,10 +60,7 @@ def q1(section_id: str) -> Q1Section:
             rationale_ja="-angが二つ。",
         ),
         Q1PhoneticCountTask(
-            task_id="Q1-C1",
-            subsection="C",
-            order=3,
-            target="tone_pattern",
+            task_id="Q1-C1", subsection="C", order=3, target="tone_pattern",
             prompt_ja="見出し語と声調の組合せが同じものはいくつあるか。",
             headword=PinyinWord(label="見出し", hanzi="明天", pinyin="míngtiān"),
             candidates=[
@@ -84,10 +74,7 @@ def q1(section_id: str) -> Q1Section:
             rationale_ja="二声＋一声が三つ。",
         ),
         Q1PhoneticCountTask(
-            task_id="Q1-C2",
-            subsection="C",
-            order=4,
-            target="tone_pattern",
+            task_id="Q1-C2", subsection="C", order=4, target="tone_pattern",
             prompt_ja="見出し語と声調の組合せが同じものはいくつあるか。",
             headword=PinyinWord(label="見出し", hanzi="下午", pinyin="xiàwǔ"),
             candidates=[
@@ -101,8 +88,7 @@ def q1(section_id: str) -> Q1Section:
             rationale_ja="四声＋三声が三つ。",
         ),
         Q1DialogueTask(
-            task_id="Q1-D1",
-            order=5,
+            task_id="Q1-D1", order=5,
             lines=[
                 PinyinDialogueLine(speaker="A", pinyin="Nǐ míngtiān yǒu shíjiān ma?"),
                 PinyinDialogueLine(speaker="B", pinyin="Shàngwǔ yào shàngkè, xiàwǔ kěyǐ."),
@@ -113,8 +99,7 @@ def q1(section_id: str) -> Q1Section:
             rationale_ja="午後なら会えると答えている。",
         ),
         Q1DialogueTask(
-            task_id="Q1-D2",
-            order=6,
+            task_id="Q1-D2", order=6,
             lines=[
                 PinyinDialogueLine(speaker="A", pinyin="Wǒmen zuò dìtiě qù ba."),
                 PinyinDialogueLine(speaker="B", pinyin="Jīntiān xià yǔ, wǒ xiǎng zuò gōnggòng qìchē."),
@@ -130,10 +115,7 @@ def q1(section_id: str) -> Q1Section:
 
 def q2(section_id: str) -> Q2Section:
     fill_a = Q2FillTask(
-        task_id="Q2-A",
-        subsection="A",
-        order=1,
-        selection_rule="appropriate",
+        task_id="Q2-A", subsection="A", order=1, selection_rule="appropriate",
         sentence_zh="今天有点冷，你＿＿＿多穿一件衣服。",
         prompt_ja="空欄に入れるのに最も適当なものを選べ。",
         options=["应该", "已经", "一直", "一起"],
@@ -141,10 +123,7 @@ def q2(section_id: str) -> Q2Section:
         rationale_ja="助言には“应该”が自然。",
     )
     fill_b = Q2FillTask(
-        task_id="Q2-B",
-        subsection="B",
-        order=2,
-        selection_rule="inappropriate",
+        task_id="Q2-B", subsection="B", order=2, selection_rule="inappropriate",
         sentence_zh="他＿＿＿喜欢在图书馆学习。",
         prompt_ja="空欄に入れるのに適当でないものを選べ。",
         options=["很", "也", "不", "把"],
@@ -152,23 +131,17 @@ def q2(section_id: str) -> Q2Section:
         rationale_ja="“把”はこの述語の前に単独では置けない。",
     )
     order1 = Q2OrderingTask(
-        task_id="Q2-C1",
-        order=3,
+        task_id="Q2-C1", order=3,
         source_ja="私は昨日、友達と一緒に新しい本屋へ行きました。",
         sentence_frame_zh="我昨天 ＿＿ ＿＿ ＿＿ ＿＿ 。",
         prompt_ja="八つの語句から四つを選び、正しい中国語文を作れ。指定位置の語句番号を答えよ。",
         token_pool=[
-            OrderingToken(token_id=1, text_zh="跟朋友"),
-            OrderingToken(token_id=2, text_zh="一起"),
-            OrderingToken(token_id=3, text_zh="去了"),
-            OrderingToken(token_id=4, text_zh="新书店"),
-            OrderingToken(token_id=5, text_zh="正在"),
-            OrderingToken(token_id=6, text_zh="因为"),
-            OrderingToken(token_id=7, text_zh="把"),
-            OrderingToken(token_id=8, text_zh="才"),
+            OrderingToken(token_id=1, text_zh="跟朋友"), OrderingToken(token_id=2, text_zh="一起"),
+            OrderingToken(token_id=3, text_zh="去了"), OrderingToken(token_id=4, text_zh="新书店"),
+            OrderingToken(token_id=5, text_zh="正在"), OrderingToken(token_id=6, text_zh="因为"),
+            OrderingToken(token_id=7, text_zh="把"), OrderingToken(token_id=8, text_zh="才"),
         ],
-        correct_sequence=[1, 2, 3, 4],
-        answer_positions=[2, 4],
+        correct_sequence=[1, 2, 3, 4], answer_positions=[2, 4],
         answer_slots=[
             AnswerSlot(slot_id="Q2-9", answer_number=9, correct_option=2),
             AnswerSlot(slot_id="Q2-10", answer_number=10, correct_option=4),
@@ -176,23 +149,17 @@ def q2(section_id: str) -> Q2Section:
         rationale_ja="跟朋友一起去了新书店。",
     )
     order2 = Q2OrderingTask(
-        task_id="Q2-C2",
-        order=4,
+        task_id="Q2-C2", order=4,
         source_ja="先生は私たちに授業の前にこの文章を読むように言いました。",
         sentence_frame_zh="老师 ＿＿ ＿＿ ＿＿ ＿＿ 。",
         prompt_ja="八つの語句から四つを選び、正しい中国語文を作れ。指定位置の語句番号を答えよ。",
         token_pool=[
-            OrderingToken(token_id=1, text_zh="让我们"),
-            OrderingToken(token_id=2, text_zh="上课以前"),
-            OrderingToken(token_id=3, text_zh="读"),
-            OrderingToken(token_id=4, text_zh="这篇文章"),
-            OrderingToken(token_id=5, text_zh="被"),
-            OrderingToken(token_id=6, text_zh="虽然"),
-            OrderingToken(token_id=7, text_zh="已经"),
-            OrderingToken(token_id=8, text_zh="从"),
+            OrderingToken(token_id=1, text_zh="让我们"), OrderingToken(token_id=2, text_zh="上课以前"),
+            OrderingToken(token_id=3, text_zh="读"), OrderingToken(token_id=4, text_zh="这篇文章"),
+            OrderingToken(token_id=5, text_zh="被"), OrderingToken(token_id=6, text_zh="虽然"),
+            OrderingToken(token_id=7, text_zh="已经"), OrderingToken(token_id=8, text_zh="从"),
         ],
-        correct_sequence=[1, 2, 3, 4],
-        answer_positions=[1, 3],
+        correct_sequence=[1, 2, 3, 4], answer_positions=[1, 3],
         answer_slots=[
             AnswerSlot(slot_id="Q2-11", answer_number=11, correct_option=1),
             AnswerSlot(slot_id="Q2-12", answer_number=12, correct_option=3),
@@ -213,22 +180,21 @@ def _q3_task(task_id: str, subsection: str, direction: str, answer: int, correct
         ]
     else:
         source = "Rúguǒ míngtiān bú xià yǔ, wǒmen jiù qù gōngyuán ba."
-        options = ["明日雨が降らなければ、公園へ行きましょう。", "明日雨なら、公園へ行きません。", "昨日雨が降らなかったので、公園へ行きました。", "公園へ行けば、明日は雨です。"]
+        options = [
+            "明日雨が降らなければ、公園へ行きましょう。",
+            "明日雨なら、公園へ行きません。",
+            "昨日雨が降らなかったので、公園へ行きました。",
+            "公園へ行けば、明日は雨です。",
+        ]
     wrong = {str(index) for index in range(1, 5) if index != correct}
     error_types = {key: ["lexical_meaning"] for key in wrong}
     reasons = {key: "原文の条件・時間・主体のいずれかが一致しない。" for key in wrong}
     return Q3TranslationTask(
-        task_id=task_id,
-        subsection=subsection,
-        order=answer,
-        direction=direction,
-        source_text=source,
-        prompt_ja="最も適当な対応を選べ。",
-        options=options,
+        task_id=task_id, subsection=subsection, order=answer, direction=direction,
+        source_text=source, prompt_ja="最も適当な対応を選べ。", options=options,
         answer_slot=AnswerSlot(slot_id=f"Q3-{answer}", answer_number=answer, correct_option=correct),
         rationale_ja="文全体の条件関係と意味が一致する。",
-        distractor_error_types=error_types,
-        distractor_rationales_ja=reasons,
+        distractor_error_types=error_types, distractor_rationales_ja=reasons,
     )
 
 
@@ -258,12 +224,26 @@ def q4(section_id: str, family: str = "main_2026") -> Item:
 
 def q5(section_id: str, family: str = "main_2026") -> Q5Section:
     paragraphs = [
-        ArticleParagraph(paragraph_id="P1", text_zh="周末，林悦第一次参加社区的旧书交换活动。她原来只想把家里的几本书送出去，却发现很多人会先读书里留下的小纸条。"),
-        ArticleParagraph(paragraph_id="P2", text_zh="一位老人告诉她，这些纸条记录了上一位读者为什么喜欢这本书。林悦开始觉得，交换的不只是书，也是读书时留下的想法。"),
-        ArticleParagraph(paragraph_id="P3", text_zh="活动结束时，她没有急着拿走最热门的书，而是选了一本几乎没人注意的小册子。她想先看看陌生人的一句话，会不会让自己用新的眼光读它。"),
+        ArticleParagraph(
+            paragraph_id="P1",
+            text_zh="周末，林悦第一次参加社区的旧书交换活动。她原来只想把家里的几本书送出去，却发现很多人会先读书里留下的小纸条。〔下線部1〕她觉得这种做法很有意思。",
+        ),
+        ArticleParagraph(
+            paragraph_id="P2",
+            text_zh="一位老人告诉她，这些纸条记录了上一位读者为什么喜欢这本书。〔下線部2〕林悦开始觉得，交换的不只是书，也是读书时留下的想法。",
+        ),
+        ArticleParagraph(
+            paragraph_id="P3",
+            text_zh="活动结束时，她没有急着拿走最热门的书，而是选了一本几乎没人注意的小册子。〔下線部3〕她想先看看陌生人的一句话，会不会让自己用新的眼光读它。",
+        ),
     ]
     anchors = [
-        ArticleAnchor(anchor_id=f"A{index}", paragraph_id=f"P{min(index, 3)}", kind="phrase", marker_label=f"下線部{index}")
+        ArticleAnchor(
+            anchor_id=f"A{index}",
+            paragraph_id=f"P{index}",
+            kind="phrase",
+            marker_label=f"下線部{index}",
+        )
         for index in range(1, 4)
     ]
     if family == "main_2026":
@@ -280,34 +260,33 @@ def q5(section_id: str, family: str = "main_2026") -> Q5Section:
     for qno, numbers in groups.items():
         multi = len(numbers) > 1
         operation = "whole_text_consistency" if qno == max(groups) else (
-            "lexical_choice" if qno in {2, 3, 4, 5, 6, 7, 8, 9, 10} and qno % 3 == 1 else "content_understanding"
+            "lexical_choice"
+            if qno in {2, 3, 4, 5, 6, 7, 8, 9, 10} and qno % 3 == 1
+            else "content_understanding"
         )
         slots = [
             Q5AnswerSlot(slot_id=f"Q5-{number}", answer_number=number, correct_option=index + 1)
             for index, number in enumerate(numbers)
         ]
-        options = ["内容に合う選択肢A", "内容に合う選択肢B", "内容に合う選択肢C", "内容に合う選択肢D", "内容に合う選択肢E"]
+        options = [
+            "内容に合う選択肢A", "内容に合う選択肢B", "内容に合う選択肢C",
+            "内容に合う選択肢D", "内容に合う選択肢E",
+        ]
         tasks.append(
             Q5Task(
-                task_id=f"Q5-Q{qno}",
-                question_no=qno,
-                order=qno,
-                prompt_ja="本文の内容に照らして最も適当なものを選べ。" if not multi else "本文の内容に合うものを二つ選べ。",
-                options=options,
-                response_mode="multi_select" if multi else "single_choice",
-                answer_slots=slots,
-                anchor_refs=["A1"] if qno < max(groups) else [],
-                operation=operation,
-                rationale_ja="本文の情報を統合するとこの選択肢になる。",
+                task_id=f"Q5-Q{qno}", question_no=qno, order=qno,
+                prompt_ja=(
+                    "本文の内容に照らして最も適当なものを選べ。"
+                    if not multi else "本文の内容に合うものを二つ選べ。"
+                ),
+                options=options, response_mode="multi_select" if multi else "single_choice",
+                answer_slots=slots, anchor_refs=["A1"] if qno < max(groups) else [],
+                operation=operation, rationale_ja="本文の情報を統合するとこの選択肢になる。",
             )
         )
     return Q5Section(
-        section_id=section_id,
-        surface_family=family,
-        topic="社区旧书交换与阅读体验",
-        paragraphs=paragraphs,
-        anchors=anchors,
-        tasks=tasks,
+        section_id=section_id, surface_family=family, topic="社区旧书交换与阅读体验",
+        paragraphs=paragraphs, anchors=anchors, tasks=tasks,
         originality_statement="社区旧书交换这一原创情境独立设计，人物、事件、段落推进均不复用2026官方题。",
     )
 
