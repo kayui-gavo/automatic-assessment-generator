@@ -22,11 +22,12 @@ jobs:
         run: >-
           python -c "import tabito_itemgen.ui_app;
           import tabito_itemgen.ui_workbench_v2;
+          import tabito_itemgen.ui_entrypoint;
           import tabito_itemgen.ui_launcher"
       - name: Launch UI smoke test
         shell: bash
         run: |
-          streamlit run src/tabito_itemgen/ui_workbench_v2.py \
+          streamlit run src/tabito_itemgen/ui_entrypoint.py \
             --server.headless true \
             --server.port 8501 \
             > /tmp/tabito-streamlit.log 2>&1 &
