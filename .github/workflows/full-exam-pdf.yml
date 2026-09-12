@@ -1,0 +1,58 @@
+name: full-exam-pdf
+
+on:
+  pull_request:
+    paths:
+      - "src/tabito_itemgen/exam_*.py"
+      - "src/tabito_itemgen/render.py"
+      - "tests/full_exam_factory.py"
+      - "tests/test_full_exam_compile.py"
+      - "blueprints/**"
+      - "prompts/**"
+      - "templates/**"
+  workflow_dispatch:
+
+jobs:
+  compile-fixture:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install Python package
+        run: pip install -e ".[dev]"
+      - name: Install XeLaTeX and CJK fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-xetex texlive-latex-extra texlive-pictures \
+            fonts-noto-cjk
+      - name: Build full-exam fixture PDFs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from tempfile import TemporaryDirectory
+
+          from tests.full_exam_factory import build_exam
+          from tabito_itemgen.exam_render import render_exam
+
+          with TemporaryDirectory() as temp:
+              root = Path(temp)
+              manifest, _ = build_exam(root, "main_2026")
+              outputs = render_exam(root, manifest.exam_id, compile_pdf=True)
+              out = Path("ci-artifacts")
+              out.mkdir(exist_ok=True)
+              for key in ("student_tex", "teacher_tex", "student_pdf", "teacher_pdf", "answer_key"):
+                  path = outputs[key]
+                  if path is None or not path.exists():
+                      raise SystemExit(f"missing output: {key}")
+                  (out / path.name).write_bytes(path.read_bytes())
+          PY
+      - name: Upload booklet artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-exam-schema-fixture
+          path: ci-artifacts/
+          if-no-files-found: error
