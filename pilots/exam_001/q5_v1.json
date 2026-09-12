@@ -1,0 +1,320 @@
+{
+  "schema_version": "0.5",
+  "section": "Q5",
+  "section_id": "TABITO-CN-PILOT-EXAM-001-Q5",
+  "surface_family": "main_2026",
+  "title_ja": "長文読解",
+  "topic": "古い商店街の共同配送と店主の変化",
+  "score": 60,
+  "paragraphs": [
+    {
+      "paragraph_id": "P1",
+      "text_zh": "城南有一条不长的老街，街上开着十几家小店。周岚经营的日用品店已经开了二十多年。附近不少顾客年纪大了，买了米、饮料或洗衣液以后，常常请她帮忙送到家。周岚觉得这也是小店服务的一部分，所以只要不太忙，她都会亲自骑车送去。可是近几年要求送货的人越来越多，有时候她下午要关店一个多小时。等她回来，门口已经站着几位等着买东西的顾客。"
+    },
+    {
+      "paragraph_id": "P2",
+      "text_zh": "新来的面包店老板小何提出，不如让几家店试试“共同配送”：各店先收好订单，下午固定一个时间把货集中起来，再按路线一次送完。这样不用每家店都来回跑。周岚听完并没有马上赞成。她说，送货的时候顺便问一句“上次买的好不好用”，或者提醒老人天气要变，这些小事也是顾客愿意来老街买东西的原因。她最担心的不是多跑几趟，而是统一配送以后，顾客会不会觉得店里的人离自己越来越〔空欄A〕。"
+    },
+    {
+      "paragraph_id": "P3",
+      "text_zh": "大家最后决定先试两个星期。每天下午三点以前，各店把订单写在同一种卡片上，卡片上除了地址和商品，还要注明“怕压”“需要冷藏”“请先打电话”等特殊要求。四点钟，一名店员按照三条路线送货。为了避免拿错，每个袋子上保留原来店铺的标签；如果商品需要店主自己说明用法，就不放进共同配送。周岚虽然参加了，但第一天还是把自己的两份订单又检查了一遍。"
+    },
+    {
+      "paragraph_id": "P4",
+      "text_zh": "试行的第三天下起了大雨。过去遇到这种天气，各店都会分别给顾客打电话解释为什么晚到。那天，负责配送的小何把三条路线的进度写在共享表里，各店都能马上看到货物到了哪里。虽然整体比平时晚了二十分钟，〔空欄B〕没有一个顾客因为不知道订单在哪里而反复打电话。周岚这才发现，所谓共同配送并不等于把信息也交出去；只要记录得清楚，她仍然可以回答自己顾客的问题。〔下線部A〕她后来回想，那天省下来的不只是路上的时间，还有“到处找消息”的时间。"
+    },
+    {
+      "paragraph_id": "P5",
+      "text_zh": "不过，共同配送也不是所有事情都能解决。有位常来买茶叶的李奶奶打电话说，想买一种“味道不要太浓”的茶。负责配送的人当然不知道她平时喝什么。周岚便先给李奶奶打电话，问清楚口味，再选好茶叶，在袋子里放了一张小纸条，写上冲泡时水温不要太高。货还是由共同配送送到，但选择商品和说明方法仍由她自己完成。她忽然明白，过去自己把“亲自送到家”和“亲自服务”当成了一回事，其实两者并不完全相同。"
+    },
+    {
+      "paragraph_id": "P6",
+      "text_zh": "第一周结束前还出了一个小问题：两家店都用了差不多大小的纸袋，送货的人在同一栋楼里把两袋东西拿反了。虽然十分钟后就换了回来，大家还是决定修改规则。以后除了店铺标签，还要用不同颜色的夹子区分路线，出发前再由另一人对照卡片检查一次。〔下線部B〕这一次，最先提出“应该把容易出错的地方写进共同规则里”的，反而是原先最担心失去自家做法的周岚。她说，既然一起做，就不能只在顺利的时候省事，出了问题却各管各的。"
+    },
+    {
+      "paragraph_id": "P7",
+      "text_zh": "两个星期以后，各店把结果放在一起看：送货的总次数少了，临时关店的时间也明显缩短；另一方面，需要店主判断商品、解释用法的订单并没有交给别人处理。周岚下午留在店里的时间多了，反而有更多机会和来店的顾客聊天。她不再把共同配送看成“把自己的客人交给别人”，而是把它理解成重新分配工作。〔下線部C〕她在最后一次会议上说：“一起送货不是把每家店变成一样，而是把可以一起承担的事情放在一起，把必须由各家负责的事情留在店里。”老街决定把试行继续下去，但每个月都要根据出错记录再检查一次规则。"
+    }
+  ],
+  "anchors": [
+    {"anchor_id": "A1", "paragraph_id": "P2", "kind": "blank", "marker_label": "空欄A", "source_excerpt": null},
+    {"anchor_id": "A2", "paragraph_id": "P4", "kind": "blank", "marker_label": "空欄B", "source_excerpt": null},
+    {"anchor_id": "A3", "paragraph_id": "P4", "kind": "sentence", "marker_label": "下線部A", "source_excerpt": "她后来回想，那天省下来的不只是路上的时间，还有“到处找消息”的时间。"},
+    {"anchor_id": "A4", "paragraph_id": "P6", "kind": "sentence", "marker_label": "下線部B", "source_excerpt": "这一次，最先提出“应该把容易出错的地方写进共同规则里”的，反而是原先最担心失去自家做法的周岚。"},
+    {"anchor_id": "A5", "paragraph_id": "P7", "kind": "sentence", "marker_label": "下線部C", "source_excerpt": "她在最后一次会议上说：“一起送货不是把每家店变成一样，而是把可以一起承担的事情放在一起，把必须由各家负责的事情留在店里。”"}
+  ],
+  "tasks": [
+    {
+      "task_id": "Q5-Q1",
+      "question_no": 1,
+      "order": 1,
+      "prompt_ja": "共同配送を始める前の老街の状況として、本文の内容に合うものを二つ選べ。",
+      "options": [
+        "周岚は配達をすべて専門業者に任せていた。",
+        "配達のために店を一時的に閉めることがあった。",
+        "客からの配達依頼は以前より減っていた。",
+        "小何は共同配送に最初から反対していた。",
+        "周岚は配達中の短い会話も小店のサービスの一部だと考えていた。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "Q5-37", "answer_number": 37, "correct_option": 2},
+        {"slot_id": "Q5-38", "answer_number": 38, "correct_option": 5}
+      ],
+      "option_reuse": "forbidden",
+      "anchor_refs": [],
+      "operation": "content_understanding",
+      "rationale_ja": "P1では配達中に店を閉める時間が生じていた。P2では周岚が配達時の声かけや会話も小店のサービス価値だと考えている。",
+      "distractor_rationales_ja": {
+        "1": "周岚は可能なとき自分で配達していた。",
+        "3": "配達依頼は増えている。",
+        "4": "小何は共同配送の提案者である。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "Q5-Q2",
+      "question_no": 2,
+      "order": 2,
+      "prompt_ja": "〔空欄A〕に入れるのに最も適当な語を選べ。",
+      "options": ["安静", "方便", "陌生", "热心"],
+      "response_mode": "single_choice",
+      "answer_slots": [{"slot_id": "Q5-39", "answer_number": 39, "correct_option": 3}],
+      "option_reuse": "forbidden",
+      "anchor_refs": ["A1"],
+      "operation": "lexical_choice",
+      "rationale_ja": "共同配送で店員と客の直接接触が減り、関係が「越来越陌生」になることを周岚は心配している。",
+      "distractor_rationales_ja": {
+        "1": "人間関係が安静になるとは言わない。",
+        "2": "文脈上、便利さではなく心理的距離への懸念。",
+        "4": "より親切になるという方向は心配の内容と逆。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "Q5-Q3",
+      "question_no": 3,
+      "order": 3,
+      "prompt_ja": "〔空欄B〕に入れるのに最も適当な語を選べ。",
+      "options": ["却", "才", "又", "只"],
+      "response_mode": "single_choice",
+      "answer_slots": [{"slot_id": "Q5-40", "answer_number": 40, "correct_option": 1}],
+      "option_reuse": "forbidden",
+      "anchor_refs": ["A2"],
+      "operation": "discourse_connector",
+      "rationale_ja": "「虽然……却……」で、配達は遅れたが問い合わせの混乱は起きなかったという逆接を作る。",
+      "distractor_rationales_ja": {
+        "2": "「才」は遅れて初めて成立した結果を示し、虽然との対比に合わない。",
+        "3": "追加を表す「又」では前後の譲歩関係を示せない。",
+        "4": "限定の「只」では文意が成立しない。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "Q5-Q4",
+      "question_no": 4,
+      "order": 4,
+      "prompt_ja": "本文中の「临时」に最も近い意味で用いることができないものを選べ。",
+      "options": ["暂时", "一时", "短期", "永远"],
+      "response_mode": "single_choice",
+      "answer_slots": [{"slot_id": "Q5-41", "answer_number": 41, "correct_option": 4}],
+      "option_reuse": "forbidden",
+      "anchor_refs": [],
+      "operation": "lexical_choice",
+      "rationale_ja": "「临时」は一時的・その場限りの意味であり、「永远」は恒久を表して方向が逆。",
+      "distractor_rationales_ja": {
+        "1": "一時的という意味で近い。",
+        "2": "一時的という意味で近い。",
+        "3": "期間が限られるという点で文脈上近い。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "Q5-Q5",
+      "question_no": 5,
+      "order": 5,
+      "prompt_ja": "〔下線部A〕が表している内容として最も適当なものを選べ。",
+      "options": [
+        "共同配送にすると配達時間そのものは必ず短くなるということ。",
+        "移動だけでなく、注文状況を探したり説明したりする重複作業も減ったということ。",
+        "雨の日は顧客へ連絡する必要が完全になくなったということ。",
+        "周岚が配達という仕事そのものを不要だと考えるようになったということ。"
+      ],
+      "response_mode": "single_choice",
+      "answer_slots": [{"slot_id": "Q5-42", "answer_number": 42, "correct_option": 2}],
+      "option_reuse": "forbidden",
+      "anchor_refs": ["A3"],
+      "operation": "interpret",
+      "rationale_ja": "共有表により移動だけでなく、各店が別々に注文位置を確認する情報探索の時間も減ったことを指す。",
+      "distractor_rationales_ja": {
+        "1": "当日はむしろ通常より20分遅れている。",
+        "3": "顧客への説明自体が不要になったとは書かれていない。",
+        "4": "配達不要ではなく、仕事の分担方法への理解が変わった。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "Q5-Q6",
+      "question_no": 6,
+      "order": 6,
+      "prompt_ja": "〔下線部B〕のように周岚が考えるようになった理由として最も適当なものを選べ。",
+      "options": [
+        "自分の店だけ共同配送から抜けたいと考えたから。",
+        "配送担当者にすべての責任を負わせたいと考えたから。",
+        "共同作業では、失敗を個別店の問題にせず再発防止の仕組みに変える必要があると分かったから。",
+        "色つきの夹子を使えば客との会話が不要になると分かったから。"
+      ],
+      "response_mode": "single_choice",
+      "answer_slots": [{"slot_id": "Q5-43", "answer_number": 43, "correct_option": 3}],
+      "option_reuse": "forbidden",
+      "anchor_refs": ["A4"],
+      "operation": "reason",
+      "rationale_ja": "誤配をきっかけに、共同で行う以上は問題も共有し、確認手順として制度化すべきだと周岚自身が考えるようになった。",
+      "distractor_rationales_ja": {
+        "1": "本文では共同配送継続へ向かっている。",
+        "2": "責任転嫁ではなく共同ルール化が主旨。",
+        "4": "夹子は誤配防止策であり、顧客との会話とは別問題。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "Q5-Q7",
+      "question_no": 7,
+      "order": 7,
+      "prompt_ja": "試行中に実際に行われたこととして最も適当なものを選べ。",
+      "options": [
+        "商品説明が必要な注文は、店主が判断や説明を担当した。",
+        "すべての商品を同じ袋に入れ、店の区別をなくした。",
+        "雨の日は共同配送を中止し、各店が別々に配達した。",
+        "誤配が起きたあとも、手順は変更しなかった。"
+      ],
+      "response_mode": "single_choice",
+      "answer_slots": [{"slot_id": "Q5-44", "answer_number": 44, "correct_option": 1}],
+      "option_reuse": "forbidden",
+      "anchor_refs": [],
+      "operation": "content_understanding",
+      "rationale_ja": "茶葉の例では配送は共同化しても、商品選択と説明は周岚自身が行っている。",
+      "distractor_rationales_ja": {
+        "2": "袋には元の店のラベルを残している。",
+        "3": "雨の日も共同配送を継続している。",
+        "4": "誤配後に色分けと二重確認を導入している。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "Q5-Q8",
+      "question_no": 8,
+      "order": 8,
+      "prompt_ja": "本文中の出来事の順序として最も適当なものを選べ。",
+      "options": [
+        "誤配の発生→共同配送の提案→雨の日の共有表→茶葉の相談",
+        "茶葉の相談→共同配送の提案→誤配の発生→雨の日の共有表",
+        "共同配送の提案→誤配の発生→雨の日の共有表→茶葉の相談",
+        "共同配送の提案→雨の日の共有表→茶葉の相談→誤配の発生"
+      ],
+      "response_mode": "single_choice",
+      "answer_slots": [{"slot_id": "Q5-45", "answer_number": 45, "correct_option": 4}],
+      "option_reuse": "forbidden",
+      "anchor_refs": [],
+      "operation": "chronology",
+      "rationale_ja": "P2で提案、P4で雨の日、P5で茶葉相談、P6で誤配の順。",
+      "distractor_rationales_ja": {
+        "1": "提案より前に誤配は起きていない。",
+        "2": "茶葉相談は提案・雨の日より後。",
+        "3": "誤配は茶葉相談より後。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "Q5-Q9",
+      "question_no": 9,
+      "order": 9,
+      "prompt_ja": "試行を通して周岚の考えがどのように変化したか。最も適当なものを選べ。",
+      "options": [
+        "小店らしいサービスを守るため、すべての仕事を各店だけで行うべきだと強く考えるようになった。",
+        "共同化できる作業と、各店が自分で担うべきサービスを分けて考えるようになった。",
+        "共同配送では個々の顧客情報を共有しないほうがよいと考えるようになった。",
+        "配達回数が減れば、商品説明や顧客との会話も不要だと考えるようになった。"
+      ],
+      "response_mode": "single_choice",
+      "answer_slots": [{"slot_id": "Q5-46", "answer_number": 46, "correct_option": 2}],
+      "option_reuse": "forbidden",
+      "anchor_refs": ["A5"],
+      "operation": "content_understanding",
+      "rationale_ja": "最終発言は共同で担う部分と各店が責任を持つ部分を分ける発想への変化を示す。",
+      "distractor_rationales_ja": {
+        "1": "当初の懸念に近く、試行後の変化ではない。",
+        "3": "共有表など必要情報の共有を肯定している。",
+        "4": "商品説明や顧客関係は各店に残すべき仕事と考えている。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "Q5-Q10",
+      "question_no": 10,
+      "order": 10,
+      "prompt_ja": "本文の内容に合うように、次の要約文の二つの空欄に入る語句を順に選べ。『今回の試行で、店どうしは一部の仕事を（　A　）し、商品判断や顧客との関係のような部分は（　B　）するという考え方を得た。』",
+      "options": ["共同承担", "完全统一", "减少联系", "各自负责", "临时取消", "只看价格"],
+      "response_mode": "multi_slot_choice",
+      "answer_slots": [
+        {"slot_id": "Q5-47", "answer_number": 47, "correct_option": 1},
+        {"slot_id": "Q5-48", "answer_number": 48, "correct_option": 4}
+      ],
+      "option_reuse": "forbidden",
+      "anchor_refs": ["A5"],
+      "operation": "sentence_choice",
+      "rationale_ja": "最終段落の『可以一起承担』と『必须由各家负责』という対比を要約したもの。",
+      "distractor_rationales_ja": {},
+      "slot_distractor_rationales_ja": {
+        "Q5-47": {
+          "2": "本文は各店を完全に同一化する考えを否定している。",
+          "3": "共同配送の目的は顧客との連絡を減らすことではない。",
+          "4": "Aは共同化できる仕事を述べる位置。",
+          "5": "試行を中止する内容ではない。",
+          "6": "価格中心の判断は本文にない。"
+        },
+        "Q5-48": {
+          "1": "Bは各店に残す責任を述べる位置。",
+          "2": "商品判断まで統一する方針ではない。",
+          "3": "顧客関係を減らすという意味ではない。",
+          "5": "継続的に各店が担う仕事であり、臨時取消ではない。",
+          "6": "価格判断の話ではない。"
+        }
+      }
+    },
+    {
+      "task_id": "Q5-Q11",
+      "question_no": 11,
+      "order": 11,
+      "prompt_ja": "本文全体の内容に合うものを二つ選べ。",
+      "options": [
+        "共同配送を始めてから、各店は顧客からの問い合わせに答えられなくなった。",
+        "共有表や確認手順を整えることで、共同作業でも各店が必要な情報を把握できるようにした。",
+        "周岚は最後まで、店主本人がすべての配達をすることが小店のサービスだと考え続けた。",
+        "誤配が起きたため、老街は二週間で共同配送を中止した。",
+        "試行後、共同化する仕事と各店に残す仕事を分けながら制度を続けることになった。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [
+        {"slot_id": "Q5-49", "answer_number": 49, "correct_option": 2},
+        {"slot_id": "Q5-50", "answer_number": 50, "correct_option": 5}
+      ],
+      "option_reuse": "forbidden",
+      "anchor_refs": ["A3", "A4", "A5"],
+      "operation": "whole_text_consistency",
+      "rationale_ja": "情報共有と確認手順を改善しながら、共同化できる作業と各店が担う作業を分けて継続するという本文全体の流れに一致する。",
+      "distractor_rationales_ja": {
+        "1": "共有表によりむしろ各店が注文状況を答えやすくなった。",
+        "3": "周岚は親自送货と亲自服务を区別するようになった。",
+        "4": "誤配後にルールを改善し、試行を継続している。"
+      },
+      "slot_distractor_rationales_ja": {}
+    }
+  ],
+  "originality_statement": "本文の『青石街』と登場人物・共同配送試行・雨天共有表・茶葉相談・誤配改善という出来事の連鎖は本Pilot用に新規設計した完全な架空設定であり、2026公式長文の人物、制度、事件順序、段落論理を転用していない。",
+  "workflow": {
+    "state": "draft",
+    "generation_mode": "manual_chat",
+    "blueprint_version": "R8-2026-full-v1"
+  }
+}
