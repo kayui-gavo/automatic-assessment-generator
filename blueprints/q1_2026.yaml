@@ -1,0 +1,68 @@
+section: Q1
+label_ja: 発音・ピンイン
+score: 24
+answer_numbers: [1, 6]
+surface_family: shared_2026
+primary_references: [2026_main, 2026_makeup]
+
+structure:
+  A:
+    answers: [1]
+    task_type: phonetic_count
+    target: initial
+    candidate_count: 4
+    count_choices: [一つ, 二つ, 三つ, 四つ, なし]
+  B:
+    answers: [2]
+    task_type: phonetic_count
+    target: final
+    candidate_count: 4
+    tone_ignored: true
+    count_choices: [一つ, 二つ, 三つ, 四つ, なし]
+  C:
+    answers: [3, 4]
+    tasks: 2
+    task_type: phonetic_count
+    target: tone_pattern
+    candidate_count: 4
+    count_choices: [一つ, 二つ, 三つ, 四つ, なし]
+  D:
+    answers: [5, 6]
+    tasks: 2
+    task_type: pinyin_dialogue_comprehension
+    stimulus_language: tone_marked_pinyin
+    question_language: Japanese
+    option_language: Japanese
+    construct:
+      - intention
+      - next_action
+      - concern
+      - reason
+      - conversation_meaning
+
+human_qa_required:
+  - pinyin_correctness
+  - initial_final_analysis_correctness
+  - tone_correctness
+  - yi_bu_tone_sandhi_handling
+  - polyphone_context_unambiguous
+  - pinyin_diacritic_layout
+  - dialogue_naturalness
+
+validator_scope:
+  deterministic:
+    - schema
+    - exact_answer_range
+    - candidate_counts
+    - option_counts
+    - unicode_tone_mark_presence
+    - answer_metadata_consistency
+  explicitly_human:
+    - real_pronunciation_correctness
+    - lexical_level
+    - natural_dialogue
+
+originality:
+  - use basic high-school-accessible vocabulary
+  - do not reuse official headwords/candidate sets as a bundle
+  - do not construct a near-identical minimal-pair set by noun substitution
