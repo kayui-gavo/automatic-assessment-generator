@@ -8,6 +8,7 @@ from jinja2 import Template
 
 from .io import load_json
 from .models import Item
+from .production import item_fingerprint
 
 BLUEPRINT_VERSION = "R8-2026-main-tsui-v3"
 
@@ -35,8 +36,8 @@ def create_q4_request(
     if surface_family not in {"main_2026", "makeup_2026"}:
         raise ValueError("surface_family must be main_2026 or makeup_2026")
 
-    # Milliseconds are enough to prevent accidental collisions from repeated UI clicks
-    # while keeping item ids readable in filenames and review logs.
+    # Milliseconds prevent accidental collisions from repeated UI clicks while
+    # keeping item IDs readable in filenames and review logs.
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")[:-3]
     item_id = f"TABITO-CN-Q4-{stamp}"
     spec = {
@@ -95,10 +96,12 @@ def _blind_item_dict(item: Item) -> dict:
 def create_review_request(root: Path, item_path: Path) -> Path:
     item = Item.model_validate(load_json(item_path))
     blind_json = json.dumps(_blind_item_dict(item), ensure_ascii=False, indent=2)
+    fingerprint = item_fingerprint(item)
     prompt_path = root / "prompts" / "review_q4.md"
     prompt = Template(prompt_path.read_text(encoding="utf-8")).render(
         **_reference_context(root),
         item_json=blind_json,
+        candidate_fingerprint=fingerprint,
     )
     reviews = root / "workspace" / "reviews"
     reviews.mkdir(parents=True, exist_ok=True)
