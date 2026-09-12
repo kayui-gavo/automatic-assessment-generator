@@ -28,7 +28,7 @@ def test_real_pilot_exam_001_renders_continuous_tex(tmp_path):
     assert answer_key and answer_key.exists()
 
     student_text = student.read_text(encoding="utf-8")
-    assert "地域防災体験イベント" in student_text
+    assert "地域の防災体験イベント" in student_text
     assert "古い商店街の共同配送と店主の変化" not in student_text  # topic metadata must not leak as a heading
     assert "共同配送" in student_text
     for label in ("第1問", "第2問", "第3問", "第4問", "第5問"):
