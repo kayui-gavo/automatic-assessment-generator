@@ -1,0 +1,53 @@
+section: Q3
+label_ja: 表現力
+score: 40
+answer_numbers: [13, 20]
+surface_family: shared_2026
+primary_references: [2026_main, 2026_makeup]
+
+structure:
+  A:
+    answers: [13, 14, 15, 16]
+    tasks: 4
+    direction: ja_to_zh
+    source_language: Japanese
+    option_language: tone_marked_pinyin
+    response_mode: single_choice
+  B:
+    answers: [17, 18, 19, 20]
+    tasks: 4
+    direction: zh_to_ja
+    source_language: tone_marked_pinyin
+    option_language: Japanese
+    response_mode: single_choice
+
+constructs:
+  - sentence_pattern
+  - semantic_scope
+  - negation_scope
+  - condition
+  - concession
+  - degree
+  - pragmatic_force
+  - result_and_reason
+  - natural_chinese_expression
+
+required_distractor_error_taxonomy:
+  - scope
+  - subject_object
+  - aspect
+  - modality
+  - lexical_meaning
+  - causal_relation
+  - pragmatic_force
+  - overtranslation
+  - undertranslation
+
+hard_rules:
+  - do not reduce tasks to word-for-word translation
+  - every distractor records at least one concrete error type and explanation
+  - all Chinese shown in Q3 options/source must use correctly tone-marked pinyin where the official surface requires pinyin
+
+originality:
+  - write new Japanese prompts and Chinese expressions
+  - do not paraphrase official sentence pairs by swapping nouns
