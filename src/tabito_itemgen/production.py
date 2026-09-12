@@ -40,12 +40,7 @@ def _utc_now() -> str:
 
 
 def parse_chat_json(text: str) -> dict:
-    """Parse a manual-ChatGPT JSON response without accepting arbitrary prose.
-
-    Generation prompts require JSON-only output, but ChatGPT may still wrap the
-    response in one Markdown code fence. Accept that wrapper and reject surrounding
-    commentary so accidental prose never enters the item bank.
-    """
+    """Parse a manual-ChatGPT JSON response without accepting arbitrary prose."""
 
     stripped = text.strip()
     match = _CODE_FENCE_RE.fullmatch(stripped)
@@ -58,15 +53,17 @@ def parse_chat_json(text: str) -> dict:
 
 
 def item_fingerprint(item: Item) -> str:
-    """Return a stable fingerprint of the substantive candidate content.
+    """Fingerprint substantive content while ignoring only workflow state.
 
-    Workflow state is intentionally excluded so moving the exact same content from
-    draft to approved does not invalidate the audit trail. Every other item field is
-    included: changing a prompt, option, answer, material, rationale, source note, or
-    blueprint-facing metadata invalidates previous review/QA evidence.
+    `draft -> reviewed -> approved` must not invalidate QA evidence, but changing the
+    blueprint version, family, wording, materials, answers, rationale, or any other
+    item content must invalidate it.
     """
 
-    payload = item.model_dump(exclude={"workflow"})
+    payload = item.model_dump()
+    workflow = payload.get("workflow")
+    if isinstance(workflow, dict):
+        workflow.pop("state", None)
     encoded = json.dumps(
         payload,
         ensure_ascii=False,
@@ -76,12 +73,23 @@ def item_fingerprint(item: Item) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def save_draft(root: Path, item: Item) -> Path:
+    """Persist one canonical draft and force workflow state back to draft."""
+
+    draft = item.model_copy(deep=True)
+    draft.workflow.state = "draft"
+    path = root / "item_bank" / "draft" / f"{draft.item_id}.json"
+    dump_json(path, draft.model_dump())
+    return path
+
+
 def import_item_response(
     root: Path,
     text: str,
     *,
     expected_item_id: str | None = None,
     expected_surface_family: str | None = None,
+    expected_blueprint_version: str | None = None,
 ) -> tuple[Item, Path, Path, list[str], list[str]]:
     data = parse_chat_json(text)
     item = Item.model_validate(data)
@@ -95,18 +103,19 @@ def import_item_response(
             "generated surface_family "
             f"{item.surface_family!r} does not match request {expected_surface_family!r}"
         )
-
-    # Generated responses always enter the local bank as drafts, regardless of what
-    # the model returned in workflow.state.
-    canonical = item.model_copy(deep=True)
-    canonical.workflow.state = "draft"
+    if expected_blueprint_version and item.workflow.blueprint_version != expected_blueprint_version:
+        raise ValueError(
+            "generated blueprint_version "
+            f"{item.workflow.blueprint_version!r} does not match request "
+            f"{expected_blueprint_version!r}"
+        )
 
     responses = root / "workspace" / "responses"
-    response_path = responses / f"{canonical.item_id}.response.json"
+    response_path = responses / f"{item.item_id}.response.json"
     dump_json(response_path, data)
 
-    draft_path = root / "item_bank" / "draft" / f"{canonical.item_id}.json"
-    dump_json(draft_path, canonical.model_dump())
+    draft_path = save_draft(root, item)
+    canonical = Item.model_validate(load_json(draft_path))
     _, errors, warnings = validate_item_file(draft_path)
     return canonical, response_path, draft_path, errors, warnings
 
@@ -144,6 +153,23 @@ def _candidate_for_item_id(root: Path, item_id: str) -> Item | None:
     return None
 
 
+def _mark_reviewed_if_current(root: Path, candidate: Item, review: Review) -> None:
+    errors, _ = compare_review(candidate, review)
+    if errors:
+        return
+    draft_path = root / "item_bank" / "draft" / f"{candidate.item_id}.json"
+    if not draft_path.exists():
+        return
+    try:
+        draft = Item.model_validate(load_json(draft_path))
+    except (ValidationError, ValueError, json.JSONDecodeError):
+        return
+    if item_fingerprint(draft) != item_fingerprint(candidate):
+        return
+    draft.workflow.state = "reviewed"
+    dump_json(draft_path, draft.model_dump())
+
+
 def import_review_response(
     root: Path,
     text: str,
@@ -170,6 +196,7 @@ def import_review_response(
             "saved_at": _utc_now(),
         },
     )
+    _mark_reviewed_if_current(root, candidate, review)
     return review, path
 
 
@@ -291,22 +318,20 @@ def release_readiness(
     else:
         binding_ok, binding_detail = review_binding_status(root, item)
         review_errors, _ = compare_review(item, review)
-        passed = binding_ok and not review_errors
-        detail_parts = [binding_detail]
+        detail = binding_detail
         if review_errors:
-            detail_parts.append("; ".join(review_errors))
-        gates.append(Gate("blind review", passed, " | ".join(detail_parts)))
+            detail += " | " + "; ".join(review_errors)
+        gates.append(Gate("blind review", binding_ok and not review_errors, detail))
 
     if human_qa is None:
         gates.append(Gate("human QA", False, "human QA record not saved"))
     else:
         binding_ok, binding_detail = human_qa_binding_status(root, item)
         qa_errors = human_qa_errors(item, human_qa)
-        passed = binding_ok and not qa_errors
-        detail_parts = [binding_detail]
+        detail = binding_detail
         if qa_errors:
-            detail_parts.append("; ".join(qa_errors))
-        gates.append(Gate("human QA", passed, " | ".join(detail_parts)))
+            detail += " | " + "; ".join(qa_errors)
+        gates.append(Gate("human QA", binding_ok and not qa_errors, detail))
 
     matches = check_bank_similarity(item, root / "item_bank" / "approved")
     best = matches[0] if matches else None
@@ -327,26 +352,7 @@ def release_readiness(
     )
 
 
-def approve_item(root: Path, item_path: Path) -> tuple[Path, ReleaseReadiness]:
-    readiness = release_readiness(root, item_path)
-    if not readiness.ready:
-        failed = [f"{gate.name}: {gate.detail}" for gate in readiness.gates if not gate.passed]
-        raise ValueError("release gates failed: " + " | ".join(failed))
-
-    item = Item.model_validate(load_json(item_path))
-    target = root / "item_bank" / "approved" / f"{item.item_id}.json"
-    if target.exists():
-        existing = Item.model_validate(load_json(target))
-        if item_fingerprint(existing) != readiness.fingerprint:
-            raise ValueError(
-                "approved item_id already exists with different content; create a new item_id/version"
-            )
-        return target, readiness
-
-    approved = item.model_copy(deep=True)
-    approved.workflow.state = "approved"
-    dump_json(target, approved.model_dump())
-
+def _write_release_record(root: Path, item: Item, readiness: ReleaseReadiness, target: Path) -> None:
     record = {
         "item_id": item.item_id,
         "item_fingerprint": readiness.fingerprint,
@@ -362,4 +368,39 @@ def approve_item(root: Path, item_path: Path) -> tuple[Path, ReleaseReadiness]:
         ],
     }
     dump_json(release_record_path(root, item.item_id), record)
+
+
+def approve_item(root: Path, item_path: Path) -> tuple[Path, ReleaseReadiness]:
+    readiness = release_readiness(root, item_path)
+    if not readiness.ready:
+        failed = [f"{gate.name}: {gate.detail}" for gate in readiness.gates if not gate.passed]
+        raise ValueError("release gates failed: " + " | ".join(failed))
+
+    item = Item.model_validate(load_json(item_path))
+    target = root / "item_bank" / "approved" / f"{item.item_id}.json"
+    if target.exists():
+        existing = Item.model_validate(load_json(target))
+        if item_fingerprint(existing) != readiness.fingerprint:
+            raise ValueError(
+                "approved item_id already exists with different content; create a new item_id/version"
+            )
+        if not release_record_path(root, item.item_id).exists():
+            _write_release_record(root, item, readiness, target)
+        return target, readiness
+
+    approved = item.model_copy(deep=True)
+    approved.workflow.state = "approved"
+    dump_json(target, approved.model_dump())
+    _write_release_record(root, item, readiness, target)
+
+    # Once approved, remove an identical canonical draft to keep the library clean.
+    draft_path = root / "item_bank" / "draft" / f"{item.item_id}.json"
+    if draft_path.exists():
+        try:
+            draft = Item.model_validate(load_json(draft_path))
+            if item_fingerprint(draft) == readiness.fingerprint:
+                draft_path.unlink()
+        except (ValidationError, ValueError, json.JSONDecodeError, OSError):
+            pass
+
     return target, readiness
