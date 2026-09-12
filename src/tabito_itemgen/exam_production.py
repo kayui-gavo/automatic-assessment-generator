@@ -216,6 +216,20 @@ def section_author_answers(section) -> dict[str, list[int]]:
     raise TypeError(f"unsupported section type {type(section)!r}")
 
 
+def _answers_match(section, task_id: str, author: list[int], reviewer: list[int]) -> bool:
+    """Respect the response semantics of each task when comparing a blind solve.
+
+    Only true multi-select questions are set-valued. Ordering tasks and multi-slot
+    questions encode different answer positions, so reversing their answers must fail.
+    """
+
+    if isinstance(section, (Item, Q5Section)):
+        task = next(task for task in section.tasks if task.task_id == task_id)
+        if task.response_mode == "multi_select":
+            return sorted(reviewer) == sorted(author)
+    return reviewer == author
+
+
 def _review_errors(section, review: SectionReview) -> list[str]:
     errors: list[str] = []
     if review.section != section.section or review.section_id != section_id(section):
@@ -230,7 +244,7 @@ def _review_errors(section, review: SectionReview) -> list[str]:
     else:
         for task_id, author in expected.items():
             reviewer = review.independent_answers[task_id]
-            if sorted(reviewer) != sorted(author):
+            if not _answers_match(section, task_id, author, reviewer):
                 errors.append(f"{task_id}: reviewer answer {reviewer} != author key {author}")
     if any(issue.severity == "high" for issue in review.issues):
         errors.append("review contains high-severity issue")
@@ -420,7 +434,6 @@ def approve_exam(root: Path, exam_id: str) -> tuple[Path, Readiness]:
     if target.exists():
         approved_manifest = target / "exam.json"
         if approved_manifest.exists():
-            # Compare the release record rather than silently overwriting an approved exam.
             record = exam_release_record_path(root, exam_id)
             if record.exists() and load_json(record).get("exam_fingerprint") == readiness.fingerprint:
                 return target, readiness
