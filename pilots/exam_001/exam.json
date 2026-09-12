@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.5",
+  "exam_id": "TABITO-CN-PILOT-EXAM-001",
+  "blueprint_version": "R8-2026-full-v1",
+  "exam_family": "main_2026",
+  "title_ja": "旅人教育 共通テスト中国語 模試 Pilot 001",
+  "duration_minutes": 80,
+  "total_score": 200,
+  "answer_range": [1, 50],
+  "notes": "First real full-exam content-QA pilot. Not approved or gold material.",
+  "q4_topic_request": "地域防災イベント",
+  "q5_topic_request": "古い商店街の共同配送と店主の変化",
+  "sections": [
+    {"section": "Q1", "section_id": "TABITO-CN-PILOT-EXAM-001-Q1", "path": "q1_v1.json", "expected_score": 24, "answer_start": 1, "answer_end": 6, "state": "draft", "fingerprint": null},
+    {"section": "Q2", "section_id": "TABITO-CN-PILOT-EXAM-001-Q2", "path": "q2_v1.json", "expected_score": 16, "answer_start": 7, "answer_end": 12, "state": "draft", "fingerprint": null},
+    {"section": "Q3", "section_id": "TABITO-CN-PILOT-EXAM-001-Q3", "path": "q3_v1.json", "expected_score": 40, "answer_start": 13, "answer_end": 20, "state": "draft", "fingerprint": null},
+    {"section": "Q4", "section_id": "TABITO-CN-PILOT-EXAM-001-Q4", "path": "q4_v1.json", "expected_score": 60, "answer_start": 21, "answer_end": 36, "state": "draft", "fingerprint": null},
+    {"section": "Q5", "section_id": "TABITO-CN-PILOT-EXAM-001-Q5", "path": "q5_v1.json", "expected_score": 60, "answer_start": 37, "answer_end": 50, "state": "draft", "fingerprint": null}
+  ],
+  "workflow": {"state": "draft", "generation_mode": "manual_chat"}
+}
