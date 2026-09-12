@@ -7,13 +7,23 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from .exam_models import ExamManifest, Q1DialogueTask, Q1PhoneticCountTask, Q1Section, Q2OrderingTask, Q2Section, Q3Section, Q5Section
+from .exam_models import (
+    ExamManifest,
+    Q1DialogueTask,
+    Q1PhoneticCountTask,
+    Q1Section,
+    Q2OrderingTask,
+    Q2Section,
+    Q3Section,
+    Q5Section,
+)
 from .io import load_json
 from .models import Item
 from .section_io import load_section, section_answer_numbers, section_fingerprint, section_id
 from .validate import validate_item_file
 
 _TONE_MARK_RE = re.compile(r"[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜĀÁǍÀĒÉĚÈĪÍǏÌŌÓǑÒŪÚǓÙǕǗǙǛ]")
+_KANA_RE = re.compile(r"[\u3040-\u30ff]")
 
 
 @dataclass(frozen=True)
@@ -40,8 +50,11 @@ def _validate_q1(section: Q1Section) -> ValidationResult:
                 if not _has_tone_mark(word.pinyin):
                     errors.append(f"{task.task_id}: pinyin for {word.label!r} has no Unicode tone mark")
         elif isinstance(task, Q1DialogueTask):
-            if not any(_has_tone_mark(line.pinyin) for line in task.lines):
-                errors.append(f"{task.task_id}: dialogue has no Unicode tone-marked pinyin")
+            missing = [line.speaker for line in task.lines if not _has_tone_mark(line.pinyin)]
+            if missing:
+                errors.append(
+                    f"{task.task_id}: dialogue lines without Unicode tone-marked pinyin: {missing}"
+                )
         if task.answer_slot.correct_option > len(task.options):
             errors.append(f"{task.task_id}: correct option exceeds option count")
     return ValidationResult(tuple(errors), tuple(warnings))
@@ -66,16 +79,30 @@ def _validate_q3(section: Q3Section) -> ValidationResult:
     for task in section.tasks:
         if task.answer_slot.correct_option > len(task.options):
             errors.append(f"{task.task_id}: correct option exceeds option count")
-        wrong = {str(index) for index in range(1, len(task.options) + 1)} - {str(task.answer_slot.correct_option)}
+        wrong = {str(index) for index in range(1, len(task.options) + 1)} - {
+            str(task.answer_slot.correct_option)
+        }
         missing_types = wrong - set(task.distractor_error_types)
         missing_reasons = wrong - set(task.distractor_rationales_ja)
         if missing_types:
             errors.append(f"{task.task_id}: missing distractor error types for {sorted(missing_types)}")
         if missing_reasons:
             errors.append(f"{task.task_id}: missing distractor rationales for {sorted(missing_reasons)}")
-        chinese_texts = task.options if task.direction == "ja_to_zh" else [task.source_text]
-        if not any(_has_tone_mark(text) for text in chinese_texts):
-            errors.append(f"{task.task_id}: expected tone-marked pinyin is missing")
+
+        if task.direction == "ja_to_zh":
+            missing_pinyin = [index for index, option in enumerate(task.options, start=1) if not _has_tone_mark(option)]
+            if missing_pinyin:
+                errors.append(
+                    f"{task.task_id}: ja_to_zh options without tone-marked pinyin: {missing_pinyin}"
+                )
+        else:
+            if not _has_tone_mark(task.source_text):
+                errors.append(f"{task.task_id}: zh_to_ja source is missing tone-marked pinyin")
+            japanese_options = sum(bool(_KANA_RE.search(option)) for option in task.options)
+            if japanese_options < 3:
+                warnings.append(
+                    f"{task.task_id}: zh_to_ja options do not clearly read as Japanese prose"
+                )
     return ValidationResult(tuple(errors), tuple(warnings))
 
 
@@ -91,7 +118,10 @@ def _validate_q5(section: Q5Section) -> ValidationResult:
         warnings.append(f"Q5 anchors not referenced by any task: {unused}")
     if not any(task.operation == "whole_text_consistency" for task in section.tasks):
         errors.append("Q5 requires a whole-text consistency task")
-    if not any(task.operation in {"lexical_choice", "sentence_choice", "discourse_connector"} for task in section.tasks):
+    if not any(
+        task.operation in {"lexical_choice", "sentence_choice", "discourse_connector"}
+        for task in section.tasks
+    ):
         errors.append("Q5 requires at least one language-form choice task")
     return ValidationResult(tuple(errors), tuple(warnings))
 
@@ -119,19 +149,23 @@ def validate_section_file(path: Path) -> ValidationResult:
     return ValidationResult((f"unsupported section type {type(section)!r}",), ())
 
 
-def _correct_options(section) -> list[int]:
+def _choice_position_answers(section) -> list[int]:
+    """Return only genuine option positions for whole-exam distribution warnings.
+
+    Q2 ordering stores token IDs 1..8 in its answer slots. Those are not positions in
+    an ordinary ①–④ choice set and must not be mixed into answer-position statistics.
+    """
+
     if isinstance(section, Item):
         return [slot.correct_option for task in section.tasks for slot in task.answer_slots]
     if isinstance(section, Q1Section):
         return [task.answer_slot.correct_option for task in section.tasks]
     if isinstance(section, Q2Section):
-        values: list[int] = []
-        for task in section.tasks:
-            if isinstance(task, Q2OrderingTask):
-                values.extend(slot.correct_option for slot in task.answer_slots)
-            else:
-                values.append(task.answer_slot.correct_option)
-        return values
+        return [
+            task.answer_slot.correct_option
+            for task in section.tasks
+            if not isinstance(task, Q2OrderingTask)
+        ]
     if isinstance(section, Q3Section):
         return [task.answer_slot.correct_option for task in section.tasks]
     if isinstance(section, Q5Section):
@@ -165,7 +199,7 @@ def validate_exam(manifest_path: Path) -> ValidationResult:
     loaded: dict[str, object] = {}
     all_numbers: list[int] = []
     all_ids: list[str] = []
-    all_correct: list[int] = []
+    choice_positions: list[int] = []
 
     for ref in manifest.sections:
         if not ref.path:
@@ -192,7 +226,7 @@ def validate_exam(manifest_path: Path) -> ValidationResult:
             errors.append(f"{ref.section}: expected answer numbers {expected}, got {numbers}")
         all_numbers.extend(numbers)
         all_ids.append(section_id(section))
-        all_correct.extend(_correct_options(section))
+        choice_positions.extend(_choice_position_answers(section))
         fingerprint = section_fingerprint(section)
         if ref.fingerprint and ref.fingerprint != fingerprint:
             errors.append(f"{ref.section}: manifest fingerprint is stale")
@@ -207,18 +241,26 @@ def validate_exam(manifest_path: Path) -> ValidationResult:
     q4 = loaded.get("Q4")
     q5 = loaded.get("Q5")
     if isinstance(q4, Item) and q4.surface_family != manifest.exam_family:
-        errors.append(f"Q4 family {q4.surface_family!r} does not match exam family {manifest.exam_family!r}")
+        errors.append(
+            f"Q4 family {q4.surface_family!r} does not match exam family {manifest.exam_family!r}"
+        )
     if isinstance(q5, Q5Section) and q5.surface_family != manifest.exam_family:
-        errors.append(f"Q5 family {q5.surface_family!r} does not match exam family {manifest.exam_family!r}")
+        errors.append(
+            f"Q5 family {q5.surface_family!r} does not match exam family {manifest.exam_family!r}"
+        )
 
-    if all_correct:
-        counts = Counter(all_correct)
-        if max(counts.values()) > len(all_correct) * 0.35:
-            warnings.append(f"exam correct-option distribution may be imbalanced: {dict(sorted(counts.items()))}")
+    if choice_positions:
+        counts = Counter(choice_positions)
+        if max(counts.values()) > len(choice_positions) * 0.35:
+            warnings.append(
+                f"exam correct-option distribution may be imbalanced: {dict(sorted(counts.items()))}"
+            )
 
     if isinstance(q4, Item) and isinstance(q5, Q5Section):
         similarity = _topic_similarity(q4.topic, q5.topic)
         if similarity >= 0.35:
-            warnings.append(f"Q4 and Q5 topics may be too similar (character 3-gram Jaccard={similarity:.2f})")
+            warnings.append(
+                f"Q4 and Q5 topics may be too similar (character 3-gram Jaccard={similarity:.2f})"
+            )
 
     return ValidationResult(tuple(errors), tuple(warnings))
