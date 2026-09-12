@@ -1,8 +1,19 @@
-# TABITO 共通テスト中国語 Q4 ブラインド独立審査 v0.4.1
+# TABITO 共通テスト中国語 Q4 ブラインド独立審査 v0.4.2
 
 以下は旅人教育の候補問題である。標準解答・根拠・解説・生成者の自己評価は意図的に削除されている。
 
 まず受験者として独立に解き、その後に命題者として品質を審査する。
+
+## Candidate binding
+
+この審査は次の候補版にだけ有効である。
+
+```text
+{{ candidate_fingerprint }}
+```
+
+出力 JSON の `candidate_fingerprint` に、この文字列を**一字も変更せず**そのまま返すこと。
+これは内容のヒントではなく、審査対象版を取り違えないための opaque identifier である。
 
 ## 最重要
 
@@ -86,6 +97,7 @@ JSON のみ。
 必須フィールド：
 - schema_version: `"0.2"`
 - item_id
+- candidate_fingerprint: 上記 Candidate binding の fingerprint をそのまま返す
 - verdict: `pass` / `revise` / `reject`
 - independent_answers: `{task_id: [correct_option, ...]}`
 - issues: severity(`high`/`medium`/`low`), task_id(optional), category, description, suggested_fix
