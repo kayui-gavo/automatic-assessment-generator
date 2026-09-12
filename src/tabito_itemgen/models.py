@@ -326,3 +326,51 @@ class Review(BaseModel):
     independent_answers: dict[str, list[int]]
     issues: list[ReviewIssue]
     overall_comment_ja: str
+
+
+class HumanQAChecks(BaseModel):
+    chinese_naturalness: bool = False
+    japanese_instruction_naturalness: bool = False
+    answer_uniqueness: bool = False
+    distractors_plausible: bool = False
+    surface_fidelity_2026: bool = False
+    information_journey: bool = False
+    visual_materials_necessary: bool = False
+    originality_ok: bool = False
+    source_integrity_ok: bool = False
+    layout_readable: bool = False
+    no_solution_leak: bool = False
+
+
+class HumanQATiming(BaseModel):
+    first_read_minutes: int = Field(default=0, ge=0, le=600)
+    chinese_edit_minutes: int = Field(default=0, ge=0, le=600)
+    item_edit_minutes: int = Field(default=0, ge=0, le=600)
+    layout_edit_minutes: int = Field(default=0, ge=0, le=600)
+
+    @property
+    def total_minutes(self) -> int:
+        return (
+            self.first_read_minutes
+            + self.chinese_edit_minutes
+            + self.item_edit_minutes
+            + self.layout_edit_minutes
+        )
+
+
+class HumanQA(BaseModel):
+    schema_version: Literal["0.1"] = "0.1"
+    item_id: str
+    reviewer: str = Field(min_length=1)
+    disposition: Literal["approve", "revise", "reject"]
+    checks: HumanQAChecks
+    defects: list[str] = Field(default_factory=list)
+    timing: HumanQATiming = Field(default_factory=HumanQATiming)
+    tasks_materially_rewritten: int = Field(default=0, ge=0)
+    materials_materially_rewritten: int = Field(default=0, ge=0)
+    answer_key_changed: bool = False
+    blind_reviewer_disagreed: bool = False
+    high_severity_ambiguity_after_blind: bool = False
+    manual_tex_repair_required: bool = False
+    biggest_rework_cause: str = ""
+    tool_change_note: str = ""

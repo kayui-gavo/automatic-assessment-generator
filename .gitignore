@@ -8,10 +8,16 @@ __pycache__/
 output/*
 !output/.gitkeep
 
-# Manual-chat transient exchange files
+# Manual-chat and production records stay local.
 workspace/requests/*
 !workspace/requests/.gitkeep
 workspace/responses/*
 !workspace/responses/.gitkeep
 workspace/reviews/*
 !workspace/reviews/.gitkeep
+workspace/human_qa/*
+!workspace/human_qa/.gitkeep
+workspace/releases/*
+!workspace/releases/.gitkeep
+workspace/ui_temp/*
+!workspace/ui_temp/.gitkeep

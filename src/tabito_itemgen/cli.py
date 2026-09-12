@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import argparse
-import shutil
 from pathlib import Path
 
 from .generate_request import create_q4_request, create_review_request, create_revision_request
 from .io import load_json
 from .models import Item, Review
 from .paths import find_project_root
+from .production import approve_item, import_item_response, release_readiness
 from .render import compile_xelatex, render_item_tex
+from .review_io import import_bound_review_response
 from .validate import check_bank_similarity, compare_review, validate_item_file
 
 
@@ -32,12 +33,17 @@ def cmd_new_item(args: argparse.Namespace) -> int:
 def cmd_import(args: argparse.Namespace) -> int:
     root = find_project_root()
     source = Path(args.file).resolve()
-    item = Item.model_validate(load_json(source))
-    target = root / "item_bank" / "draft" / f"{item.item_id}.json"
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    item, _, target, errors, warnings = import_item_response(
+        root,
+        source.read_text(encoding="utf-8"),
+    )
     print(f"imported draft: {target}")
-    return 0
+    print(f"item_id: {item.item_id}")
+    for error in errors:
+        print(f"ERROR: {error}")
+    for warning in warnings:
+        print(f"WARNING: {warning}")
+    return 1 if errors else 0
 
 
 def _print_validation(item, errors, warnings) -> int:
@@ -75,11 +81,9 @@ def cmd_review_request(args: argparse.Namespace) -> int:
 def cmd_import_review(args: argparse.Namespace) -> int:
     root = find_project_root()
     source = Path(args.file).resolve()
-    review = Review.model_validate(load_json(source))
-    target = root / "workspace" / "reviews" / f"{review.item_id}.review.json"
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
-    print(target)
+    review, target = import_bound_review_response(root, source.read_text(encoding="utf-8"))
+    print(f"saved review: {target}")
+    print(f"item_id: {review.item_id}")
     return 0
 
 
@@ -87,12 +91,9 @@ def cmd_review_check(args: argparse.Namespace) -> int:
     item = Item.model_validate(load_json(Path(args.item).resolve()))
     review = Review.model_validate(load_json(Path(args.review).resolve()))
     errors, warnings = compare_review(item, review)
-    if errors:
-        print("FAIL")
-        for error in errors:
-            print(f"ERROR: {error}")
-    else:
-        print("PASS")
+    print("PASS" if not errors else "FAIL")
+    for error in errors:
+        print(f"ERROR: {error}")
     for warning in warnings:
         print(f"WARNING: {warning}")
     return 1 if errors else 0
@@ -121,44 +122,27 @@ def cmd_similarity(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_release_check(args: argparse.Namespace) -> int:
+    root = find_project_root()
+    readiness = release_readiness(root, Path(args.file).resolve())
+    print(f"item_id: {readiness.item_id}")
+    if readiness.fingerprint:
+        print(f"fingerprint: {readiness.fingerprint}")
+    for gate in readiness.gates:
+        status = "PASS" if gate.passed else "FAIL"
+        print(f"{status}: {gate.name} — {gate.detail}")
+    return 0 if readiness.ready else 1
+
+
 def cmd_approve(args: argparse.Namespace) -> int:
     root = find_project_root()
-    source = Path(args.file).resolve()
-    item, errors, warnings = validate_item_file(source)
-    if errors or item is None:
-        print("Cannot approve: item validation failed")
-        for error in errors:
-            print(f"ERROR: {error}")
+    try:
+        target, readiness = approve_item(root, Path(args.file).resolve())
+    except ValueError as exc:
+        print(f"Cannot approve: {exc}")
         return 1
-
-    if not args.override_review:
-        if not args.review:
-            print("Cannot approve: --review is required (or use --override-review explicitly)")
-            return 1
-        review = Review.model_validate(load_json(Path(args.review).resolve()))
-        review_errors, review_warnings = compare_review(item, review)
-        errors.extend(review_errors)
-        warnings.extend(review_warnings)
-        if review_errors:
-            print("Cannot approve: blind review gate failed")
-            for error in review_errors:
-                print(f"ERROR: {error}")
-            return 1
-
-    matches = check_bank_similarity(item, root / "item_bank" / "approved")
-    if matches and matches[0][1] >= 0.35 and not args.override_similarity:
-        print("Cannot approve: high similarity to approved bank")
-        for other_id, score in matches[:5]:
-            print(f"SIMILAR: {score:.3f} {other_id}")
-        print("Use --override-similarity only after human confirmation.")
-        return 1
-
-    target = root / "item_bank" / "approved" / f"{item.item_id}.json"
-    target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(source, target)
     print(f"approved: {target}")
-    for warning in warnings:
-        print(f"WARNING: {warning}")
+    print(f"fingerprint: {readiness.fingerprint}")
     return 0
 
 
@@ -201,7 +185,7 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("--notes", default=None)
     command.set_defaults(func=cmd_new_item)
 
-    command = sub.add_parser("import-response", help="Validate schema and import generated JSON")
+    command = sub.add_parser("import-response", help="Import generated JSON as a canonical draft")
     command.add_argument("file")
     command.set_defaults(func=cmd_import)
 
@@ -209,11 +193,11 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("file")
     command.set_defaults(func=cmd_validate)
 
-    command = sub.add_parser("review-request", help="Create a blind independent-review prompt")
+    command = sub.add_parser("review-request", help="Create a fingerprint-bound blind-review prompt")
     command.add_argument("file")
     command.set_defaults(func=cmd_review_request)
 
-    command = sub.add_parser("import-review", help="Validate and save a review JSON")
+    command = sub.add_parser("import-review", help="Verify fingerprint and save a review JSON")
     command.add_argument("file")
     command.set_defaults(func=cmd_import_review)
 
@@ -231,11 +215,12 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("file")
     command.set_defaults(func=cmd_similarity)
 
-    command = sub.add_parser("approve", help="Approve an item after validation + blind review")
+    command = sub.add_parser("release-check", help="Show all release gates for one candidate")
     command.add_argument("file")
-    command.add_argument("--review")
-    command.add_argument("--override-review", action="store_true")
-    command.add_argument("--override-similarity", action="store_true")
+    command.set_defaults(func=cmd_release_check)
+
+    command = sub.add_parser("approve", help="Approve only after all persisted release gates pass")
+    command.add_argument("file")
     command.set_defaults(func=cmd_approve)
 
     command = sub.add_parser("render", help="Render student/teacher LaTeX files")
