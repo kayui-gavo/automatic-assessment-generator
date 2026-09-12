@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tabito_itemgen.io import dump_json, load_json
+from tabito_itemgen.io import load_json
 from tabito_itemgen.models import HumanQA, HumanQAChecks, HumanQATiming, Item, Review
 from tabito_itemgen.production import (
     approve_item,
