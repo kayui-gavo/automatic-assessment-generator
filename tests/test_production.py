@@ -1,5 +1,4 @@
 import json
-import shutil
 from pathlib import Path
 
 import pytest
@@ -13,6 +12,7 @@ from tabito_itemgen.production import (
     import_review_response,
     parse_chat_json,
     release_readiness,
+    save_draft,
     save_human_qa,
 )
 
@@ -30,6 +30,10 @@ def _root(tmp_path: Path) -> Path:
     ]:
         (tmp_path / relative).mkdir(parents=True, exist_ok=True)
     return tmp_path
+
+
+def _item() -> Item:
+    return Item.model_validate(load_json(PILOT))
 
 
 def _review(item: Item) -> Review:
@@ -73,6 +77,7 @@ def test_import_item_and_review_are_persisted(tmp_path):
     item, response_path, draft_path, errors, _ = import_item_response(root, text)
     assert response_path.exists()
     assert draft_path.exists()
+    assert draft_path.name == f"{item.item_id}.json"
     assert not errors
 
     review = _review(item)
@@ -84,7 +89,7 @@ def test_import_item_and_review_are_persisted(tmp_path):
 
 
 def test_human_qa_blocks_release_when_required_check_fails():
-    item = Item.model_validate(load_json(PILOT))
+    item = _item()
     checks = {name: True for name in HumanQAChecks.model_fields}
     checks["answer_uniqueness"] = False
     qa = _qa(item, checks=HumanQAChecks(**checks))
@@ -94,8 +99,7 @@ def test_human_qa_blocks_release_when_required_check_fails():
 
 def test_release_requires_review_and_human_qa(tmp_path):
     root = _root(tmp_path)
-    item_path = root / "item_bank" / "draft" / PILOT.name
-    shutil.copy2(PILOT, item_path)
+    item_path = save_draft(root, _item())
     item = Item.model_validate(load_json(item_path))
 
     readiness = release_readiness(root, item_path)
@@ -115,8 +119,7 @@ def test_release_requires_review_and_human_qa(tmp_path):
 
 def test_approve_writes_canonical_approved_state(tmp_path):
     root = _root(tmp_path)
-    item_path = root / "item_bank" / "draft" / PILOT.name
-    shutil.copy2(PILOT, item_path)
+    item_path = save_draft(root, _item())
     item = Item.model_validate(load_json(item_path))
     import_review_response(
         root, json.dumps(_review(item).model_dump(), ensure_ascii=False)
