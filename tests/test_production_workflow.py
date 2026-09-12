@@ -8,7 +8,6 @@ from tabito_itemgen.models import HumanQA, HumanQAChecks, Item, Review
 from tabito_itemgen.production import (
     approve_item,
     import_item_response,
-    import_review_response,
     item_fingerprint,
     parse_chat_json,
     release_readiness,
@@ -16,6 +15,7 @@ from tabito_itemgen.production import (
     save_draft,
     save_human_qa,
 )
+from tabito_itemgen.review_io import import_bound_review_response
 
 ROOT = Path(__file__).resolve().parents[1]
 PILOT = ROOT / "pilots" / "q4_pilot_002_library_study_main2026.json"
@@ -36,6 +36,12 @@ def _review(item: Item) -> Review:
         issues=[],
         overall_comment_ja="独立解答は著者キーと一致した。",
     )
+
+
+def _review_json(item: Item, fingerprint: str | None = None) -> str:
+    data = _review(item).model_dump()
+    data["candidate_fingerprint"] = fingerprint or item_fingerprint(item)
+    return json.dumps(data, ensure_ascii=False)
 
 
 def _qa(item: Item) -> HumanQA:
@@ -93,12 +99,27 @@ def test_fingerprint_ignores_state_but_tracks_blueprint_and_content():
     assert item_fingerprint(wording_changed) != baseline
 
 
+def test_old_reviewer_response_cannot_be_rebound_to_changed_candidate(tmp_path: Path):
+    item = _item()
+    old_fingerprint = item_fingerprint(item)
+    changed = item.model_copy(deep=True)
+    changed.tasks[0].prompt_ja += "（修正版）"
+    save_draft(tmp_path, changed)
+
+    with pytest.raises(ValueError, match="candidate_fingerprint"):
+        import_bound_review_response(
+            tmp_path,
+            _review_json(changed, fingerprint=old_fingerprint),
+            item=changed,
+        )
+
+
 def test_review_and_human_qa_become_stale_after_candidate_edit(tmp_path: Path):
     item = _item()
     draft_path = save_draft(tmp_path, item)
     current = Item.model_validate(load_json(draft_path))
 
-    import_review_response(tmp_path, _review(current).model_dump_json(), item=current)
+    import_bound_review_response(tmp_path, _review_json(current), item=current)
     save_human_qa(tmp_path, _qa(current), item=current)
 
     ready = release_readiness(tmp_path, draft_path)
@@ -121,7 +142,7 @@ def test_approve_is_a_release_transaction(tmp_path: Path):
     item = _item()
     draft_path = save_draft(tmp_path, item)
     current = Item.model_validate(load_json(draft_path))
-    import_review_response(tmp_path, _review(current).model_dump_json(), item=current)
+    import_bound_review_response(tmp_path, _review_json(current), item=current)
     save_human_qa(tmp_path, _qa(current), item=current)
 
     target, readiness = approve_item(tmp_path, draft_path)
