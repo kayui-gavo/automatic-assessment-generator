@@ -29,30 +29,46 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             texlive-xetex texlive-latex-extra texlive-pictures \
             fonts-noto-cjk
-      - name: Build full-exam fixture PDFs
+      - name: Generate continuous full-exam TeX fixture
         run: |
           python - <<'PY'
           from pathlib import Path
-          from tempfile import TemporaryDirectory
 
           from tests.full_exam_factory import build_exam
           from tabito_itemgen.exam_render import render_exam
 
-          with TemporaryDirectory() as temp:
-              root = Path(temp)
-              manifest, _ = build_exam(root, "main_2026")
-              outputs = render_exam(root, manifest.exam_id, compile_pdf=True)
-              out = Path("ci-artifacts")
-              out.mkdir(exist_ok=True)
-              for key in ("student_tex", "teacher_tex", "student_pdf", "teacher_pdf", "answer_key"):
-                  path = outputs[key]
-                  if path is None or not path.exists():
-                      raise SystemExit(f"missing output: {key}")
-                  (out / path.name).write_bytes(path.read_bytes())
+          root = Path("ci-work")
+          manifest, _ = build_exam(root, "main_2026")
+          outputs = render_exam(root, manifest.exam_id, compile_pdf=False)
+          out = Path("ci-artifacts")
+          out.mkdir(exist_ok=True)
+          for key in ("student_tex", "teacher_tex", "answer_key"):
+              path = outputs[key]
+              if path is None or not path.exists():
+                  raise SystemExit(f"missing output: {key}")
+              (out / path.name).write_bytes(path.read_bytes())
           PY
+      - name: Compile student and teacher PDFs with diagnostics
+        working-directory: ci-artifacts
+        run: |
+          set -o pipefail
+          for tex in student.tex teacher.tex; do
+            echo "=== compiling $tex ==="
+            if ! xelatex -interaction=nonstopmode -halt-on-error "$tex" > "${tex%.tex}.xelatex.log" 2>&1; then
+              echo "=== XeLaTeX failure: $tex ==="
+              tail -n 120 "${tex%.tex}.xelatex.log"
+              exit 1
+            fi
+            test -s "${tex%.tex}.pdf"
+          done
       - name: Upload booklet artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: full-exam-schema-fixture
-          path: ci-artifacts/
+          path: |
+            ci-artifacts/*.tex
+            ci-artifacts/*.pdf
+            ci-artifacts/*.json
+            ci-artifacts/*.xelatex.log
           if-no-files-found: error
