@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from tabito_itemgen.ui_launcher import app_path
 
 
