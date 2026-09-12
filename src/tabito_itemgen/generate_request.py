@@ -35,7 +35,9 @@ def create_q4_request(
     if surface_family not in {"main_2026", "makeup_2026"}:
         raise ValueError("surface_family must be main_2026 or makeup_2026")
 
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    # Milliseconds are enough to prevent accidental collisions from repeated UI clicks
+    # while keeping item ids readable in filenames and review logs.
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")[:-3]
     item_id = f"TABITO-CN-Q4-{stamp}"
     spec = {
         "item_id": item_id,
