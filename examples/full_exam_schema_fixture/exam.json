@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.5",
+  "exam_id": "TABITO-CN-EXAM-FIXTURE-001",
+  "blueprint_version": "R8-2026-full-v1",
+  "exam_family": "main_2026",
+  "title_ja": "旅人教育 共通テスト中国語 Full Exam Schema Fixture",
+  "duration_minutes": 80,
+  "total_score": 200,
+  "answer_range": [1, 50],
+  "notes": "Schema/renderer regression fixture only. Not a gold-quality mock exam.",
+  "q4_topic_request": "",
+  "q5_topic_request": "",
+  "sections": [
+    {"section":"Q1","section_id":"FIXTURE-Q1","path":"sections/q1.json","expected_score":24,"answer_start":1,"answer_end":6,"state":"draft","fingerprint":null},
+    {"section":"Q2","section_id":"FIXTURE-Q2","path":"sections/q2.json","expected_score":16,"answer_start":7,"answer_end":12,"state":"draft","fingerprint":null},
+    {"section":"Q3","section_id":"FIXTURE-Q3","path":"sections/q3.json","expected_score":40,"answer_start":13,"answer_end":20,"state":"draft","fingerprint":null},
+    {"section":"Q4","section_id":"TABITO-CN-Q4-PILOT-002","path":"../../../pilots/q4_pilot_002_library_study_main2026.json","expected_score":60,"answer_start":21,"answer_end":36,"state":"draft","fingerprint":null},
+    {"section":"Q5","section_id":"FIXTURE-Q5","path":"sections/q5.json","expected_score":60,"answer_start":37,"answer_end":50,"state":"draft","fingerprint":null}
+  ],
+  "workflow": {"state":"draft","generation_mode":"manual_chat"}
+}
