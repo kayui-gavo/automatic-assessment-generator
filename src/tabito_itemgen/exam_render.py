@@ -3,10 +3,25 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .exam_models import Q1DialogueTask, Q1PhoneticCountTask, Q1Section, Q2OrderingTask, Q2Section, Q3Section, Q5Section
+from .exam_models import (
+    Q1DialogueTask,
+    Q1PhoneticCountTask,
+    Q1Section,
+    Q2OrderingTask,
+    Q2Section,
+    Q3Section,
+    Q5Section,
+)
 from .exam_production import load_manifest, manifest_path
 from .models import Item
-from .presentation import owner_task_for_order, question_number, subsection_intro, subquestion_index, tasks_for_subsection, timeline
+from .presentation import (
+    owner_task_for_order,
+    question_number,
+    subsection_intro,
+    subquestion_index,
+    tasks_for_subsection,
+    timeline,
+)
 from .render import _font_setup, _material_block, _task_block, compile_xelatex, latex_escape
 from .section_io import load_section
 
@@ -72,7 +87,7 @@ def _render_q2(section: Q2Section, teacher: bool) -> str:
     for task in sorted(section.tasks, key=lambda value: value.order):
         tex += rf"\Needspace{{7\baselineskip}}\noindent{{\large\textbf{{{task.subsection}}}}}\par\vspace{{0.25em}}\n"
         if isinstance(task, Q2OrderingTask):
-            boxes = " \quad ".join(_box(slot.answer_number) for slot in task.answer_slots)
+            boxes = r" \quad ".join(_box(slot.answer_number) for slot in task.answer_slots)
             tex += rf"\noindent {latex_escape(task.prompt_ja)}\hfill {boxes}\par\n"
             tex += rf"\noindent {latex_escape(task.source_ja)}\par\smallskip\n"
             tex += rf"\noindent{{\zhfont {latex_escape(task.sentence_frame_zh)}}}\par\smallskip\n"
@@ -145,14 +160,14 @@ def _render_q5(section: Q5Section, teacher: bool) -> str:
         tex += rf"\noindent{{\zhfont {latex_escape(paragraph.text_zh)}}}\par\vspace{{0.55em}}\n"
     tex += "\\vspace{0.4em}\n"
     for task in sorted(section.tasks, key=lambda value: value.question_no):
-        boxes = " \quad ".join(_box(slot.answer_number) for slot in task.answer_slots)
+        boxes = r" \quad ".join(_box(slot.answer_number) for slot in task.answer_slots)
         tex += rf"\Needspace{{7\baselineskip}}\noindent\textbf{{問 {task.question_no}}}\quad {latex_escape(task.prompt_ja)}\hfill {boxes}\par\n"
         tex += _options(task.options) + "\n"
         if teacher:
             answer = ", ".join(
                 f"{slot.answer_number}→{slot.correct_option}" for slot in task.answer_slots
             )
-            anchor_note = f" anchors={','.join(task.anchor_refs)}" if task.anchor_refs else ""
+            anchor_note = f" 参照={','.join(task.anchor_refs)}" if task.anchor_refs else ""
             tex += _teacher_note(f"正答 {answer}{anchor_note}", task.rationale_ja)
     return tex
 
@@ -181,7 +196,7 @@ def _document_preamble(title: str, teacher: bool) -> str:
     edition = "【教師用】" if teacher else ""
     tex += rf"\noindent{{\Large\textbf{{{latex_escape(title)}}}}}\hfill {edition}\par\n"
     tex += "\\vspace{0.35em}\\hrule\\vspace{0.45em}\n"
-    tex += "\\noindent 試験時間 80分 \quad 200点満点 \quad 解答番号 1～50\par\n"
+    tex += r"\noindent 試験時間 80分 \quad 200点満点 \quad 解答番号 1～50\par" + "\n"
     tex += "\\vspace{0.8em}\n"
     return tex
 
