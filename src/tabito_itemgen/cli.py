@@ -7,13 +7,9 @@ from .generate_request import create_q4_request, create_review_request, create_r
 from .io import load_json
 from .models import Item, Review
 from .paths import find_project_root
-from .production import (
-    approve_item,
-    import_item_response,
-    import_review_response,
-    release_readiness,
-)
+from .production import approve_item, import_item_response, release_readiness
 from .render import compile_xelatex, render_item_tex
+from .review_io import import_bound_review_response
 from .validate import check_bank_similarity, compare_review, validate_item_file
 
 
@@ -85,7 +81,7 @@ def cmd_review_request(args: argparse.Namespace) -> int:
 def cmd_import_review(args: argparse.Namespace) -> int:
     root = find_project_root()
     source = Path(args.file).resolve()
-    review, target = import_review_response(root, source.read_text(encoding="utf-8"))
+    review, target = import_bound_review_response(root, source.read_text(encoding="utf-8"))
     print(f"saved review: {target}")
     print(f"item_id: {review.item_id}")
     return 0
@@ -197,11 +193,11 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("file")
     command.set_defaults(func=cmd_validate)
 
-    command = sub.add_parser("review-request", help="Create a blind independent-review prompt")
+    command = sub.add_parser("review-request", help="Create a fingerprint-bound blind-review prompt")
     command.add_argument("file")
     command.set_defaults(func=cmd_review_request)
 
-    command = sub.add_parser("import-review", help="Bind and save a review JSON to the current draft")
+    command = sub.add_parser("import-review", help="Verify fingerprint and save a review JSON")
     command.add_argument("file")
     command.set_defaults(func=cmd_import_review)
 
