@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import streamlit as st
 
-from . import ui_workbench_v2 as workbench
-from .production import human_qa_binding_status
-from .review_io import import_bound_review_response
+import tabito_itemgen.ui_workbench_v2 as workbench
+from tabito_itemgen.production import human_qa_binding_status
+from tabito_itemgen.review_io import import_bound_review_response
 
 # Keep the large presentation/workflow page stable while enforcing the production
 # boundary here. This adapter can disappear once UI components are split into
