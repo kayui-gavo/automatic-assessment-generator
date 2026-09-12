@@ -6,11 +6,11 @@ from pathlib import Path
 
 
 def app_path() -> Path:
-    return Path(__file__).with_name("ui_entrypoint.py")
+    return Path(__file__).with_name("exam_ui.py")
 
 
 def main() -> None:
-    """Launch the local TABITO content-production workbench."""
+    """Launch the local TABITO full Common Test Chinese exam workbench."""
     subprocess.run(
         [sys.executable, "-m", "streamlit", "run", str(app_path())],
         check=True,
