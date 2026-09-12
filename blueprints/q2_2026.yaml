@@ -1,0 +1,51 @@
+section: Q2
+label_ja: 語句
+score: 16
+answer_numbers: [7, 12]
+surface_family: shared_2026
+primary_references: [2026_main, 2026_makeup]
+
+structure:
+  A:
+    answers: [7]
+    task_type: fill_choice
+    selection_rule: appropriate
+    option_count: 4
+    stimulus_language: Chinese
+  B:
+    answers: [8]
+    task_type: fill_choice
+    selection_rule: inappropriate
+    option_count: 4
+    stimulus_language: Chinese
+  C:
+    answers: [9, 10, 11, 12]
+    tasks: 2
+    task_type: ordering
+    per_task:
+      source_language: Japanese
+      target_language: Chinese
+      token_pool_count: 8
+      selected_token_count: 4
+      answer_slot_count: 2
+      token_reuse: forbidden
+    task_answer_groups:
+      - [9, 10]
+      - [11, 12]
+
+constructs:
+  - lexical_meaning
+  - usage
+  - collocation
+  - adverb_and_connector_choice
+  - sentence_grammar
+  - japanese_to_chinese_sentence_assembly
+
+hard_rules:
+  - Q2-B must explicitly encode selection_rule=inappropriate
+  - ordering tasks must store the full token pool, correct four-token sequence and answer positions
+  - ordering tasks must not be represented as ordinary multiple choice
+
+originality:
+  - examples must be newly written
+  - avoid lexical or syntactic near-copy of 2026 official sentences
