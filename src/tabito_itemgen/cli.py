@@ -5,14 +5,13 @@ from pathlib import Path
 
 from .generate_request import create_q4_request, create_review_request, create_revision_request
 from .io import load_json
-from .models import HumanQA, Item, Review
+from .models import Item, Review
 from .paths import find_project_root
 from .production import (
     approve_item,
     import_item_response,
     import_review_response,
     release_readiness,
-    save_human_qa,
 )
 from .render import compile_xelatex, render_item_tex
 from .validate import check_bank_similarity, compare_review, validate_item_file
@@ -38,13 +37,17 @@ def cmd_new_item(args: argparse.Namespace) -> int:
 def cmd_import(args: argparse.Namespace) -> int:
     root = find_project_root()
     source = Path(args.file).resolve()
-    item, response_path, draft_path, errors, warnings = import_item_response(
-        root, source.read_text(encoding="utf-8")
+    item, _, target, errors, warnings = import_item_response(
+        root,
+        source.read_text(encoding="utf-8"),
     )
-    print(f"item_id:  {item.item_id}")
-    print(f"response: {response_path}")
-    print(f"draft:    {draft_path}")
-    return _print_validation(item, errors, warnings)
+    print(f"imported draft: {target}")
+    print(f"item_id: {item.item_id}")
+    for error in errors:
+        print(f"ERROR: {error}")
+    for warning in warnings:
+        print(f"WARNING: {warning}")
+    return 1 if errors else 0
 
 
 def _print_validation(item, errors, warnings) -> int:
@@ -83,8 +86,8 @@ def cmd_import_review(args: argparse.Namespace) -> int:
     root = find_project_root()
     source = Path(args.file).resolve()
     review, target = import_review_response(root, source.read_text(encoding="utf-8"))
+    print(f"saved review: {target}")
     print(f"item_id: {review.item_id}")
-    print(target)
     return 0
 
 
@@ -92,12 +95,9 @@ def cmd_review_check(args: argparse.Namespace) -> int:
     item = Item.model_validate(load_json(Path(args.item).resolve()))
     review = Review.model_validate(load_json(Path(args.review).resolve()))
     errors, warnings = compare_review(item, review)
-    if errors:
-        print("FAIL")
-        for error in errors:
-            print(f"ERROR: {error}")
-    else:
-        print("PASS")
+    print("PASS" if not errors else "FAIL")
+    for error in errors:
+        print(f"ERROR: {error}")
     for warning in warnings:
         print(f"WARNING: {warning}")
     return 1 if errors else 0
@@ -128,35 +128,25 @@ def cmd_similarity(args: argparse.Namespace) -> int:
 
 def cmd_release_check(args: argparse.Namespace) -> int:
     root = find_project_root()
-    source = Path(args.file).resolve()
-    readiness = release_readiness(root, source)
-    print("READY" if readiness.ready else "NOT READY")
+    readiness = release_readiness(root, Path(args.file).resolve())
+    print(f"item_id: {readiness.item_id}")
+    if readiness.fingerprint:
+        print(f"fingerprint: {readiness.fingerprint}")
     for gate in readiness.gates:
-        mark = "PASS" if gate.passed else "FAIL"
-        print(f"{mark}\t{gate.name}\t{gate.detail}")
+        status = "PASS" if gate.passed else "FAIL"
+        print(f"{status}: {gate.name} — {gate.detail}")
     return 0 if readiness.ready else 1
 
 
 def cmd_approve(args: argparse.Namespace) -> int:
     root = find_project_root()
-    source = Path(args.file).resolve()
-
-    if args.review:
-        review_source = Path(args.review).resolve()
-        import_review_response(root, review_source.read_text(encoding="utf-8"))
-    if args.human_qa:
-        qa = HumanQA.model_validate(load_json(Path(args.human_qa).resolve()))
-        save_human_qa(root, qa)
-
     try:
-        target, readiness = approve_item(root, source)
+        target, readiness = approve_item(root, Path(args.file).resolve())
     except ValueError as exc:
         print(f"Cannot approve: {exc}")
         return 1
-
     print(f"approved: {target}")
-    for gate in readiness.gates:
-        print(f"PASS\t{gate.name}\t{gate.detail}")
+    print(f"fingerprint: {readiness.fingerprint}")
     return 0
 
 
@@ -199,10 +189,7 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("--notes", default=None)
     command.set_defaults(func=cmd_new_item)
 
-    command = sub.add_parser(
-        "import-response",
-        help="Import a manual ChatGPT JSON response into workspace + draft and validate it",
-    )
+    command = sub.add_parser("import-response", help="Import generated JSON as a canonical draft")
     command.add_argument("file")
     command.set_defaults(func=cmd_import)
 
@@ -214,7 +201,7 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("file")
     command.set_defaults(func=cmd_review_request)
 
-    command = sub.add_parser("import-review", help="Validate and save a review JSON")
+    command = sub.add_parser("import-review", help="Bind and save a review JSON to the current draft")
     command.add_argument("file")
     command.set_defaults(func=cmd_import_review)
 
@@ -232,20 +219,12 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("file")
     command.set_defaults(func=cmd_similarity)
 
-    command = sub.add_parser(
-        "release-check",
-        help="Check validation + blind review + human QA + similarity gates",
-    )
+    command = sub.add_parser("release-check", help="Show all release gates for one candidate")
     command.add_argument("file")
     command.set_defaults(func=cmd_release_check)
 
-    command = sub.add_parser(
-        "approve",
-        help="Approve only after deterministic validation, blind review, human QA and similarity gates",
-    )
+    command = sub.add_parser("approve", help="Approve only after all persisted release gates pass")
     command.add_argument("file")
-    command.add_argument("--review", help="Optionally import a review JSON before approval")
-    command.add_argument("--human-qa", help="Optionally import a human-QA JSON before approval")
     command.set_defaults(func=cmd_approve)
 
     command = sub.add_parser("render", help="Render student/teacher LaTeX files")
