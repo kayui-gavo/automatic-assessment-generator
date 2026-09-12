@@ -24,5 +24,5 @@ def test_full_exam_workbench_exposes_main_and_makeup_blueprints():
     at.run()
     assert not at.exception
     radio_values = [option for radio in at.radio for option in radio.options]
-    assert "main_2026" in radio_values
-    assert "makeup_2026" in radio_values
+    assert "2026 本試験型" in radio_values
+    assert "2026 追試験型" in radio_values
