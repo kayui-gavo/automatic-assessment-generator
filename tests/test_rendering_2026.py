@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from pydantic import TypeAdapter
 
 from tabito_itemgen.models import Material
