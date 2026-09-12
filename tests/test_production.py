@@ -9,12 +9,13 @@ from tabito_itemgen.production import (
     approve_item,
     human_qa_errors,
     import_item_response,
-    import_review_response,
+    item_fingerprint,
     parse_chat_json,
     release_readiness,
     save_draft,
     save_human_qa,
 )
+from tabito_itemgen.review_io import import_bound_review_response
 
 ROOT = Path(__file__).resolve().parents[1]
 PILOT = ROOT / "pilots" / "q4_pilot_002_library_study_main2026.json"
@@ -49,6 +50,12 @@ def _review(item: Item) -> Review:
     )
 
 
+def _review_json(item: Item) -> str:
+    data = _review(item).model_dump()
+    data["candidate_fingerprint"] = item_fingerprint(item)
+    return json.dumps(data, ensure_ascii=False)
+
+
 def _qa(item: Item, **overrides) -> HumanQA:
     data = {
         "item_id": item.item_id,
@@ -80,10 +87,7 @@ def test_import_item_and_review_are_persisted(tmp_path):
     assert draft_path.name == f"{item.item_id}.json"
     assert not errors
 
-    review = _review(item)
-    imported_review, review_path = import_review_response(
-        root, json.dumps(review.model_dump(), ensure_ascii=False)
-    )
+    imported_review, review_path = import_bound_review_response(root, _review_json(item))
     assert imported_review.item_id == item.item_id
     assert review_path.exists()
 
@@ -109,9 +113,7 @@ def test_release_requires_review_and_human_qa(tmp_path):
         "human QA",
     }
 
-    import_review_response(
-        root, json.dumps(_review(item).model_dump(), ensure_ascii=False)
-    )
+    import_bound_review_response(root, _review_json(item))
     save_human_qa(root, _qa(item))
     readiness = release_readiness(root, item_path)
     assert readiness.ready
@@ -121,9 +123,7 @@ def test_approve_writes_canonical_approved_state(tmp_path):
     root = _root(tmp_path)
     item_path = save_draft(root, _item())
     item = Item.model_validate(load_json(item_path))
-    import_review_response(
-        root, json.dumps(_review(item).model_dump(), ensure_ascii=False)
-    )
+    import_bound_review_response(root, _review_json(item))
     save_human_qa(root, _qa(item))
 
     target, readiness = approve_item(root, item_path)
