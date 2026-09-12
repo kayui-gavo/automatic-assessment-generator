@@ -1,10 +1,10 @@
-# TABITO Common Test Chinese Item Generator
+# TABITO Common Test Chinese Mock-Exam Workbench
 
-旅人教育の内部教研向け **共通テスト中国語 命題 Workbench**。
+旅人教育の内部教研向け **大学入学共通テスト 中国語 模試制作 Workbench**。
 
-現在は第4問（Q4）を優先し、**2026 本試験 + 2026 追・再試験を同格の唯一の一次蓝本**として、原创問題の命題・独立審査・人工QA・正式題庫化・学生版/教師版組版までをローカルUIで扱う。
+v0.5 から製品の中心は Q4 単問ではなく、**80分・200点・解答番号1–50の完整模試 production** です。Q1–Q5 は別々に生成・審査・返修し、最後に1冊の問題冊子として組み上げます。
 
-API は不要。ChatGPT Plus を manual LLM backend として使う。
+LLM API は不要です。ChatGPT Plus を manual backend として使い、JSON / filesystem / Streamlit / XeLaTeX で production workflow を管理します。
 
 ## 起動
 
@@ -27,243 +27,265 @@ git pull
 tabito-itemgen-ui
 ```
 
-## v0.4.2 の生产流程
+网页预览は LaTeX 不要。PDF compile だけ XeLaTeX が必要です。
 
-UI は5つの仕事に分ける。
+## 命题基准
 
-### 1. 📄 试卷
+優先順位は固定します。
 
-最初に学生視点で読む。
+1. **Tier 0 — 2026 大学入試センター問題作成方針**：測る能力の境界だけを定義
+2. **Tier 1 — 2026 本試験 + 2026 追・再試験**：唯一の current surface blueprint
+3. **Tier 2 — 2025以前**：語彙・文法レベル、誤答肢、日本語設問、長期安定能力の参考のみ
 
-- **学生册**：A/B・問1〜3・小問・資料・解答欄を本番冊子に近い階層で確認
-- **教师标注**：正答、根拠、解説、誤答肢分析
-- **结构检查**：answer slot / response mode / dependency / material type
+2025以前の題型を平均して2026へ戻すことは禁止します。
 
-旧 Pilot・rejected sample はデフォルトで隠す。
-
-### 2. ✨ 命题
-
-1. `main_2026` / `makeup_2026` を選ぶ
-2. 題材と追加条件を入力
-3. UI が `request.md` / `spec.json` を生成
-4. request を ChatGPT Plus の新規対話へ貼る
-5. 返ってきた JSON を UI へ貼る
-6. **Draft として保存し、その場で validation**
-
-同じUI sessionで作った request がある場合、返答 JSON の
-
-- `item_id`
-- `surface_family`
-- `blueprint_version`
-
-を request spec と照合する。別の request の出力を誤って取り込まない。
-
-### 3. ✅ 审题
-
-順序は固定する。
+Full-exam blueprint version：
 
 ```text
-Deterministic QA
-      ↓
-Blind Review
-      ↓
-Human QA
+R8-2026-full-v1
 ```
 
-Blind Review は author key / evidence / rationale / family label を見ない独立解答。reviewer JSON は `workspace/reviews/` に保存する。
-
-Human QA では少なくとも以下を人間が確認する。
-
-- 中国語の自然さ
-- 日本語設問の自然さ
-- 正答唯一性
-- 誤答肢の妥当性
-- 2026 surface fidelity
-- 情報の流れ
-- 図表・資料の必要性
-- originality / 非換皮
-- source integrity
-- レイアウト可読性
-- solution leak がないこと
-
-返工時間と実際に起きた defect も構造化して `workspace/human_qa/` に保存する。
-
-### 4. 🚀 Release
-
-正式題庫へ入るには **4 gate 全部**が必要。
+## 完整模試
 
 ```text
-1 deterministic validation
-2 blind review
-3 human QA
-4 approved-bank similarity
+Exam
+├── Q1  発音・ピンイン             24点   1–6
+├── Q2  語句                       16点   7–12
+├── Q3  表現力                     40点  13–20
+├── Q4  複合的な資料の読み取り     60点  21–36
+└── Q5  長文読解                   60点  37–50
+
+TOTAL 200点 / 80分 / 50解答欄
 ```
 
-さらに review / Human QA は `item_id` だけでなく、**その時点の内容 fingerprint** に結び付く。
+`main_2026` と `makeup_2026` の2 family を持ちます。Q1–Q3 は2026二套で安定している共通構造を使い、Q4/Q5 は本試・追試の違いを明示的に保持します。
 
-したがって、審査後に設問・選択肢・正答・資料・解説・blueprint 等を1文字でも実質変更すると、旧 review / QA は自動的に stale になり、再審査が必要になる。
+## なぜ5回に分けて生成するか
 
-Approve は単なるファイルコピーではない。
+「新建完整模試」は1つの Exam project を作りますが、LLM には Q1–Q5 を別々に依頼します。
 
-- 全 gate を再確認
-- canonical JSON の `workflow.state` を `approved` に変更
-- `item_bank/approved/` へ保存
+```text
+create Exam
+   ↓
+Q1 request → import → review → Human QA
+Q2 request → import → review → Human QA
+Q3 request → import → review → Human QA
+Q4 request → import → review → Human QA
+Q5 request → import → review → Human QA
+   ↓
+Full Exam QA
+   ↓
+Release
+```
+
+これにより Q3 を直しても Q1/Q2/Q4/Q5 の section review は有効なままです。ただし整卷 fingerprint が変わるので Final Exam QA は stale になります。
+
+## UI workflow
+
+### 1. 新建完整模試
+
+首页から：
+
+- `2026 本試験型`
+- `2026 追試験型`
+
+を選び、必要なら模試名・Q4希望题材・Q5希望题材・教研备注を入力します。
+
+作成後、Q1–Q5 五份の generation prompt が個別に用意されます。
+
+### 2. Section production
+
+各大题で：
+
+```text
+Generate Prompt
+→ ChatGPT Plus
+→ JSON import
+→ deterministic validation
+→ Blind Review
+→ Human QA
+→ Revision Prompt（必要時）
+→ 修订版 JSON 再导入
+```
+
+修訂版を再導入すると、その section だけ `draft` に戻り、旧 Blind Review / Human QA は fingerprint mismatch により自動で stale になります。
+
+### 3. Human QA
+
+共通チェックに加え、各 section 専用チェックを持ちます。
+
+- Q1：拼音、声母/韵母、声调、一/不变调、多音字、拼音版面、会话自然度
+- Q2：词汇用法、不适当项唯一性、语序唯一性、token pool 自然度
+- Q3：拼音、翻译语义、干扰项错误类型、逐词翻译化の回避
+- Q4：信息旅程、资料必要性、source integrity、2026 family fidelity
+- Q5：文章自然度、段落连贯、anchor、全文推理、著作权原创性、长文分页
+
+Human QA では返工時間も保存します：
+
+- first read
+- language edit
+- item edit
+- layout edit
+- biggest rework cause
+
+この数据を使い、今後は「よく起きる返工原因」だけを prompt / schema / validator に戻します。
+
+### 4. Final Exam QA
+
+全 section ready 後に整卷だけを再確認します。
+
+- 80分钟负荷
+- 200分结构
+- 1–50连续
+- Q1–Q5视觉层级
+- 难度节奏
+- Q4/Q5题材重复
+- 跨大题 solution leak
+- 拼音 / 简体字 / 日本语设问统一
+- 数字・标点・选项格式
+- 分页・图表・长文可读性
+
+### 5. Release
+
+正式模試は次が全て通ったときだけ approve できます。
+
+```text
+Exam deterministic validation
++
+Q1 ready
+Q2 ready
+Q3 ready
+Q4 ready
+Q5 ready
++
+Final Exam Human QA
+```
+
+Approve は単なる copy ではありません。
+
+- exam / section state を `approved` に変更
+- `exam_bank/approved/<exam_id>/` に canonical copy を作成
+- release fingerprint / gates を記録
 - 同一 draft を除去
-- `workspace/releases/<item_id>.release.json` に fingerprint と gate 結果を記録
+- 同じ exam_id の別内容による上書きを禁止
 
-同じ `item_id` で内容の異なる approved item を上書きすることはできない。
+Approved project は UI 上で read-only です。改题する場合は新版本を作ります。
 
-### 5. 🛠 编辑 / 导出
+## Version safety
 
-通常は JSON を直接触らない。
-
-必要な場合のみ高度な JSON editor を使う。保存すると canonical state は `draft` に戻り、内容 fingerprint が変われば旧 review / Human QA は無効になる。
-
-网页预览は LaTeX 不要。PDF 生成だけ XeLaTeX が必要。
-
----
-
-## 命题的一次蓝本
-
-優先順位は固定する。
-
-1. **Tier 0** — 2026 大学入試センター問題作成方針：測る能力の境界
-2. **Tier 1** — **2026 本試験 + 2026 追・再試験**：Q4 の実際の型
-3. **Tier 2** — 2025以前：語彙・文法レベル、誤答肢、日本語設問等の歴史的参考のみ
-
-2025以前の題型を平均化して2026へ戻さない。
-
-現在の blueprint：
+Blind Review / Human QA は ID だけでなく **candidate content fingerprint** に binding されます。
 
 ```text
-R8-2026-main-tsui-v3
+Q3 v1 → review/QA PASS
+   ↓
+Q3 を1文字でも実質修改
+   ↓
+Q3 v2 fingerprint changes
+   ↓
+Q3 review = stale
+Q3 QA     = stale
+Exam QA   = stale
+
+Q1/Q2/Q4/Q5 evidence remains current
 ```
 
-## 2026 Q4 surface family
+Multi-select は集合として比較しますが、Q2语序や multi-slot は解答位置に意味があるため **顺序を保持して比較**します。
 
-### `main_2026`
+## Section data models
+
+Q1–Q5 を無理に1つの万能 Task に押し込みません。
+
+- **Q1**：phonetic count / pinyin dialogue
+- **Q2**：fill-choice / `token_pool + correct_sequence + answer_positions`
+- **Q3**：ja→zh / zh→ja + distractor error taxonomy
+- **Q4**：既存の rich multi-source `Item` をそのまま利用
+- **Q5**：original paragraphs + stable anchors + long-reading tasks
+
+Q4 は full Exam の Section 4 ですが、既存 Q4 JSON は引き続き load / validate / preview / render できます。
+
+## Full booklet output
 
 ```text
-A
-21–22  会話 + 二つ選べ
-23–24  shared options / quantitative material
-25      chart
-26      related visual comparison
-27–28  explanation / lecture / memo + 二つ選べ
-
-B
-29–30  checklist / requirements + 二つ選べ
-31–32  profile / candidate matching
-33      missing-information inference
-34      rule / flow general principle
-35–36  process applied to two cases
+output/<exam_id>/
+├── student.tex
+├── student.pdf       # XeLaTeX available 时
+├── teacher.tex
+├── teacher.pdf       # XeLaTeX available 时
+└── answer_key.json
 ```
 
-### `makeup_2026`
-
-```text
-A
-21–22  discussion dialogue + 二つ選べ
-23–24  survey / chart + 二つ選べ
-25–26  explanatory text + diagram + 二つ選べ
-27–28  structured memo + 二つ選べ
-
-B
-29–30  chronological planning
-31–32  map / memo / system compound source
-33–34  flyer / instructions / safety document
-35–36  reflection / summary + 二つ選べ
-```
-
-新規生成は `subsection_intros_ja.A/B` も持ち、A/B 冒頭の日本語導入まで題面として審査する。
-
-詳細：
-
-- `docs/Q4_SURFACE_GRAMMAR_2026.md`
-- `docs/EXAM_SPEC_2026.md`
-- `docs/ITEM_WRITING_DIRECTION_2026.md`
-- `blueprints/q4_2026_reference_patterns.yaml`
-- `blueprints/q4_2026_generation_profile.yaml`
-
-## Pilot / benchmark
-
-- `examples/` — schema / renderer fixture。質の見本ではない
-- `pilots/` — real content-QA candidate
-- `benchmarks/` — 将来、人間が本当に承認した gold exemplar のみ
-
-現状：
-
-- Pilot 001 — **REJECTED**。generic multi-source reading に寄りすぎた失敗例
-- Pilot 002 — active `main_2026` candidate
-- Pilot 003 v1 — **SUPERSEDED**。option-language surface が不十分
-- Pilot 003 v2 — active `makeup_2026` candidate
+1つの document 内で第1問→第5問を连续排版します。内部 ID、fingerprint、dependency metadata は学生版に出しません。
 
 ## CLI
 
-UI を使わない場合も同じ release rule を使う。CLI から gate を迂回する override は置かない。
+日常は UI 推奨ですが、CLI も同じ production rule を使います。
 
 ```bash
-# request
-tabito-itemgen new-item --topic "地域施設の利用改善" --family main_2026
+# 完整模試 project + Q1–Q5 requests
+tabito-itemgen new-exam --family main_2026 --title "旅人教育 中国語模試 第1回"
 
-# ChatGPT JSON を draft 化
-tabito-itemgen import-response response.json
+# Section JSON import
+tabito-itemgen exam-import-section <EXAM_ID> Q1 q1_response.json
 
-# deterministic validation
-tabito-itemgen validate item_bank/draft/TABITO-CN-Q4-....json
+# Full validation
+tabito-itemgen exam-validate <EXAM_ID>
 
-# blind review request
-tabito-itemgen review-request item_bank/draft/TABITO-CN-Q4-....json
+# Section blind review
+tabito-itemgen exam-review-request <EXAM_ID> Q1
+tabito-itemgen exam-import-review <EXAM_ID> Q1 q1_review.json
 
-# reviewer JSON を current draft に bind して保存
-tabito-itemgen import-review reviewer.json
+# Revision
+tabito-itemgen exam-revision-request <EXAM_ID> Q1
 
-# 必要なら revision prompt
-tabito-itemgen revision-request \
-  --item item_bank/draft/TABITO-CN-Q4-....json \
-  --review workspace/reviews/TABITO-CN-Q4-....review.json
+# Release gates
+tabito-itemgen exam-release-check <EXAM_ID>
 
-# 全 release gate を確認
-tabito-itemgen release-check item_bank/draft/TABITO-CN-Q4-....json
+# Final Human QA は UI で保存後、全 gate PASS 時のみ approve
+tabito-itemgen exam-approve <EXAM_ID>
 
-# Human QA まで保存済みで全 gate PASS の場合のみ approve
-tabito-itemgen approve item_bank/draft/TABITO-CN-Q4-....json
-
-# PDF
-tabito-itemgen render item_bank/approved/TABITO-CN-Q4-....json --compile
+# 連続冊子
+tabito-itemgen exam-render <EXAM_ID> --compile
 ```
 
-Human QA の入力は現在 UI が標準。CLI で無理に bypass しない。
+旧 Q4-only CLI (`new-item`, `validate`, `render` 等) は backward compatibility / 单独大题 production 用として残しています。
 
 ## Repository
 
 ```text
-blueprints/          2026 blueprint / official structural reference metadata
-templates/           generation constraints
-prompts/             generate / blind review / revise
-docs/                exam spec / surface grammar / item-writing direction
-examples/            schema regression fixtures; NOT gold content
-pilots/              real content-QA candidates + revision history
-benchmarks/          future human-approved gold exemplars
-workspace/           local request / response / review / QA / release records
-item_bank/draft/     unapproved candidates
-item_bank/approved/  released items
-item_bank/rejected/  rejected items
-src/                 CLI / UI / schema / validation / presentation / rendering
-tests/               regression tests
-output/              generated TeX/PDF
+blueprints/                    2026 full-exam / section blueprints
+prompts/                       Q1–Q5 generate / review / revise prompts
+src/tabito_itemgen/            schema / production / validation / UI / renderer
+examples/full_exam_schema_fixture/
+                               schema + regression fixture; NOT quality exemplar
+pilots/                        real content-QA candidates
+benchmarks/                    future human-approved gold exemplars only
+exam_bank/draft/               local unpublished full exams
+exam_bank/approved/            local formally released full exams
+item_bank/                     legacy Q4-only bank
+workspace/exams/               local request / response / review / QA / release records
+output/                        generated TeX/PDF
 ```
 
-`workspace/` の生成記録と `output/` は `.gitignore` でローカル保持する。
+Live `workspace/exams/`, `exam_bank/draft/`, `exam_bank/approved/`, `output/` 内容は public repo に自動 commit しません。研究/回归用の候选题だけ `pilots/` に明确に置きます。
+
+## Fixture / Pilot / Benchmark
+
+- `examples/`：schema / renderer fixture。**質の見本ではない**
+- `pilots/`：実際に content QA する候选模試・候选题
+- `benchmarks/`：人間が正式に gold exemplar と認定したものだけ
+
+既存 Q4 Pilot 001 は rejected、Pilot 002 / 003 v2 は Q4 surface regression 用に残します。
 
 ## 今やらないこと
 
-API、LangChain、vector DB、fine-tuning、IRT、重いWeb frameworkは優先しない。
+API、LangChain、multi-agent framework、vector DB、SQL DB、RAG、fine-tuning、IRT、自動正答率予測、React/Next.js 重前端は現段階では導入しません。
 
-優先するのは：
+まず測るのは：
 
-1. `main_2026` / `makeup_2026` の候補問題を実際に作る
-2. blind review + 中国語自然度 + 共通テスト命題観点で人間が直す
-3. **何を何分直したか**を保存する
-4. 頻発 defect だけを prompt / schema / validator に戻す
-5. 学生が実際に読む冊子の可読性を上げる
+1. 一套200点模試を最後まで作れるか
+2. 各 section の人工返工に何分かかるか
+3. 哪种 defect が何度起こるか
+4. PDF に手修正がどれだけ必要か
+5. 学生が実際に解いたときに不自然/多解/过易过难がどこで出るか
+
+その実测结果だけを次の system upgrade に戻します。
