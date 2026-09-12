@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 def app_path() -> Path:
-    return Path(__file__).with_name("ui_workbench_v2.py")
+    return Path(__file__).with_name("ui_entrypoint.py")
 
 
 def main() -> None:
