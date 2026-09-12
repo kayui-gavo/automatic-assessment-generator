@@ -1,0 +1,455 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import shutil
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+
+from pydantic import ValidationError
+
+from .exam_models import (
+    ExamHumanQA,
+    ExamManifest,
+    Q1Section,
+    Q2OrderingTask,
+    Q2Section,
+    Q3Section,
+    Q5Section,
+    SECTION_SPECS,
+    SectionRef,
+)
+from .exam_review_models import SECTION_SPECIFIC_QA, SectionHumanQA, SectionReview
+from .exam_validation import ValidationResult, validate_exam, validate_section_file
+from .io import dump_json, load_json
+from .models import Item
+from .production import parse_chat_json
+from .section_io import load_section, save_section_draft, section_fingerprint, section_id
+
+
+@dataclass(frozen=True)
+class Gate:
+    name: str
+    passed: bool
+    detail: str
+
+
+@dataclass(frozen=True)
+class Readiness:
+    subject_id: str
+    fingerprint: str
+    gates: tuple[Gate, ...]
+
+    @property
+    def ready(self) -> bool:
+        return all(gate.passed for gate in self.gates)
+
+
+def _now() -> str:
+    return datetime.now(UTC).isoformat(timespec="seconds")
+
+
+def _exam_stamp() -> str:
+    return datetime.now(UTC).strftime("%Y%m%d-%H%M%S-%f")[:-3]
+
+
+def exam_draft_dir(root: Path, exam_id: str) -> Path:
+    return root / "exam_bank" / "draft" / exam_id
+
+
+def exam_approved_dir(root: Path, exam_id: str) -> Path:
+    return root / "exam_bank" / "approved" / exam_id
+
+
+def exam_workspace_dir(root: Path, exam_id: str) -> Path:
+    return root / "workspace" / "exams" / exam_id
+
+
+def manifest_path(root: Path, exam_id: str, *, approved: bool = False) -> Path:
+    base = exam_approved_dir(root, exam_id) if approved else exam_draft_dir(root, exam_id)
+    return base / "exam.json"
+
+
+def create_exam_project(
+    root: Path,
+    *,
+    exam_family: str,
+    title_ja: str | None = None,
+    notes: str = "",
+    q4_topic_request: str = "",
+    q5_topic_request: str = "",
+) -> tuple[ExamManifest, Path]:
+    if exam_family not in {"main_2026", "makeup_2026"}:
+        raise ValueError("exam_family must be main_2026 or makeup_2026")
+    exam_id = f"TABITO-CN-EXAM-{_exam_stamp()}"
+    refs: list[SectionRef] = []
+    for section in ("Q1", "Q2", "Q3", "Q4", "Q5"):
+        score, start, end = SECTION_SPECS[section]
+        refs.append(
+            SectionRef(
+                section=section,
+                section_id=f"{exam_id}-{section}",
+                expected_score=score,
+                answer_start=start,
+                answer_end=end,
+            )
+        )
+    manifest = ExamManifest(
+        exam_id=exam_id,
+        exam_family=exam_family,
+        title_ja=title_ja or f"旅人教育 共通テスト中国語 模試 {exam_id[-7:]}",
+        notes=notes,
+        q4_topic_request=q4_topic_request,
+        q5_topic_request=q5_topic_request,
+        sections=refs,
+    )
+    path = manifest_path(root, exam_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    dump_json(path, manifest.model_dump())
+    (path.parent / "sections").mkdir(parents=True, exist_ok=True)
+    return manifest, path
+
+
+def load_manifest(path: Path) -> ExamManifest:
+    return ExamManifest.model_validate(load_json(path))
+
+
+def _ref_for(manifest: ExamManifest, section: str) -> SectionRef:
+    return next(ref for ref in manifest.sections if ref.section == section)
+
+
+def _save_manifest(path: Path, manifest: ExamManifest) -> None:
+    dump_json(path, manifest.model_dump())
+
+
+def import_section_response(
+    root: Path,
+    exam_id: str,
+    section_name: str,
+    text: str,
+) -> tuple[Path, ValidationResult]:
+    path = manifest_path(root, exam_id)
+    manifest = load_manifest(path)
+    ref = _ref_for(manifest, section_name)
+    data = parse_chat_json(text)
+    if data.get("section") != section_name:
+        raise ValueError(f"response section {data.get('section')!r} does not match {section_name}")
+    incoming_id = data.get("item_id") if section_name == "Q4" else data.get("section_id")
+    if incoming_id != ref.section_id:
+        raise ValueError(f"response section id {incoming_id!r} does not match request {ref.section_id!r}")
+
+    response_dir = exam_workspace_dir(root, exam_id) / "responses"
+    response_dir.mkdir(parents=True, exist_ok=True)
+    dump_json(response_dir / f"{section_name.lower()}.response.json", data)
+
+    from pydantic import TypeAdapter
+
+    from .exam_models import SectionData
+
+    section = TypeAdapter(SectionData).validate_python(data)
+    if isinstance(section, (Item, Q5Section)) and section.surface_family != manifest.exam_family:
+        raise ValueError(
+            f"{section_name} surface family {section.surface_family!r} does not match exam family {manifest.exam_family!r}"
+        )
+    section_path = save_section_draft(path.parent, section)
+    result = validate_section_file(section_path)
+    ref.path = str(section_path.relative_to(path.parent))
+    ref.state = "draft"
+    ref.fingerprint = section_fingerprint(load_section(section_path))
+    manifest.workflow.state = "draft"
+    _save_manifest(path, manifest)
+    return section_path, result
+
+
+def section_review_path(root: Path, exam_id: str, section: str) -> Path:
+    return exam_workspace_dir(root, exam_id) / "reviews" / f"{section.lower()}.review.json"
+
+
+def section_qa_path(root: Path, exam_id: str, section: str) -> Path:
+    return exam_workspace_dir(root, exam_id) / "human_qa" / f"{section.lower()}.human_qa.json"
+
+
+def exam_qa_path(root: Path, exam_id: str) -> Path:
+    return exam_workspace_dir(root, exam_id) / "exam_qa.json"
+
+
+def exam_qa_meta_path(root: Path, exam_id: str) -> Path:
+    return exam_workspace_dir(root, exam_id) / "exam_qa.meta.json"
+
+
+def exam_release_record_path(root: Path, exam_id: str) -> Path:
+    return exam_workspace_dir(root, exam_id) / "release.json"
+
+
+def _section_file(root: Path, manifest: ExamManifest, section: str) -> Path:
+    ref = _ref_for(manifest, section)
+    if not ref.path:
+        raise ValueError(f"{section} has not been generated")
+    return manifest_path(root, manifest.exam_id).parent / ref.path
+
+
+def section_author_answers(section) -> dict[str, list[int]]:
+    if isinstance(section, Item):
+        return {
+            task.task_id: [slot.correct_option for slot in task.answer_slots]
+            for task in section.tasks
+        }
+    if isinstance(section, Q1Section):
+        return {task.task_id: [task.answer_slot.correct_option] for task in section.tasks}
+    if isinstance(section, Q2Section):
+        return {
+            task.task_id: (
+                [slot.correct_option for slot in task.answer_slots]
+                if isinstance(task, Q2OrderingTask)
+                else [task.answer_slot.correct_option]
+            )
+            for task in section.tasks
+        }
+    if isinstance(section, Q3Section):
+        return {task.task_id: [task.answer_slot.correct_option] for task in section.tasks}
+    if isinstance(section, Q5Section):
+        return {
+            task.task_id: [slot.correct_option for slot in task.answer_slots]
+            for task in section.tasks
+        }
+    raise TypeError(f"unsupported section type {type(section)!r}")
+
+
+def _review_errors(section, review: SectionReview) -> list[str]:
+    errors: list[str] = []
+    if review.section != section.section or review.section_id != section_id(section):
+        errors.append("review section identity does not match candidate")
+    if review.candidate_fingerprint != section_fingerprint(section):
+        errors.append("review fingerprint does not match current candidate")
+    if review.verdict != "pass":
+        errors.append(f"review verdict is {review.verdict}, not pass")
+    expected = section_author_answers(section)
+    if set(review.independent_answers) != set(expected):
+        errors.append("review task ids do not match candidate tasks")
+    else:
+        for task_id, author in expected.items():
+            reviewer = review.independent_answers[task_id]
+            if sorted(reviewer) != sorted(author):
+                errors.append(f"{task_id}: reviewer answer {reviewer} != author key {author}")
+    if any(issue.severity == "high" for issue in review.issues):
+        errors.append("review contains high-severity issue")
+    return errors
+
+
+def import_section_review(root: Path, exam_id: str, section_name: str, text: str) -> Path:
+    manifest = load_manifest(manifest_path(root, exam_id))
+    section = load_section(_section_file(root, manifest, section_name))
+    review = SectionReview.model_validate(parse_chat_json(text))
+    errors = _review_errors(section, review)
+    if review.candidate_fingerprint != section_fingerprint(section):
+        raise ValueError("review was produced for a different candidate version")
+    path = section_review_path(root, exam_id, section_name)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    dump_json(path, review.model_dump())
+    ref = _ref_for(manifest, section_name)
+    ref.state = "reviewed" if not errors else "draft"
+    _save_manifest(manifest_path(root, exam_id), manifest)
+    return path
+
+
+def save_section_human_qa(
+    root: Path,
+    exam_id: str,
+    section_name: str,
+    qa: SectionHumanQA,
+) -> Path:
+    manifest = load_manifest(manifest_path(root, exam_id))
+    section = load_section(_section_file(root, manifest, section_name))
+    current = section_fingerprint(section)
+    if qa.section != section_name or qa.section_id != section_id(section):
+        raise ValueError("section Human QA identity does not match candidate")
+    if qa.candidate_fingerprint != current:
+        raise ValueError("section Human QA was completed for a different candidate version")
+    path = section_qa_path(root, exam_id, section_name)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    dump_json(path, qa.model_dump())
+    return path
+
+
+def _qa_errors(section, qa: SectionHumanQA) -> list[str]:
+    errors: list[str] = []
+    current = section_fingerprint(section)
+    if qa.candidate_fingerprint != current:
+        errors.append("Human QA is stale")
+    if qa.disposition != "approve":
+        errors.append(f"Human QA disposition is {qa.disposition}")
+    failed_common = [name for name, value in qa.checks.model_dump().items() if not value]
+    if failed_common:
+        errors.append("Human QA common checks failed: " + ", ".join(failed_common))
+    required_specific = SECTION_SPECIFIC_QA[section.section]
+    failed_specific = [name for name in required_specific if not qa.section_specific_checks.get(name, False)]
+    if failed_specific:
+        errors.append("Human QA section checks failed: " + ", ".join(failed_specific))
+    return errors
+
+
+def section_release_readiness(root: Path, exam_id: str, section_name: str) -> Readiness:
+    manifest = load_manifest(manifest_path(root, exam_id))
+    section_path = _section_file(root, manifest, section_name)
+    section = load_section(section_path)
+    fingerprint = section_fingerprint(section)
+    validation = validate_section_file(section_path)
+    gates: list[Gate] = [
+        Gate(
+            "deterministic validation",
+            validation.passed,
+            "pass" if validation.passed else "; ".join(validation.errors),
+        )
+    ]
+
+    review_path = section_review_path(root, exam_id, section_name)
+    if not review_path.exists():
+        gates.append(Gate("blind review", False, "review JSON not saved"))
+    else:
+        try:
+            review = SectionReview.model_validate(load_json(review_path))
+            errors = _review_errors(section, review)
+            gates.append(Gate("blind review", not errors, "pass" if not errors else "; ".join(errors)))
+        except (ValidationError, ValueError) as exc:
+            gates.append(Gate("blind review", False, str(exc)))
+
+    qa_path = section_qa_path(root, exam_id, section_name)
+    if not qa_path.exists():
+        gates.append(Gate("human QA", False, "section Human QA not saved"))
+    else:
+        try:
+            qa = SectionHumanQA.model_validate(load_json(qa_path))
+            errors = _qa_errors(section, qa)
+            gates.append(Gate("human QA", not errors, "pass" if not errors else "; ".join(errors)))
+        except (ValidationError, ValueError) as exc:
+            gates.append(Gate("human QA", False, str(exc)))
+
+    return Readiness(section_id(section), fingerprint, tuple(gates))
+
+
+def exam_fingerprint(root: Path, exam_id: str) -> str:
+    path = manifest_path(root, exam_id)
+    manifest = load_manifest(path)
+    payload = manifest.model_dump()
+    payload["workflow"].pop("state", None)
+    for ref in payload["sections"]:
+        ref.pop("state", None)
+        ref.pop("fingerprint", None)
+    section_hashes: dict[str, str | None] = {}
+    for ref in manifest.sections:
+        if ref.path and (path.parent / ref.path).exists():
+            section_hashes[ref.section] = section_fingerprint(load_section(path.parent / ref.path))
+        else:
+            section_hashes[ref.section] = None
+    encoded = json.dumps(
+        {"manifest": payload, "section_fingerprints": section_hashes},
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def save_exam_human_qa(root: Path, exam_id: str, qa: ExamHumanQA) -> Path:
+    if qa.exam_id != exam_id:
+        raise ValueError("exam Human QA exam_id does not match")
+    path = exam_qa_path(root, exam_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    dump_json(path, qa.model_dump())
+    dump_json(
+        exam_qa_meta_path(root, exam_id),
+        {"exam_id": exam_id, "exam_fingerprint": exam_fingerprint(root, exam_id), "saved_at": _now()},
+    )
+    return path
+
+
+def _exam_qa_gate(root: Path, exam_id: str) -> Gate:
+    path = exam_qa_path(root, exam_id)
+    meta = exam_qa_meta_path(root, exam_id)
+    if not path.exists() or not meta.exists():
+        return Gate("exam human QA", False, "exam Human QA not saved")
+    try:
+        qa = ExamHumanQA.model_validate(load_json(path))
+        saved = load_json(meta).get("exam_fingerprint")
+    except (ValidationError, ValueError, OSError) as exc:
+        return Gate("exam human QA", False, str(exc))
+    if saved != exam_fingerprint(root, exam_id):
+        return Gate("exam human QA", False, "exam changed after final Human QA")
+    failed = [name for name, value in qa.checks.model_dump().items() if not value]
+    if qa.disposition != "approve" or failed:
+        detail = f"disposition={qa.disposition}"
+        if failed:
+            detail += " | failed checks: " + ", ".join(failed)
+        return Gate("exam human QA", False, detail)
+    return Gate("exam human QA", True, "pass")
+
+
+def exam_release_readiness(root: Path, exam_id: str) -> Readiness:
+    path = manifest_path(root, exam_id)
+    validation = validate_exam(path)
+    gates: list[Gate] = [
+        Gate(
+            "exam validation",
+            validation.passed,
+            "pass" if validation.passed else "; ".join(validation.errors),
+        )
+    ]
+    manifest = load_manifest(path)
+    for ref in manifest.sections:
+        if not ref.path:
+            gates.append(Gate(f"{ref.section} release", False, "section not generated"))
+            continue
+        readiness = section_release_readiness(root, exam_id, ref.section)
+        detail = "pass" if readiness.ready else " | ".join(
+            f"{gate.name}: {gate.detail}" for gate in readiness.gates if not gate.passed
+        )
+        gates.append(Gate(f"{ref.section} release", readiness.ready, detail))
+    gates.append(_exam_qa_gate(root, exam_id))
+    return Readiness(exam_id, exam_fingerprint(root, exam_id), tuple(gates))
+
+
+def approve_exam(root: Path, exam_id: str) -> tuple[Path, Readiness]:
+    readiness = exam_release_readiness(root, exam_id)
+    if not readiness.ready:
+        failed = [f"{gate.name}: {gate.detail}" for gate in readiness.gates if not gate.passed]
+        raise ValueError("exam release gates failed: " + " | ".join(failed))
+
+    source = exam_draft_dir(root, exam_id)
+    target = exam_approved_dir(root, exam_id)
+    if target.exists():
+        approved_manifest = target / "exam.json"
+        if approved_manifest.exists():
+            # Compare the release record rather than silently overwriting an approved exam.
+            record = exam_release_record_path(root, exam_id)
+            if record.exists() and load_json(record).get("exam_fingerprint") == readiness.fingerprint:
+                return target, readiness
+        raise ValueError("approved exam_id already exists with different or unverifiable content")
+
+    shutil.copytree(source, target)
+    approved_manifest = load_manifest(target / "exam.json")
+    approved_manifest.workflow.state = "approved"
+    for ref in approved_manifest.sections:
+        ref.state = "approved"
+        if ref.path:
+            section_path = target / ref.path
+            section = load_section(section_path)
+            section.workflow.state = "approved"
+            dump_json(section_path, section.model_dump())
+    dump_json(target / "exam.json", approved_manifest.model_dump())
+
+    record = {
+        "exam_id": exam_id,
+        "exam_fingerprint": readiness.fingerprint,
+        "approved_at": _now(),
+        "approved_path": str(target.relative_to(root)),
+        "gates": [
+            {"name": gate.name, "passed": gate.passed, "detail": gate.detail}
+            for gate in readiness.gates
+        ],
+    }
+    record_path = exam_release_record_path(root, exam_id)
+    record_path.parent.mkdir(parents=True, exist_ok=True)
+    dump_json(record_path, record)
+    shutil.rmtree(source)
+    return target, readiness
