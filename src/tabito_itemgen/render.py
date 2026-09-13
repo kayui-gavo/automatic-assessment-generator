@@ -338,13 +338,27 @@ def _task_block(task, teacher: bool) -> str:
 
 def _font_setup() -> str:
     return r"""
-\IfFontExistsTF{TeX Gyre Termes}{\setmainfont{TeX Gyre Termes}}{\setmainfont{Times New Roman}}
+\IfFontExistsTF{TeX Gyre Termes}
+  {\setmainfont{TeX Gyre Termes}}
+  {\IfFontExistsTF{Liberation Serif}
+     {\setmainfont{Liberation Serif}}
+     {\IfFontExistsTF{Times New Roman}
+        {\setmainfont{Times New Roman}}
+        {\setmainfont{Latin Modern Roman}}}}
 \IfFontExistsTF{Noto Serif CJK JP}
   {\setCJKmainfont{Noto Serif CJK JP}}
-  {\IfFontExistsTF{Hiragino Mincho ProN}{\setCJKmainfont{Hiragino Mincho ProN}}{\setCJKmainfont{Songti SC}}}
+  {\IfFontExistsTF{Hiragino Mincho ProN}
+     {\setCJKmainfont{Hiragino Mincho ProN}}
+     {\IfFontExistsTF{Songti SC}
+        {\setCJKmainfont{Songti SC}}
+        {\setCJKmainfont{FandolSong-Regular}}}}
 \IfFontExistsTF{Noto Serif CJK SC}
   {\newCJKfontfamily\zhfont{Noto Serif CJK SC}}
-  {\IfFontExistsTF{Songti SC}{\newCJKfontfamily\zhfont{Songti SC}}{\newCJKfontfamily\zhfont{STSong}}}
+  {\IfFontExistsTF{Songti SC}
+     {\newCJKfontfamily\zhfont{Songti SC}}
+     {\IfFontExistsTF{STSong}
+        {\newCJKfontfamily\zhfont{STSong}}
+        {\newcommand{\zhfont}{}}}}
 """
 
 
@@ -414,11 +428,16 @@ def compile_xelatex(tex_path: Path) -> Path | None:
     exe = shutil.which("xelatex")
     if not exe:
         return None
-    subprocess.run(
+    result = subprocess.run(
         [exe, "-interaction=nonstopmode", "-halt-on-error", tex_path.name],
         cwd=tex_path.parent,
-        check=True,
-        stdout=subprocess.DEVNULL,
+        check=False,
+        stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        text=True,
     )
+    if result.returncode != 0:
+        lines = result.stdout.splitlines()
+        tail = "\n".join(lines[-80:])
+        raise RuntimeError(f"XeLaTeX failed for {tex_path.name}:\n{tail}")
     return tex_path.with_suffix(".pdf")
