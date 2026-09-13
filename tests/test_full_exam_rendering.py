@@ -1,7 +1,12 @@
 import json
 from types import SimpleNamespace
 
-from tabito_itemgen.exam_render import _ordering_frame, _tex_line, render_exam
+from tabito_itemgen.exam_render import (
+    _ordering_frame,
+    _q5_paragraph_text,
+    _tex_line,
+    render_exam,
+)
 
 from tests.full_exam_factory import build_exam
 
@@ -19,6 +24,7 @@ def test_full_exam_renderer_writes_one_student_and_teacher_booklet(tmp_path):
         assert f"第{number}問" in text
     assert "試験時間 80分" in text
     assert "200点満点" in text
+    assert r"\usepackage[normalem]{ulem}" in text
     assert "task_id" not in text
     assert "fingerprint" not in text
     assert "dependency_mode" not in text
@@ -70,3 +76,30 @@ def test_q2_ordering_frame_rejects_mismatched_blank_count():
         assert "sentence frame has 3 blanks" in str(exc)
     else:
         raise AssertionError("mismatched ordering frame must be rejected")
+
+
+def test_q5_anchor_renderer_draws_blank_and_underlined_excerpt():
+    paragraph = SimpleNamespace(
+        paragraph_id="P1",
+        text_zh="她觉得关系越来越〔空欄A〕。〔下線部A〕她保留了店里的判断。",
+    )
+    section = SimpleNamespace(
+        anchors=[
+            SimpleNamespace(
+                paragraph_id="P1",
+                kind="blank",
+                marker_label="空欄A",
+                source_excerpt=None,
+            ),
+            SimpleNamespace(
+                paragraph_id="P1",
+                kind="sentence",
+                marker_label="下線部A",
+                source_excerpt="她保留了店里的判断。",
+            ),
+        ]
+    )
+
+    rendered = _q5_paragraph_text(section, paragraph)
+    assert r"{\small\textbf{〔空欄A〕}}\,\underline{\hspace{4.2em}}" in rendered
+    assert r"{\small\textbf{〔下線部A〕}}\uline{她保留了店里的判断。}" in rendered
