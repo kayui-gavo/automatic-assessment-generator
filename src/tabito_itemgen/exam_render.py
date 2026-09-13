@@ -127,6 +127,7 @@ def _render_q1(section: Q1Section, teacher: bool) -> str:
                 r"\par\vspace{0.3em}"
             )
             current_subsection = task.subsection
+        tex += _tex_line(r"\Needspace{14\baselineskip}")
         if isinstance(task, Q1PhoneticCountTask):
             tex += _tex_line(
                 rf"\noindent {latex_escape(task.prompt_ja)}\hfill "
@@ -164,11 +165,15 @@ def _render_q1(section: Q1Section, teacher: bool) -> str:
 
 def _render_q2(section: Q2Section, teacher: bool) -> str:
     tex = _section_header(2, section.title_ja, 16)
+    current_subsection = None
     for task in sorted(section.tasks, key=lambda value: value.order):
-        tex += _tex_line(
-            rf"\Needspace{{7\baselineskip}}\noindent{{\large\textbf{{{task.subsection}}}}}"
-            r"\par\vspace{0.25em}"
-        )
+        if task.subsection != current_subsection:
+            tex += _tex_line(
+                rf"\Needspace{{7\baselineskip}}\noindent{{\large\textbf{{{task.subsection}}}}}"
+                r"\par\vspace{0.25em}"
+            )
+            current_subsection = task.subsection
+        tex += _tex_line(r"\Needspace{8\baselineskip}")
         if isinstance(task, Q2OrderingTask):
             tex += _tex_line(rf"\noindent {latex_escape(task.prompt_ja)}\par")
             tex += _tex_line(rf"\noindent {latex_escape(task.source_ja)}\par\smallskip")
@@ -238,13 +243,14 @@ def _render_q4(section: Item, teacher: bool) -> str:
             qno = question_number(section.surface_family, subsection, owner)
             if qno != current_qno:
                 tex += _tex_line(
-                    rf"\Needspace{{6\baselineskip}}\vspace{{0.55em}}\noindent"
+                    rf"\Needspace{{18\baselineskip}}\vspace{{0.55em}}\noindent"
                     rf"\textbf{{問 {qno}}}\par\vspace{{0.25em}}"
                 )
                 current_qno = qno
             if owner.task_id not in introduced:
                 sub_index = subquestion_index(section, owner)
                 if sub_index is not None:
+                    tex += _tex_line(r"\Needspace{14\baselineskip}")
                     tex += _tex_line(
                         rf"\noindent\textbf{{（{sub_index}）}}\par\vspace{{0.15em}}"
                     )
