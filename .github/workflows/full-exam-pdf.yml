@@ -7,13 +7,16 @@ on:
       - "src/tabito_itemgen/render.py"
       - "tests/full_exam_factory.py"
       - "tests/test_full_exam_compile.py"
+      - "tests/test_pilot_exam_001_render.py"
+      - "tests/test_render_portability.py"
+      - "pilots/exam_001/**"
       - "blueprints/**"
       - "prompts/**"
       - "templates/**"
   workflow_dispatch:
 
 jobs:
-  compile-fixture:
+  compile-fixture-and-pilot:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -29,7 +32,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             texlive-xetex texlive-latex-extra texlive-pictures texlive-lang-chinese \
             fonts-noto-cjk
-      - name: Generate continuous full-exam TeX fixture
+      - name: Generate continuous full-exam schema fixture
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -48,20 +51,48 @@ jobs:
                   raise SystemExit(f"missing output: {key}")
               (out / path.name).write_bytes(path.read_bytes())
           PY
-      - name: Compile student and teacher PDFs with diagnostics
-        working-directory: ci-artifacts
+      - name: Generate real Pilot Exam 001 booklet
         run: |
-          set -o pipefail
-          for tex in student.tex teacher.tex; do
-            echo "=== compiling $tex ==="
-            if ! xelatex -interaction=nonstopmode -halt-on-error "$tex" > "${tex%.tex}.xelatex.log" 2>&1; then
-              echo "=== XeLaTeX failure: $tex ==="
-              tail -n 120 "${tex%.tex}.xelatex.log"
-              exit 1
-            fi
-            test -s "${tex%.tex}.pdf"
+          python - <<'PY'
+          import shutil
+          from pathlib import Path
+
+          from tabito_itemgen.exam_render import render_exam
+
+          exam_id = "TABITO-CN-PILOT-EXAM-001"
+          root = Path("pilot-ci-work")
+          source = Path("pilots/exam_001")
+          target = root / "exam_bank" / "draft" / exam_id
+          target.parent.mkdir(parents=True, exist_ok=True)
+          shutil.copytree(source, target)
+
+          outputs = render_exam(root, exam_id, compile_pdf=False)
+          out = Path("pilot-artifacts")
+          out.mkdir(exist_ok=True)
+          for key in ("student_tex", "teacher_tex", "answer_key"):
+              path = outputs[key]
+              if path is None or not path.exists():
+                  raise SystemExit(f"missing Pilot output: {key}")
+              (out / path.name).write_bytes(path.read_bytes())
+          PY
+      - name: Compile fixture and Pilot PDFs with diagnostics
+        run: |
+          status=0
+          for directory in ci-artifacts pilot-artifacts; do
+            for tex in student.tex teacher.tex; do
+              echo "=== compiling ${directory}/${tex} ==="
+              if ! (cd "$directory" && xelatex -interaction=nonstopmode -halt-on-error "$tex" > "${tex%.tex}.xelatex.log" 2>&1); then
+                echo "=== XeLaTeX failure: ${directory}/${tex} ==="
+                tail -n 120 "${directory}/${tex%.tex}.xelatex.log"
+                status=1
+              elif ! test -s "${directory}/${tex%.tex}.pdf"; then
+                echo "missing PDF: ${directory}/${tex%.tex}.pdf"
+                status=1
+              fi
+            done
           done
-      - name: Upload booklet artifacts
+          exit "$status"
+      - name: Upload schema fixture artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -71,4 +102,15 @@ jobs:
             ci-artifacts/*.pdf
             ci-artifacts/*.json
             ci-artifacts/*.xelatex.log
+          if-no-files-found: error
+      - name: Upload Pilot Exam 001 preview
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pilot-exam-001-preview
+          path: |
+            pilot-artifacts/*.tex
+            pilot-artifacts/*.pdf
+            pilot-artifacts/*.json
+            pilot-artifacts/*.xelatex.log
           if-no-files-found: error
