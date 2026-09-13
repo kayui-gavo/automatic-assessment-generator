@@ -32,6 +32,12 @@ def test_full_exam_renderer_writes_one_student_and_teacher_booklet(tmp_path):
     assert r"\clearpage\n" not in text
     assert r"\smallskip\n" not in text
 
+    q2 = text.split("第2問", 1)[1].split("第3問", 1)[0]
+    q4 = text.split("第4問", 1)[1].split("第5問", 1)[0]
+    assert q2.count(r"\large\textbf{C}") == 1
+    assert r"\Needspace{14\baselineskip}" in text
+    assert r"\Needspace{18\baselineskip}" in q4
+
     key = json.loads(outputs["answer_key"].read_text(encoding="utf-8"))
     assert list(map(int, key)) == list(range(1, 51))
 
