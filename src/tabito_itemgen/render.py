@@ -97,22 +97,28 @@ def _table_material(material: TableMaterial) -> str:
     )
 
 
+def _pgf_tick_labels(categories: list[str]) -> str:
+    """Brace each label so commas/spaces stay inside one pgfplots tick label."""
+    return ",".join("{" + latex_escape(category) + "}" for category in categories)
+
+
 def _chart_material(material: ChartMaterial) -> str:
     plots: list[str] = []
     line_styles = ["solid,mark=*", "dashed,mark=square*", "dotted,mark=triangle*"]
     fills = ["black!20", "black!42", "black!62", "black!78"]
     horizontal = material.chart_kind == "horizontal_bar"
+    positions = list(range(len(material.categories)))
 
     for index, series in enumerate(material.series):
         if horizontal:
             pairs = " ".join(
-                f"({value},{latex_escape(category)})"
-                for category, value in zip(material.categories, series.values)
+                f"({value},{position})"
+                for position, value in zip(positions, series.values)
             )
         else:
             pairs = " ".join(
-                f"({latex_escape(category)},{value})"
-                for category, value in zip(material.categories, series.values)
+                f"({position},{value})"
+                for position, value in zip(positions, series.values)
             )
 
         if material.chart_kind in {"bar", "horizontal_bar", "stacked_bar"}:
@@ -123,10 +129,11 @@ def _chart_material(material: ChartMaterial) -> str:
         plots.append(rf"\addplot+[{plot_style}] coordinates {{{pairs}}};{legend}")
 
     axis_label = latex_escape(material.y_label or "")
-    symbols = ",".join(latex_escape(c) for c in material.categories)
+    ticks = ",".join(str(position) for position in positions)
+    tick_labels = _pgf_tick_labels(material.categories)
     if horizontal:
         axis_style = (
-            rf"xbar,symbolic y coords={{{symbols}}},ytick=data,xlabel={{{axis_label}}},"
+            rf"xbar,ytick={{{ticks}}},yticklabels={{{tick_labels}}},xlabel={{{axis_label}}},"
             "y tick label style={font=\\small},grid=major"
         )
     else:
@@ -136,8 +143,9 @@ def _chart_material(material: ChartMaterial) -> str:
             else ("ybar," if material.chart_kind == "bar" else "")
         )
         axis_style = (
-            rf"{bar_style}symbolic x coords={{{symbols}}},xtick=data,"
-            rf"x tick label style={{rotate=25,anchor=east,font=\\small}},ylabel={{{axis_label}}},grid=major"
+            rf"{bar_style}xtick={{{ticks}}},xticklabels={{{tick_labels}}},"
+            r"x tick label style={rotate=25,anchor=east,font=\small},"
+            rf"ylabel={{{axis_label}}},grid=major"
         )
 
     notes = "\\\n".join(rf"\scriptsize {latex_escape(note)}" for note in material.footnotes)
