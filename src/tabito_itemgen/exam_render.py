@@ -30,11 +30,39 @@ def _box(number: int) -> str:
     return rf"\fbox{{\rule{{0pt}}{{1.45em}}\hspace{{0.42em}}{number}\hspace{{0.42em}}}}"
 
 
-def _options(options: list[str]) -> str:
-    return "\n".join(
-        rf"\noindent\optnum{{{index}}}\quad {latex_escape(option)}\par"
-        for index, option in enumerate(options, start=1)
-    )
+def _options(options: list[str], *, chinese: bool = False) -> str:
+    lines: list[str] = []
+    for index, option in enumerate(options, start=1):
+        text = latex_escape(option)
+        if chinese:
+            text = r"{\zhfont " + text + "}"
+        lines.append(rf"\noindent\optnum{{{index}}}\quad {text}\par")
+    return "\n".join(lines)
+
+
+def _ordering_frame(task: Q2OrderingTask) -> str:
+    parts = task.sentence_frame_zh.split("＿＿")
+    blank_count = len(parts) - 1
+    if blank_count != len(task.correct_sequence):
+        raise ValueError(
+            f"{task.task_id}: sentence frame has {blank_count} blanks but "
+            f"correct_sequence has {len(task.correct_sequence)} positions"
+        )
+    if len(task.answer_positions) != len(task.answer_slots):
+        raise ValueError(f"{task.task_id}: answer_positions and answer_slots must have the same length")
+
+    slot_by_position = {
+        position: slot for position, slot in zip(task.answer_positions, task.answer_slots, strict=True)
+    }
+    fragments = [latex_escape(parts[0])]
+    for position in range(1, blank_count + 1):
+        slot = slot_by_position.get(position)
+        if slot is None:
+            fragments.append(r"\underline{\hspace{4.0em}}")
+        else:
+            fragments.append(_box(slot.answer_number))
+        fragments.append(latex_escape(parts[position]))
+    return "".join(fragments)
 
 
 def _teacher_note(title: str, body: str) -> str:
@@ -87,22 +115,22 @@ def _render_q2(section: Q2Section, teacher: bool) -> str:
     for task in sorted(section.tasks, key=lambda value: value.order):
         tex += rf"\Needspace{{7\baselineskip}}\noindent{{\large\textbf{{{task.subsection}}}}}\par\vspace{{0.25em}}\n"
         if isinstance(task, Q2OrderingTask):
-            boxes = r" \quad ".join(_box(slot.answer_number) for slot in task.answer_slots)
-            tex += rf"\noindent {latex_escape(task.prompt_ja)}\hfill {boxes}\par\n"
+            tex += rf"\noindent {latex_escape(task.prompt_ja)}\par\n"
             tex += rf"\noindent {latex_escape(task.source_ja)}\par\smallskip\n"
-            tex += rf"\noindent{{\zhfont {latex_escape(task.sentence_frame_zh)}}}\par\smallskip\n"
+            tex += rf"\noindent{{\zhfont {_ordering_frame(task)}}}\par\smallskip\n"
             for token in task.token_pool:
-                tex += rf"\optnum{{{token.token_id}}}\ {latex_escape(token.text_zh)}\quad "
+                tex += rf"\optnum{{{token.token_id}}}\ {{\zhfont {latex_escape(token.text_zh)}}}\quad "
             tex += "\\par\n"
             if teacher:
                 answer = ", ".join(
-                    f"{slot.answer_number}→{slot.correct_option}" for slot in task.answer_slots
+                    f"第{position}空欄 ({slot.answer_number})→{slot.correct_option}"
+                    for position, slot in zip(task.answer_positions, task.answer_slots, strict=True)
                 )
                 tex += _teacher_note(f"正答 {answer}", task.rationale_ja)
         else:
             tex += rf"\noindent {latex_escape(task.prompt_ja)}\hfill {_box(task.answer_slot.answer_number)}\par\n"
             tex += rf"\noindent{{\zhfont {latex_escape(task.sentence_zh)}}}\par\smallskip\n"
-            tex += _options(task.options) + "\n"
+            tex += _options(task.options, chinese=True) + "\n"
             if teacher:
                 tex += _teacher_note(
                     f"正答 {task.answer_slot.answer_number}→{task.answer_slot.correct_option}",
@@ -162,7 +190,8 @@ def _render_q5(section: Q5Section, teacher: bool) -> str:
     for task in sorted(section.tasks, key=lambda value: value.question_no):
         boxes = r" \quad ".join(_box(slot.answer_number) for slot in task.answer_slots)
         tex += rf"\Needspace{{7\baselineskip}}\noindent\textbf{{問 {task.question_no}}}\quad {latex_escape(task.prompt_ja)}\hfill {boxes}\par\n"
-        tex += _options(task.options) + "\n"
+        chinese_options = task.operation in {"lexical_choice", "discourse_connector", "sentence_choice"}
+        tex += _options(task.options, chinese=chinese_options) + "\n"
         if teacher:
             answer = ", ".join(
                 f"{slot.answer_number}→{slot.correct_option}" for slot in task.answer_slots
