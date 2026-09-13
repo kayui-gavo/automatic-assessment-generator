@@ -11,7 +11,7 @@ PILOT = ROOT / "pilots" / "exam_001"
 
 
 def test_pilot_exam_001_active_sections_are_schema_valid():
-    for filename in ("q1_v2.json", "q2_v2.json", "q3_v3.json", "q4_v2.json", "q5_v3.json"):
+    for filename in ("q1_v2.json", "q2_v2.json", "q3_v3.json", "q4_v3.json", "q5_v3.json"):
         result = validate_section_file(PILOT / filename)
         assert result.errors == (), f"{filename}: {result.errors}"
 
@@ -37,6 +37,22 @@ def test_pilot_exam_001_q3_correct_positions_are_balanced():
     assert sorted(answers) == [1, 1, 2, 2, 3, 3, 4, 4]
 
 
+def test_pilot_exam_001_q4_v3_uses_japanese_prompts_and_real_cross_source_reasoning():
+    section = load_section(PILOT / "q4_v3.json")
+    tasks = {task.task_id: task for task in section.tasks}
+
+    assert tasks["A2b"].prompt_ja == "グラフの内容と一致するものを一つ選べ。"
+    assert tasks["A2c"].prompt_ja == "二つのグラフから読み取れることとして、最も適当なものを一つ選べ。"
+    assert tasks["B3a"].prompt_ja == "フローチャートが示す判断の原則として、最も適当なものを一つ選べ。"
+
+    integrative = tasks["A2c"]
+    assert integrative.dependency_mode == "cross_source"
+    assert {item.material_id for item in integrative.evidence} == {"A-M4", "A-M5"}
+    correct = integrative.options[integrative.answer_slots[0].correct_option - 1]
+    assert "不知道活动内容是最常见的不参加原因" in correct
+    assert "四个项目的报名人数都增加了" in correct
+
+
 def test_pilot_exam_001_q5_anchors_are_visible_and_answer_range_is_complete():
     section = load_section(PILOT / "q5_v3.json")
     paragraphs = {paragraph.paragraph_id: paragraph.text_zh for paragraph in section.paragraphs}
@@ -56,7 +72,7 @@ def test_pilot_exam_001_manifest_uses_current_revisions():
         "Q1": "q1_v2.json",
         "Q2": "q2_v2.json",
         "Q3": "q3_v3.json",
-        "Q4": "q4_v2.json",
+        "Q4": "q4_v3.json",
         "Q5": "q5_v3.json",
     }
 
