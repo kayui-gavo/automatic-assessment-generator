@@ -1,7 +1,7 @@
 import json
 from types import SimpleNamespace
 
-from tabito_itemgen.exam_render import _ordering_frame, render_exam
+from tabito_itemgen.exam_render import _ordering_frame, _tex_line, render_exam
 
 from tests.full_exam_factory import build_exam
 
@@ -22,9 +22,18 @@ def test_full_exam_renderer_writes_one_student_and_teacher_booklet(tmp_path):
     assert "task_id" not in text
     assert "fingerprint" not in text
     assert "dependency_mode" not in text
+    assert r"\par\n" not in text
+    assert r"\clearpage\n" not in text
+    assert r"\smallskip\n" not in text
 
     key = json.loads(outputs["answer_key"].read_text(encoding="utf-8"))
     assert list(map(int, key)) == list(range(1, 51))
+
+
+def test_tex_line_emits_a_real_newline_character():
+    line = _tex_line(r"\par")
+    assert line == "\\par\n"
+    assert line != r"\par\n"
 
 
 def test_q2_ordering_frame_places_answer_numbers_in_requested_blank_positions():
