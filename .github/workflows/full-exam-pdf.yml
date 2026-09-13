@@ -9,6 +9,8 @@ on:
       - "tests/test_full_exam_compile.py"
       - "tests/test_pilot_exam_001_render.py"
       - "tests/test_render_portability.py"
+      - "tests/test_full_exam_rendering.py"
+      - "tests/test_chart_rendering.py"
       - "pilots/exam_001/**"
       - "blueprints/**"
       - "prompts/**"
@@ -31,7 +33,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             texlive-xetex texlive-latex-extra texlive-pictures texlive-lang-chinese \
-            fonts-noto-cjk
+            texlive-plain-generic fonts-noto-cjk
       - name: Generate continuous full-exam schema fixture
         run: |
           python - <<'PY'
