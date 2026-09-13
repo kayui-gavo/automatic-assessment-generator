@@ -30,6 +30,11 @@ def _box(number: int) -> str:
     return rf"\fbox{{\rule{{0pt}}{{1.45em}}\hspace{{0.42em}}{number}\hspace{{0.42em}}}}"
 
 
+def _tex_line(fragment: str = "") -> str:
+    """Terminate one generated TeX line with a real newline character."""
+    return fragment + "\n"
+
+
 def _options(options: list[str], *, chinese: bool = False) -> str:
     lines: list[str] = []
     for index, option in enumerate(options, start=1):
@@ -67,18 +72,20 @@ def _ordering_frame(task: Q2OrderingTask) -> str:
 
 def _teacher_note(title: str, body: str) -> str:
     return (
-        "\\begin{quote}\\small\n"
-        + rf"\textbf{{{latex_escape(title)}}} {latex_escape(body)}\par\n"
-        + "\\end{quote}\n"
+        _tex_line(r"\begin{quote}\small")
+        + _tex_line(rf"\textbf{{{latex_escape(title)}}} {latex_escape(body)}\par")
+        + _tex_line(r"\end{quote}")
     )
 
 
 def _section_header(number: int, label: str, score: int) -> str:
     return (
-        "\\Needspace{8\\baselineskip}\n"
-        + rf"\vspace{{0.8em}}\noindent{{\Large\textbf{{第{number}問}}}}"
-        + rf"\quad {latex_escape(label)}\hfill （配点 {score}）\par\n"
-        + "\\vspace{0.3em}\\hrule\\vspace{0.75em}\n"
+        _tex_line(r"\Needspace{8\baselineskip}")
+        + _tex_line(
+            rf"\vspace{{0.8em}}\noindent{{\Large\textbf{{第{number}問}}}}"
+            rf"\quad {latex_escape(label)}\hfill （配点 {score}）\par"
+        )
+        + _tex_line(r"\vspace{0.3em}\hrule\vspace{0.75em}")
     )
 
 
@@ -87,20 +94,37 @@ def _render_q1(section: Q1Section, teacher: bool) -> str:
     current_subsection = None
     for task in sorted(section.tasks, key=lambda value: value.answer_slot.answer_number):
         if task.subsection != current_subsection:
-            tex += rf"\Needspace{{5\baselineskip}}\noindent{{\large\textbf{{{task.subsection}}}}}\par\vspace{{0.3em}}\n"
+            tex += _tex_line(
+                rf"\Needspace{{5\baselineskip}}\noindent{{\large\textbf{{{task.subsection}}}}}"
+                r"\par\vspace{0.3em}"
+            )
             current_subsection = task.subsection
         if isinstance(task, Q1PhoneticCountTask):
-            tex += rf"\noindent {latex_escape(task.prompt_ja)}\hfill {_box(task.answer_slot.answer_number)}\par\n"
-            tex += rf"\noindent\textbf{{見出し}}\quad {{\zhfont {latex_escape(task.headword.hanzi)}}} \quad {latex_escape(task.headword.pinyin)}\par\smallskip\n"
+            tex += _tex_line(
+                rf"\noindent {latex_escape(task.prompt_ja)}\hfill "
+                rf"{_box(task.answer_slot.answer_number)}\par"
+            )
+            tex += _tex_line(
+                rf"\noindent\textbf{{見出し}}\quad {{\zhfont {latex_escape(task.headword.hanzi)}}} "
+                rf"\quad {latex_escape(task.headword.pinyin)}\par\smallskip"
+            )
             for word in task.candidates:
-                tex += rf"\noindent {latex_escape(word.label)}\quad {{\zhfont {latex_escape(word.hanzi)}}}\quad {latex_escape(word.pinyin)}\par\n"
-            tex += "\\smallskip\n" + _options(task.options) + "\n"
+                tex += _tex_line(
+                    rf"\noindent {latex_escape(word.label)}\quad {{\zhfont {latex_escape(word.hanzi)}}}"
+                    rf"\quad {latex_escape(word.pinyin)}\par"
+                )
+            tex += _tex_line(r"\smallskip") + _options(task.options) + "\n"
         elif isinstance(task, Q1DialogueTask):
-            tex += "\\begin{quote}\n"
+            tex += _tex_line(r"\begin{quote}")
             for line in task.lines:
-                tex += rf"\noindent\textbf{{{latex_escape(line.speaker)}}}：{latex_escape(line.pinyin)}\par\n"
-            tex += "\\end{quote}\n"
-            tex += rf"\noindent {latex_escape(task.prompt_ja)}\hfill {_box(task.answer_slot.answer_number)}\par\n"
+                tex += _tex_line(
+                    rf"\noindent\textbf{{{latex_escape(line.speaker)}}}：{latex_escape(line.pinyin)}\par"
+                )
+            tex += _tex_line(r"\end{quote}")
+            tex += _tex_line(
+                rf"\noindent {latex_escape(task.prompt_ja)}\hfill "
+                rf"{_box(task.answer_slot.answer_number)}\par"
+            )
             tex += _options(task.options) + "\n"
         if teacher:
             tex += _teacher_note(
@@ -113,14 +137,17 @@ def _render_q1(section: Q1Section, teacher: bool) -> str:
 def _render_q2(section: Q2Section, teacher: bool) -> str:
     tex = _section_header(2, section.title_ja, 16)
     for task in sorted(section.tasks, key=lambda value: value.order):
-        tex += rf"\Needspace{{7\baselineskip}}\noindent{{\large\textbf{{{task.subsection}}}}}\par\vspace{{0.25em}}\n"
+        tex += _tex_line(
+            rf"\Needspace{{7\baselineskip}}\noindent{{\large\textbf{{{task.subsection}}}}}"
+            r"\par\vspace{0.25em}"
+        )
         if isinstance(task, Q2OrderingTask):
-            tex += rf"\noindent {latex_escape(task.prompt_ja)}\par\n"
-            tex += rf"\noindent {latex_escape(task.source_ja)}\par\smallskip\n"
-            tex += rf"\noindent{{\zhfont {_ordering_frame(task)}}}\par\smallskip\n"
+            tex += _tex_line(rf"\noindent {latex_escape(task.prompt_ja)}\par")
+            tex += _tex_line(rf"\noindent {latex_escape(task.source_ja)}\par\smallskip")
+            tex += _tex_line(rf"\noindent{{\zhfont {_ordering_frame(task)}}}\par\smallskip")
             for token in task.token_pool:
                 tex += rf"\optnum{{{token.token_id}}}\ {{\zhfont {latex_escape(token.text_zh)}}}\quad "
-            tex += "\\par\n"
+            tex += _tex_line(r"\par")
             if teacher:
                 answer = ", ".join(
                     f"第{position}空欄 ({slot.answer_number})→{slot.correct_option}"
@@ -128,8 +155,11 @@ def _render_q2(section: Q2Section, teacher: bool) -> str:
                 )
                 tex += _teacher_note(f"正答 {answer}", task.rationale_ja)
         else:
-            tex += rf"\noindent {latex_escape(task.prompt_ja)}\hfill {_box(task.answer_slot.answer_number)}\par\n"
-            tex += rf"\noindent{{\zhfont {latex_escape(task.sentence_zh)}}}\par\smallskip\n"
+            tex += _tex_line(
+                rf"\noindent {latex_escape(task.prompt_ja)}\hfill "
+                rf"{_box(task.answer_slot.answer_number)}\par"
+            )
+            tex += _tex_line(rf"\noindent{{\zhfont {latex_escape(task.sentence_zh)}}}\par\smallskip")
             tex += _options(task.options, chinese=True) + "\n"
             if teacher:
                 tex += _teacher_note(
@@ -144,10 +174,16 @@ def _render_q3(section: Q3Section, teacher: bool) -> str:
     current_subsection = None
     for task in sorted(section.tasks, key=lambda value: value.answer_slot.answer_number):
         if task.subsection != current_subsection:
-            tex += rf"\Needspace{{5\baselineskip}}\noindent{{\large\textbf{{{task.subsection}}}}}\par\vspace{{0.3em}}\n"
+            tex += _tex_line(
+                rf"\Needspace{{5\baselineskip}}\noindent{{\large\textbf{{{task.subsection}}}}}"
+                r"\par\vspace{0.3em}"
+            )
             current_subsection = task.subsection
-        tex += rf"\Needspace{{6\baselineskip}}\noindent {latex_escape(task.prompt_ja)}\hfill {_box(task.answer_slot.answer_number)}\par\n"
-        tex += rf"\noindent {latex_escape(task.source_text)}\par\smallskip\n"
+        tex += _tex_line(
+            rf"\Needspace{{6\baselineskip}}\noindent {latex_escape(task.prompt_ja)}\hfill "
+            rf"{_box(task.answer_slot.answer_number)}\par"
+        )
+        tex += _tex_line(rf"\noindent {latex_escape(task.source_text)}\par\smallskip")
         tex += _options(task.options) + "\n"
         if teacher:
             tex += _teacher_note(
@@ -165,17 +201,25 @@ def _render_q4(section: Item, teacher: bool) -> str:
             continue
         introduced: set[str] = set()
         current_qno: int | None = None
-        tex += rf"\Needspace{{8\baselineskip}}\noindent{{\large\textbf{{{subsection}}}}}\quad {latex_escape(subsection_intro(section, subsection))}\par\vspace{{0.65em}}\n"
+        tex += _tex_line(
+            rf"\Needspace{{8\baselineskip}}\noindent{{\large\textbf{{{subsection}}}}}"
+            rf"\quad {latex_escape(subsection_intro(section, subsection))}\par\vspace{{0.65em}}"
+        )
         for order, kind, block in timeline(section, subsection):
             owner = block if kind == "task" else owner_task_for_order(tasks, order)
             qno = question_number(section.surface_family, subsection, owner)
             if qno != current_qno:
-                tex += rf"\Needspace{{6\baselineskip}}\vspace{{0.55em}}\noindent\textbf{{問 {qno}}}\par\vspace{{0.25em}}\n"
+                tex += _tex_line(
+                    rf"\Needspace{{6\baselineskip}}\vspace{{0.55em}}\noindent"
+                    rf"\textbf{{問 {qno}}}\par\vspace{{0.25em}}"
+                )
                 current_qno = qno
             if owner.task_id not in introduced:
                 sub_index = subquestion_index(section, owner)
                 if sub_index is not None:
-                    tex += rf"\noindent\textbf{{（{sub_index}）}}\par\vspace{{0.15em}}\n"
+                    tex += _tex_line(
+                        rf"\noindent\textbf{{（{sub_index}）}}\par\vspace{{0.15em}}"
+                    )
                 introduced.add(owner.task_id)
             tex += (_material_block(block) if kind == "material" else _task_block(block, teacher)) + "\n"
     return tex
@@ -183,13 +227,18 @@ def _render_q4(section: Item, teacher: bool) -> str:
 
 def _render_q5(section: Q5Section, teacher: bool) -> str:
     tex = _section_header(5, section.title_ja, 60)
-    tex += "\\Needspace{10\\baselineskip}\n"
+    tex += _tex_line(r"\Needspace{10\baselineskip}")
     for paragraph in section.paragraphs:
-        tex += rf"\noindent{{\zhfont {latex_escape(paragraph.text_zh)}}}\par\vspace{{0.55em}}\n"
-    tex += "\\vspace{0.4em}\n"
+        tex += _tex_line(
+            rf"\noindent{{\zhfont {latex_escape(paragraph.text_zh)}}}\par\vspace{{0.55em}}"
+        )
+    tex += _tex_line(r"\vspace{0.4em}")
     for task in sorted(section.tasks, key=lambda value: value.question_no):
         boxes = r" \quad ".join(_box(slot.answer_number) for slot in task.answer_slots)
-        tex += rf"\Needspace{{7\baselineskip}}\noindent\textbf{{問 {task.question_no}}}\quad {latex_escape(task.prompt_ja)}\hfill {boxes}\par\n"
+        tex += _tex_line(
+            rf"\Needspace{{7\baselineskip}}\noindent\textbf{{問 {task.question_no}}}\quad "
+            rf"{latex_escape(task.prompt_ja)}\hfill {boxes}\par"
+        )
         chinese_options = task.operation in {"lexical_choice", "discourse_connector", "sentence_choice"}
         tex += _options(task.options, chinese=chinese_options) + "\n"
         if teacher:
@@ -223,10 +272,10 @@ def _document_preamble(title: str, teacher: bool) -> str:
 \begin{document}
 """
     edition = "【教師用】" if teacher else ""
-    tex += rf"\noindent{{\Large\textbf{{{latex_escape(title)}}}}}\hfill {edition}\par\n"
-    tex += "\\vspace{0.35em}\\hrule\\vspace{0.45em}\n"
-    tex += r"\noindent 試験時間 80分 \quad 200点満点 \quad 解答番号 1～50\par" + "\n"
-    tex += "\\vspace{0.8em}\n"
+    tex += _tex_line(rf"\noindent{{\Large\textbf{{{latex_escape(title)}}}}}\hfill {edition}\par")
+    tex += _tex_line(r"\vspace{0.35em}\hrule\vspace{0.45em}")
+    tex += _tex_line(r"\noindent 試験時間 80分 \quad 200点満点 \quad 解答番号 1～50\par")
+    tex += _tex_line(r"\vspace{0.8em}")
     return tex
 
 
@@ -273,11 +322,11 @@ def render_exam(root: Path, exam_id: str, *, compile_pdf: bool = False) -> dict[
     for teacher, name in ((False, "student"), (True, "teacher")):
         tex = _document_preamble(manifest.title_ja, teacher)
         tex += _render_q1(sections["Q1"], teacher)
-        tex += "\\clearpage\n" + _render_q2(sections["Q2"], teacher)
+        tex += _tex_line(r"\clearpage") + _render_q2(sections["Q2"], teacher)
         tex += _render_q3(sections["Q3"], teacher)
-        tex += "\\clearpage\n" + _render_q4(sections["Q4"], teacher)
-        tex += "\\clearpage\n" + _render_q5(sections["Q5"], teacher)
-        tex += "\\end{document}\n"
+        tex += _tex_line(r"\clearpage") + _render_q4(sections["Q4"], teacher)
+        tex += _tex_line(r"\clearpage") + _render_q5(sections["Q5"], teacher)
+        tex += _tex_line(r"\end{document}")
         tex_path = out_dir / f"{name}.tex"
         tex_path.write_text(tex, encoding="utf-8")
         outputs[f"{name}_tex"] = tex_path
