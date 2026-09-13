@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from .exam_models import (
+    ArticleParagraph,
     Q1DialogueTask,
     Q1PhoneticCountTask,
     Q1Section,
@@ -68,6 +69,33 @@ def _ordering_frame(task: Q2OrderingTask) -> str:
             fragments.append(_box(slot.answer_number))
         fragments.append(latex_escape(parts[position]))
     return "".join(fragments)
+
+
+def _q5_paragraph_text(section: Q5Section, paragraph: ArticleParagraph) -> str:
+    """Render stable Q5 anchors without leaking internal anchor ids into prose."""
+    text = latex_escape(paragraph.text_zh)
+    anchors = [anchor for anchor in section.anchors if anchor.paragraph_id == paragraph.paragraph_id]
+
+    for anchor in anchors:
+        marker_tex = ""
+        if anchor.marker_label:
+            marker = latex_escape(f"〔{anchor.marker_label}〕")
+            marker_tex = rf"{{\small\textbf{{{marker}}}}}"
+            if marker in text:
+                text = text.replace(marker, marker_tex, 1)
+
+        if anchor.kind == "blank" and marker_tex:
+            text = text.replace(
+                marker_tex,
+                marker_tex + r"\,\underline{\hspace{4.2em}}",
+                1,
+            )
+        elif anchor.source_excerpt:
+            excerpt = latex_escape(anchor.source_excerpt)
+            if excerpt in text:
+                text = text.replace(excerpt, rf"\uline{{{excerpt}}}", 1)
+
+    return text
 
 
 def _teacher_note(title: str, body: str) -> str:
@@ -230,7 +258,7 @@ def _render_q5(section: Q5Section, teacher: bool) -> str:
     tex += _tex_line(r"\Needspace{10\baselineskip}")
     for paragraph in section.paragraphs:
         tex += _tex_line(
-            rf"\noindent{{\zhfont {latex_escape(paragraph.text_zh)}}}\par\vspace{{0.55em}}"
+            rf"\noindent{{\zhfont {_q5_paragraph_text(section, paragraph)}}}\par\vspace{{0.55em}}"
         )
     tex += _tex_line(r"\vspace{0.4em}")
     for task in sorted(section.tasks, key=lambda value: value.question_no):
@@ -257,6 +285,7 @@ def _document_preamble(title: str, teacher: bool) -> str:
 \usepackage{xeCJK}
 \usepackage{array,tabularx}
 \usepackage{needspace}
+\usepackage[normalem]{ulem}
 \usepackage{tikz}
 \usepackage{pgfplots}
 \usepackage{xcolor}
