@@ -69,6 +69,29 @@ def _breakable_underline(source: str, *, chunk_size: int = 10) -> str:
     return r"\allowbreak{}".join(rf"\uline{{{latex_escape(chunk)}}}" for chunk in chunks)
 
 
+def _q1_word_surface(word, *, underline_target: bool) -> str:
+    """Render only the Hanzi shown to candidates; pinyin remains authoring metadata.
+
+    Official Q1 A/B underlines one target character inside a lexical item.  The
+    target_index field is 1-based.  Legacy one-character fixtures without an
+    explicit target remain renderable by underlining that sole character.
+    """
+
+    if not underline_target:
+        return latex_escape(word.hanzi)
+    target_index = word.target_index
+    if target_index is None and len(word.hanzi) == 1:
+        target_index = 1
+    if target_index is None:
+        return latex_escape(word.hanzi)
+    index = target_index - 1
+    return (
+        latex_escape(word.hanzi[:index])
+        + rf"\uline{{{latex_escape(word.hanzi[index])}}}"
+        + latex_escape(word.hanzi[index + 1 :])
+    )
+
+
 def _q5_paragraph_text(section: Q5Section, paragraph: ArticleParagraph) -> str:
     fragments: list[str] = []
     for segment in q5_surface_segments(section, paragraph):
@@ -119,14 +142,15 @@ def _render_q1(section: Q1Section, teacher: bool) -> str:
                 rf"\noindent {latex_escape(task.prompt_ja)}\hfill "
                 rf"{_box(task.answer_slot.answer_number)}\par"
             )
+            underline_target = task.target in {"initial", "final"}
             tex += _tex_line(
-                rf"\noindent\textbf{{見出し}}\quad {{\zhfont {latex_escape(task.headword.hanzi)}}} "
-                rf"\quad {latex_escape(task.headword.pinyin)}\par\smallskip"
+                rf"\noindent\textbf{{見出し}}\quad {{\zhfont {_q1_word_surface(task.headword, underline_target=underline_target)}}}"
+                r"\par\smallskip"
             )
             for word in task.candidates:
                 tex += _tex_line(
-                    rf"\noindent {latex_escape(word.label)}\quad {{\zhfont {latex_escape(word.hanzi)}}}"
-                    rf"\quad {latex_escape(word.pinyin)}\par"
+                    rf"\noindent {latex_escape(word.label)}\quad "
+                    rf"{{\zhfont {_q1_word_surface(word, underline_target=underline_target)}}}\par"
                 )
             tex += _tex_line(r"\smallskip") + _options(task.options) + "\n"
         elif isinstance(task, Q1DialogueTask):
