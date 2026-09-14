@@ -49,6 +49,7 @@ def _bind_section_release_evidence(root: Path, exam_id: str, section_name: str) 
         review.model_dump_json(),
         reasoning_level="high",
         fresh_chat_confirmed=True,
+        context_mode="non_personalized_temporary_chat",
     )
     qa = SectionHumanQA(
         section=section_name,
