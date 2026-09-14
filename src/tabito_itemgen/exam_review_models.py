@@ -22,11 +22,11 @@ class SectionReview(BaseModel):
 class ReviewExecution(BaseModel):
     """Operator-recorded provenance for one blind-review run.
 
-    The reviewer model cannot prove that it ran in a fresh chat, so this record is
-    intentionally saved by the production workflow rather than emitted by the model.
+    The reviewer model cannot prove conversation isolation, so the production workflow
+    records the execution context separately from model-emitted review JSON.
     """
 
-    schema_version: Literal["0.1"] = "0.1"
+    schema_version: Literal["0.2"] = "0.2"
     section: SectionKind
     section_id: str
     candidate_fingerprint: str = Field(min_length=64, max_length=64)
@@ -34,6 +34,12 @@ class ReviewExecution(BaseModel):
     model_label: str = Field(min_length=1)
     reasoning_level: Literal["instant", "medium", "high", "extra_high", "pro", "unknown"]
     fresh_chat_confirmed: bool = False
+    context_mode: Literal[
+        "non_personalized_temporary_chat",
+        "stateless_api",
+        "other_memory_isolated",
+        "unknown",
+    ] = "unknown"
     authoring_context_seen: bool = False
 
 
