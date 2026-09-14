@@ -20,6 +20,7 @@ from .exam_render import render_exam
 from .exam_validation import validate_exam
 from .generate_request import create_q4_request, create_review_request, create_revision_request
 from .io import load_json
+from .model_policy import PREFERRED_MODEL
 from .models import Item, Review
 from .paths import find_project_root
 from .production import approve_item, import_item_response, release_readiness
@@ -263,11 +264,17 @@ def cmd_exam_import_review(args: argparse.Namespace) -> int:
             args.exam_id,
             args.section,
             source.read_text(encoding="utf-8"),
+            model_label=args.model,
+            reasoning_level=args.reasoning,
+            fresh_chat_confirmed=args.fresh_chat_confirmed,
+            authoring_context_seen=args.authoring_context_seen,
         )
     except (ValueError, FileNotFoundError) as exc:
         print(f"Cannot import review: {exc}")
         return 1
     print(out)
+    if not args.fresh_chat_confirmed:
+        print("WARNING: blind-review release gate will fail until a fresh-chat review is imported")
     return 0
 
 
@@ -354,6 +361,22 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("exam_id")
     command.add_argument("section", choices=["Q1", "Q2", "Q3", "Q4", "Q5"])
     command.add_argument("file")
+    command.add_argument("--model", default=PREFERRED_MODEL)
+    command.add_argument(
+        "--reasoning",
+        choices=["instant", "medium", "high", "extra_high", "pro", "unknown"],
+        default="high",
+    )
+    command.add_argument(
+        "--fresh-chat-confirmed",
+        action="store_true",
+        help="Confirm that the reviewer ran in a new chat with no authoring/revision context",
+    )
+    command.add_argument(
+        "--authoring-context-seen",
+        action="store_true",
+        help="Record that the reviewer saw authoring context; this intentionally fails the release gate",
+    )
     command.set_defaults(func=cmd_exam_import_review)
 
     command = sub.add_parser("exam-revision-request", help="Create a revision prompt for one section")
