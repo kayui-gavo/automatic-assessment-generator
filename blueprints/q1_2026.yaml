@@ -40,6 +40,21 @@ structure:
       - reason
       - conversation_meaning
 
+quality_calibration:
+  lexical_level:
+    principle: accessible_does_not_mean_elementary
+    - use common high-school-accessible vocabulary, but avoid sets made almost entirely of one-character beginner words
+    - for A and B, prefer ordinary multi-character words or a realistic mix of one- and multi-character words
+    - for C, use natural multi-syllable lexical items so tone-pattern comparison requires processing the full word
+  phonetic_competition:
+    - wrong candidates should share partial phonetic cues with the headword when possible
+    - do not let character shape, word length, or a visibly unique spelling reveal the count before phonetic analysis
+    - avoid candidate sets where the matching items are visually grouped or trivially identical in pinyin prefix
+  dialogue_load:
+    - D1 and D2 must require integrating at least two utterances
+    - use different comprehension functions across the two tasks
+    - distractors should recycle real plans, reasons, times, or participants from the dialogue rather than invent unrelated facts
+
 human_qa_required:
   - pinyin_correctness
   - initial_final_analysis_correctness
@@ -48,6 +63,9 @@ human_qa_required:
   - polyphone_context_unambiguous
   - pinyin_diacritic_layout
   - dialogue_naturalness
+  - lexical_load_official_like
+  - phonetic_confusability_sufficient
+  - no_visual_counting_shortcut
 
 validator_scope:
   deterministic:
@@ -57,12 +75,14 @@ validator_scope:
     - option_counts
     - unicode_tone_mark_presence
     - answer_metadata_consistency
+    - elementary_single_character_set_warning
   explicitly_human:
     - real_pronunciation_correctness
     - lexical_level
     - natural_dialogue
+    - official_difficulty_calibration
 
 originality:
-  - use basic high-school-accessible vocabulary
+  - use common high-school-accessible vocabulary without collapsing to elementary one-character drills
   - do not reuse official headwords/candidate sets as a bundle
   - do not construct a near-identical minimal-pair set by noun substitution
