@@ -11,17 +11,20 @@ from .io import load_json
 from .models import Item
 from .production import item_fingerprint
 
-BLUEPRINT_VERSION = "R8-2026-main-tsui-v3"
+BLUEPRINT_VERSION = "R8-2026-main-tsui-v4"
 
 
 def _reference_context(root: Path) -> dict[str, str]:
+    """Compact production context shared by legacy Q4 author/review/revision prompts."""
+
     return {
-        "blueprint_yaml": (root / "blueprints" / "common_test_chinese.yaml").read_text(encoding="utf-8"),
-        "generation_profile_yaml": (root / "blueprints" / "q4_2026_generation_profile.yaml").read_text(encoding="utf-8"),
-        "reference_patterns_yaml": (root / "blueprints" / "q4_2026_reference_patterns.yaml").read_text(encoding="utf-8"),
-        "surface_grammar": (root / "docs" / "Q4_SURFACE_GRAMMAR_2026.md").read_text(encoding="utf-8"),
+        "generation_profile_yaml": (
+            root / "blueprints" / "q4_2026_generation_profile.yaml"
+        ).read_text(encoding="utf-8"),
+        "reference_patterns_yaml": (
+            root / "blueprints" / "q4_2026_reference_patterns.yaml"
+        ).read_text(encoding="utf-8"),
         "template_yaml": (root / "templates" / "q4.yaml").read_text(encoding="utf-8"),
-        "item_writing_direction": (root / "docs" / "ITEM_WRITING_DIRECTION_2026.md").read_text(encoding="utf-8"),
     }
 
 
