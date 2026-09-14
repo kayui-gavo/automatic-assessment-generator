@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from .answer_sheet import render_answer_sheet_tex
+from .artifact_preflight import build_artifact_manifest, write_artifact_manifest
 from .exam_models import (
     ArticleParagraph,
     Q1DialogueTask,
@@ -13,7 +15,7 @@ from .exam_models import (
     Q3Section,
     Q5Section,
 )
-from .exam_production import load_manifest, manifest_path
+from .exam_production import exam_fingerprint, load_manifest, manifest_path
 from .models import Item
 from .presentation import (
     owner_task_for_order,
@@ -26,6 +28,14 @@ from .presentation import (
 from .render import _font_setup, _material_block, _task_block, compile_xelatex, latex_escape
 from .section_io import load_section
 
+_SECTION_INSTRUCTIONS = {
+    1: "次の問い（A～D）に答えよ。",
+    2: "次の問い（A～C）に答えよ。",
+    3: "次の問い（A・B）に答えよ。",
+    4: "次の問い（A・B）に答えよ。",
+    5: "次の問いに答えよ。",
+}
+
 
 def _box(number: int) -> str:
     return rf"\fbox{{\rule{{0pt}}{{1.45em}}\hspace{{0.42em}}{number}\hspace{{0.42em}}}}"
@@ -33,6 +43,7 @@ def _box(number: int) -> str:
 
 def _tex_line(fragment: str = "") -> str:
     """Terminate one generated TeX line with a real newline character."""
+
     return fragment + "\n"
 
 
@@ -71,8 +82,21 @@ def _ordering_frame(task: Q2OrderingTask) -> str:
     return "".join(fragments)
 
 
+def _breakable_underline(source: str, *, chunk_size: int = 10) -> str:
+    """Underline CJK prose while leaving legal line-break opportunities.
+
+    ``ulem`` does not reliably find break points inside long unspaced CJK text.
+    Breaking the source into invisible adjacent underline chunks prevents the
+    very large overfull boxes found by the Pilot 001 PDF preflight.
+    """
+
+    chunks = [source[index : index + chunk_size] for index in range(0, len(source), chunk_size)]
+    return r"\allowbreak{}".join(rf"\uline{{{latex_escape(chunk)}}}" for chunk in chunks)
+
+
 def _q5_paragraph_text(section: Q5Section, paragraph: ArticleParagraph) -> str:
     """Render stable Q5 anchors without leaking internal anchor ids into prose."""
+
     text = latex_escape(paragraph.text_zh)
     anchors = [anchor for anchor in section.anchors if anchor.paragraph_id == paragraph.paragraph_id]
 
@@ -93,7 +117,7 @@ def _q5_paragraph_text(section: Q5Section, paragraph: ArticleParagraph) -> str:
         elif anchor.source_excerpt:
             excerpt = latex_escape(anchor.source_excerpt)
             if excerpt in text:
-                text = text.replace(excerpt, rf"\uline{{{excerpt}}}", 1)
+                text = text.replace(excerpt, _breakable_underline(anchor.source_excerpt), 1)
 
     return text
 
@@ -106,19 +130,20 @@ def _teacher_note(title: str, body: str) -> str:
     )
 
 
-def _section_header(number: int, label: str, score: int) -> str:
+def _section_header(number: int, score: int) -> str:
+    instruction = _SECTION_INSTRUCTIONS[number]
     return (
         _tex_line(r"\Needspace{8\baselineskip}")
         + _tex_line(
             rf"\vspace{{0.8em}}\noindent{{\Large\textbf{{第{number}問}}}}"
-            rf"\quad {latex_escape(label)}\hfill （配点 {score}）\par"
+            rf"\quad {latex_escape(instruction)}\hfill （配点 {score}）\par"
         )
         + _tex_line(r"\vspace{0.3em}\hrule\vspace{0.75em}")
     )
 
 
 def _render_q1(section: Q1Section, teacher: bool) -> str:
-    tex = _section_header(1, section.title_ja, 24)
+    tex = _section_header(1, 24)
     current_subsection = None
     for task in sorted(section.tasks, key=lambda value: value.answer_slot.answer_number):
         if task.subsection != current_subsection:
@@ -164,7 +189,7 @@ def _render_q1(section: Q1Section, teacher: bool) -> str:
 
 
 def _render_q2(section: Q2Section, teacher: bool) -> str:
-    tex = _section_header(2, section.title_ja, 16)
+    tex = _section_header(2, 16)
     current_subsection = None
     for task in sorted(section.tasks, key=lambda value: value.order):
         if task.subsection != current_subsection:
@@ -203,7 +228,7 @@ def _render_q2(section: Q2Section, teacher: bool) -> str:
 
 
 def _render_q3(section: Q3Section, teacher: bool) -> str:
-    tex = _section_header(3, section.title_ja, 40)
+    tex = _section_header(3, 40)
     current_subsection = None
     for task in sorted(section.tasks, key=lambda value: value.answer_slot.answer_number):
         if task.subsection != current_subsection:
@@ -226,8 +251,21 @@ def _render_q3(section: Q3Section, teacher: bool) -> str:
     return tex
 
 
+def _print_safe_q4(section: Item) -> Item:
+    """Normalize symbols that are unreliable in the Latin fallback font.
+
+    Q4 material rendering uses the legacy renderer, where units such as ℃ may
+    otherwise be assigned to the Latin main font.  The semantic content is not
+    changed: only the print representation is normalized to the widely
+    supported degree sign plus C.
+    """
+
+    return Item.model_validate_json(section.model_dump_json().replace("℃", "°C"))
+
+
 def _render_q4(section: Item, teacher: bool) -> str:
-    tex = _section_header(4, "複合的な資料の読み取り", 60)
+    section = _print_safe_q4(section)
+    tex = _section_header(4, 60)
     for subsection in ("A", "B"):
         tasks = tasks_for_subsection(section, subsection)
         if not tasks:
@@ -260,14 +298,20 @@ def _render_q4(section: Item, teacher: bool) -> str:
 
 
 def _render_q5(section: Q5Section, teacher: bool) -> str:
-    tex = _section_header(5, section.title_ja, 60)
+    tex = _section_header(5, 60)
     tex += _tex_line(r"\Needspace{10\baselineskip}")
     for paragraph in section.paragraphs:
         tex += _tex_line(
             rf"\noindent{{\zhfont {_q5_paragraph_text(section, paragraph)}}}\par\vspace{{0.55em}}"
         )
-    tex += _tex_line(r"\vspace{0.4em}")
+
+    # Keep the source text visually separate from the questions.  Pilot 001
+    # showed that mixing the last paragraphs with Q1/Q2 produced a dense page
+    # followed by an almost empty final page.
+    tex += _tex_line(r"\clearpage")
     for task in sorted(section.tasks, key=lambda value: value.question_no):
+        if task.question_no == 7:
+            tex += _tex_line(r"\clearpage")
         boxes = r" \quad ".join(_box(slot.answer_number) for slot in task.answer_slots)
         tex += _tex_line(
             rf"\Needspace{{7\baselineskip}}\noindent\textbf{{問 {task.question_no}}}\quad "
@@ -338,6 +382,7 @@ def _answer_key(sections: dict[str, object]) -> dict[str, int]:
 
 def render_exam(root: Path, exam_id: str, *, compile_pdf: bool = False) -> dict[str, Path | None]:
     manifest_file = manifest_path(root, exam_id)
+    draft_manifest = manifest_file.exists()
     if not manifest_file.exists():
         approved = root / "exam_bank" / "approved" / exam_id / "exam.json"
         if approved.exists():
@@ -358,7 +403,7 @@ def render_exam(root: Path, exam_id: str, *, compile_pdf: bool = False) -> dict[
         tex = _document_preamble(manifest.title_ja, teacher)
         tex += _render_q1(sections["Q1"], teacher)
         tex += _tex_line(r"\clearpage") + _render_q2(sections["Q2"], teacher)
-        tex += _render_q3(sections["Q3"], teacher)
+        tex += _tex_line(r"\clearpage") + _render_q3(sections["Q3"], teacher)
         tex += _tex_line(r"\clearpage") + _render_q4(sections["Q4"], teacher)
         tex += _tex_line(r"\clearpage") + _render_q5(sections["Q5"], teacher)
         tex += _tex_line(r"\end{document}")
@@ -373,4 +418,27 @@ def render_exam(root: Path, exam_id: str, *, compile_pdf: bool = False) -> dict[
         encoding="utf-8",
     )
     outputs["answer_key"] = answer_key_path
+
+    answer_sheet = render_answer_sheet_tex(root, exam_id, compile_pdf=compile_pdf)
+    outputs.update(answer_sheet)
+
+    if compile_pdf and draft_manifest:
+        artifact = build_artifact_manifest(
+            root=root,
+            exam_id=exam_id,
+            exam_fingerprint=exam_fingerprint(root, exam_id),
+            out_dir=out_dir,
+        )
+        artifact_path = write_artifact_manifest(artifact, out_dir / "artifact_manifest.json")
+        outputs["artifact_manifest"] = artifact_path
+        if not artifact.passed:
+            details = [
+                f"{check.name}: {'; '.join(check.errors)}"
+                for check in artifact.checks
+                if not check.passed
+            ]
+            raise RuntimeError("PDF artifact preflight failed: " + " | ".join(details))
+    else:
+        outputs["artifact_manifest"] = None
+
     return outputs
