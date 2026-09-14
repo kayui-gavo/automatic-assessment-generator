@@ -118,7 +118,7 @@ def render_answer_sheet_tex(
 
     tex += r"\end{multicols}" + "\n"
     tex += r"\vfill\hrule\vspace{0.3em}" + "\n"
-    tex += r"{\small ※ 解答番号ごとに一つだけマークすること。複数解答を求める設問は、指定された各解答番号に一つずつマークする。}" + "\n"
+    tex += r"{\small 注：解答番号ごとに一つだけマークすること。複数解答を求める設問は、指定された各解答番号に一つずつマークする。}" + "\n"
     tex += r"\end{document}" + "\n"
 
     tex_path = out_dir / "answer_sheet.tex"
