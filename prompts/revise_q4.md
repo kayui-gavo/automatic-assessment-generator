@@ -15,15 +15,13 @@
 9. 資料を細切れカード化せず、visualは本当に関係を表す場合だけ使う。
 10. 修訂後にもう一度、正答一意性、single-source ablation、distractor競合、family surfaceを内部確認する。
 
-規則が重なる場合は、Candidateの今回のidentityを除き、Production Profileをauthoritative contract、Reference Patternsをobserved family surface、Output TemplateをJSON shapeとして扱う。
+詳細な公式reference sequenceは修訂モデルにも与えない。元candidateを2026実題へ近づけるための換皮ではなく、Production Profileの生成安全な範囲内でreview issueを直す。
+
+規則が重なる場合は、Candidateの今回のidentityを除き、Production Profileをauthoritative contract、Output TemplateをJSON shapeとして扱う。
 
 ## Production Profile — authoritative contract
 
 {{ generation_profile_yaml }}
-
-## 2026 Reference Patterns
-
-{{ reference_patterns_yaml }}
 
 ## Output Template
 
