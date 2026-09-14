@@ -41,10 +41,45 @@ constructs:
   - sentence_grammar
   - japanese_to_chinese_sentence_assembly
 
+quality_calibration:
+  fill_choice:
+    - keep all four options locally plausible in the blank whenever possible
+    - distinguish options by collocation, scope, register, or discourse fit rather than gross part-of-speech mismatch
+    - for the inappropriate-choice task, the wrong option must be semantically or usage-wise wrong, not merely grammatically broken
+  ordering:
+    principle: test_sentence_assembly_not_clause_reordering
+    - do not pre-package most of the correct sentence into four long clause-sized tokens
+    - prefer lexical items, function words, short phrases, complements, and predicate components whose order must be solved syntactically
+    - at least several unused tokens should be locally attachable, so elimination requires sentence-level reasoning
+    - avoid a token pool where four distractors are obviously unusable before the learner considers the Japanese source
+    - a correct answer should require at least two genuine ordering or dependency decisions, not only arranging a time phrase before three already-complete clauses
+
 hard_rules:
   - Q2-B must explicitly encode selection_rule=inappropriate
   - ordering tasks must store the full token pool, correct four-token sequence and answer positions
   - ordering tasks must not be represented as ordinary multiple choice
+
+human_qa_required:
+  - lexical_usage_correct
+  - inappropriate_rule_unambiguous
+  - ordering_unique
+  - token_pool_natural
+  - ordering_token_granularity
+  - ordering_requires_syntax
+  - distractor_tokens_locally_plausible
+
+validator_scope:
+  deterministic:
+    - schema
+    - exact_answer_range
+    - token_counts
+    - answer_metadata_consistency
+    - overlong_ordering_token_warning
+  explicitly_human:
+    - lexical_collocation_quality
+    - ordering_uniqueness
+    - shortcut_resistance
+    - official_difficulty_calibration
 
 originality:
   - examples must be newly written
