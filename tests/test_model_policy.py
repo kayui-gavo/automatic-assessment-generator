@@ -2,6 +2,7 @@ from tabito_itemgen.model_policy import (
     MIN_REASONING_LEVEL,
     POLICY_VERSION,
     PREFERRED_MODEL,
+    execution_is_review_grade,
     execution_protocol,
     profile_for,
     reasoning_is_review_grade,
@@ -36,3 +37,15 @@ def test_only_high_or_stronger_reasoning_is_review_grade():
     assert reasoning_is_review_grade("high")
     assert reasoning_is_review_grade("extra_high")
     assert reasoning_is_review_grade("pro")
+
+
+def test_review_grade_requires_an_allowed_model_reasoning_pair():
+    assert execution_is_review_grade("GPT-5.6 Sol", "high")
+    assert execution_is_review_grade("GPT-5.6 Sol", "extra_high")
+    assert execution_is_review_grade("GPT-5.6 Sol Pro", "pro")
+    assert execution_is_review_grade("GPT-6 Pro", "pro")
+
+    assert not execution_is_review_grade("GPT-5.6 Sol", "medium")
+    assert not execution_is_review_grade("GPT-5.6 Sol", "pro")
+    assert not execution_is_review_grade("GPT-5.6 Luna", "high")
+    assert not execution_is_review_grade("unknown-model", "high")
