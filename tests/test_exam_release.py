@@ -35,6 +35,9 @@ from tabito_itemgen.section_io import load_section, section_fingerprint
 from tests.full_exam_factory import build_exam
 
 
+ISOLATED_CONTEXT = "non_personalized_temporary_chat"
+
+
 def _review_for(root, exam_id, section_name) -> SectionReview:
     manifest = load_manifest(manifest_path(root, exam_id))
     ref = next(ref for ref in manifest.sections if ref.section == section_name)
@@ -63,6 +66,7 @@ def _complete_section_qa(root, exam_id, section_name):
         review.model_dump_json(),
         reasoning_level="high",
         fresh_chat_confirmed=True,
+        context_mode=ISOLATED_CONTEXT,
     )
     qa = SectionHumanQA(
         section=section_name,
@@ -126,6 +130,7 @@ def test_ordered_multislot_review_does_not_accept_reversed_q2_answers(tmp_path):
         review.model_dump_json(),
         reasoning_level="high",
         fresh_chat_confirmed=True,
+        context_mode=ISOLATED_CONTEXT,
     )
     readiness = section_release_readiness(tmp_path, manifest.exam_id, "Q2")
     blind = next(gate for gate in readiness.gates if gate.name == "blind review")
@@ -133,7 +138,7 @@ def test_ordered_multislot_review_does_not_accept_reversed_q2_answers(tmp_path):
     assert ordered_task in blind.detail
 
 
-def test_blind_review_requires_confirmed_fresh_chat(tmp_path):
+def test_blind_review_requires_confirmed_independent_context(tmp_path):
     manifest, _ = build_exam(tmp_path, "main_2026")
     review = _review_for(tmp_path, manifest.exam_id, "Q1")
 
@@ -144,11 +149,12 @@ def test_blind_review_requires_confirmed_fresh_chat(tmp_path):
         review.model_dump_json(),
         reasoning_level="high",
         fresh_chat_confirmed=False,
+        context_mode=ISOLATED_CONTEXT,
     )
     readiness = section_release_readiness(tmp_path, manifest.exam_id, "Q1")
     blind = next(gate for gate in readiness.gates if gate.name == "blind review")
     assert not blind.passed
-    assert "fresh chat" in blind.detail
+    assert "independent context" in blind.detail
 
     import_section_review(
         tmp_path,
@@ -157,10 +163,29 @@ def test_blind_review_requires_confirmed_fresh_chat(tmp_path):
         review.model_dump_json(),
         reasoning_level="high",
         fresh_chat_confirmed=True,
+        context_mode=ISOLATED_CONTEXT,
     )
     readiness = section_release_readiness(tmp_path, manifest.exam_id, "Q1")
     blind = next(gate for gate in readiness.gates if gate.name == "blind review")
     assert blind.passed
+
+
+def test_blind_review_rejects_fresh_but_nonisolated_context(tmp_path):
+    manifest, _ = build_exam(tmp_path, "main_2026")
+    review = _review_for(tmp_path, manifest.exam_id, "Q3")
+    import_section_review(
+        tmp_path,
+        manifest.exam_id,
+        "Q3",
+        review.model_dump_json(),
+        reasoning_level="high",
+        fresh_chat_confirmed=True,
+        context_mode="unknown",
+    )
+    readiness = section_release_readiness(tmp_path, manifest.exam_id, "Q3")
+    blind = next(gate for gate in readiness.gates if gate.name == "blind review")
+    assert not blind.passed
+    assert "memory-isolated" in blind.detail
 
 
 def test_blind_review_rejects_below_production_reasoning(tmp_path):
@@ -173,6 +198,7 @@ def test_blind_review_rejects_below_production_reasoning(tmp_path):
         review.model_dump_json(),
         reasoning_level="medium",
         fresh_chat_confirmed=True,
+        context_mode=ISOLATED_CONTEXT,
     )
     readiness = section_release_readiness(tmp_path, manifest.exam_id, "Q5")
     blind = next(gate for gate in readiness.gates if gate.name == "blind review")
@@ -227,6 +253,12 @@ def test_exam_release_requires_sections_artifacts_and_final_exam_qa(tmp_path):
     record = load_json(exam_release_record_path(tmp_path, manifest.exam_id))
     assert record["exam_fingerprint"] == release.fingerprint
     assert record["artifact_manifest_sha256"]
+    assert record["model_policy_version"]
+    assert set(record["section_review_execution"]) == {"Q1", "Q2", "Q3", "Q4", "Q5"}
+    assert all(
+        execution["context_mode"] == ISOLATED_CONTEXT
+        for execution in record["section_review_execution"].values()
+    )
 
 
 def test_artifact_change_invalidates_final_exam_qa(tmp_path):
