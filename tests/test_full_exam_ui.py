@@ -15,6 +15,7 @@ from tabito_itemgen.exam_production import (
 from tabito_itemgen.exam_review_models import SECTION_SPECIFIC_QA, SectionHumanQA, SectionQAChecks, SectionQATiming, SectionReview
 from tabito_itemgen.section_io import load_section, section_fingerprint
 
+from tests.artifact_factory import write_clean_artifacts
 from tests.full_exam_factory import build_exam
 
 
@@ -97,6 +98,7 @@ def test_approved_exam_remains_renderable_but_draft_manifest_is_removed(tmp_path
     for section_name in ("Q1", "Q2", "Q3", "Q4", "Q5"):
         _bind_section_release_evidence(tmp_path, manifest.exam_id, section_name)
 
+    write_clean_artifacts(tmp_path, manifest.exam_id)
     qa = ExamHumanQA(
         exam_id=manifest.exam_id,
         reviewer="Final QA",
@@ -111,3 +113,4 @@ def test_approved_exam_remains_renderable_but_draft_manifest_is_removed(tmp_path
     approved_manifest = load_manifest(approved_dir / "exam.json")
     assert approved_manifest.workflow.state == "approved"
     assert all(ref.state == "approved" for ref in approved_manifest.sections)
+    assert (approved_dir / "artifacts" / "student.pdf").exists()
