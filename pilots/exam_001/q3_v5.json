@@ -126,7 +126,7 @@
       "subsection": "B",
       "order": 6,
       "direction": "zh_to_ja",
-      "source_text": "Zhè jiàn shì bùshì bùnéng zuò, zhǐshì xiànzài jiù kāishǐ dehuà, zhǔnbèi shíjiān kǒngpà bùgòu.",
+      "source_text": "Zhè jiàn shì bú shì bùnéng zuò, zhǐshì xiànzài jiù kāishǐ dehuà, zhǔnbèi shíjiān kǒngpà bùgòu.",
       "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
       "options": [
         "これはできないわけではないので、今すぐ始めれば準備時間も十分だろう。",
@@ -149,7 +149,7 @@
       "subsection": "B",
       "order": 7,
       "direction": "zh_to_ja",
-      "source_text": "Tā bǎ nà fèn bàogào kàn le liǎng biàn, bùshì yīnwèi kàn bù dǒng, ér shì pà zìjǐ lòu diào le zhòngyào de shùzì.",
+      "source_text": "Tā bǎ nà fèn bàogào kàn le liǎng biàn, bú shì yīnwèi kàn bù dǒng, ér shì pà zìjǐ lòu diào le zhòngyào de shùzì.",
       "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
       "options": [
         "彼がその報告を二度読んだのは、理解できなかったからではなく、重要な数字を見落としていないか心配だったからだ。",
