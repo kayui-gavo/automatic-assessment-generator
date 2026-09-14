@@ -58,6 +58,8 @@ SECTION_SPECIFIC_QA: dict[str, tuple[str, ...]] = {
     "Q1": (
         "pinyin_correctness",
         "initial_final_analysis_correctness",
+        "target_character_underlining_correct",
+        "pinyin_hidden_in_student_a_b_c",
         "tone_correctness",
         "yi_bu_tone_sandhi_handling",
         "polyphone_context_unambiguous",
