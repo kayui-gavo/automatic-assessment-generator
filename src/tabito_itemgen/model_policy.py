@@ -5,7 +5,7 @@ from typing import Literal
 
 Stage = Literal["generate", "review", "revision"]
 
-POLICY_VERSION = "manual-chat-sol-high-2026-09-v1"
+POLICY_VERSION = "manual-chat-sol-high-2026-09-v2"
 PREFERRED_MODEL = "GPT-5.6 Sol"
 MIN_REASONING_LEVEL = "high"
 ACCEPTED_REVIEW_REASONING = frozenset({"high", "extra_high", "pro"})
