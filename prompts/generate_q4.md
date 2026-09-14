@@ -1,157 +1,118 @@
-# TABITO 共通テスト中国語 Q4 生成タスク v0.4.2
+# TABITO 共通テスト中国語 Q4 生成タスク v0.5
 
-旅人教育の内部教研用に、2026大学入学共通テスト中国語 第4問を蓝本とした**原创候補問題**を作成する。
+2026大学入学共通テスト中国語 第4問の**原创候補問題**を作成する。
 
-## 最重要ルール
+目的は「多資料っぽい問題」を作ることではない。指定された2026 familyの学生向け構造を保ちながら、題材・文章・数値・人物・具体的な判断ロジックを新規設計し、共通テストらしい情報処理を成立させることである。
 
-2026本試験・追試験は「能力の参考」ではなく、**現在のQ4の実際の型**である。
+## 規則の優先順位
 
-以前の失敗は、換皮を避けるために2026のsurface grammarまで捨て、一般的な「多資料読解」にしてしまったことだった。今回は逆に、**題材・文章・数値・固有名詞・正誤関係は原创にしつつ、設問骨格・資料接続・選択肢言語は選択した2026 familyに十分近づける。**
+以下の入力に重複がある場合、勝手に平均しない。優先順位は固定する。
 
-full Q4 の `surface_family` は必ず次のどちらか：
+1. **Item Spec** — 今回のID、family、scope、topic等
+2. **Production Profile** — 命題上の authoritative contract。hard core、family scaffold、情報依存、品質条件
+3. **Reference Patterns** — 2026本試・追試から観察した task role / option language / variation の具体像。例を新しい必須ルールへ膨張させない
+4. **Output Template** — JSONフィールドと表現可能な資料・taskの形
 
-- `main_2026`：2026本試型
-- `makeup_2026`：2026追試型
+このprompt本文は作業手順だけを与える。上記入力に既に書かれたslot構造をここで再定義しない。
 
-`Item Spec` に指定された family を厳守する。
+## 作成手順
 
-## 冊子上の導入文
+### 1. 先に大問の情報設計を作る
 
-full Q4 では `subsection_intros_ja` を必ず作成する。
+本文を書き始める前に、内部的に次を決める。
 
-```json
-"subsection_intros_ja": {
-  "A": "...",
-  "B": "..."
-}
-```
+- AからBまで一つの目的・活動として自然につながるscenario
+- 各answer slotが何を判断させるか
+- 各資料がどの設問に必要か
+- 直接理解 / 比較 / 検証 / 条件照合 / 適用等が単調に反復しないか
 
-- A/Bそれぞれ1〜3文程度の自然な日本語。
-- 受験者に「誰が・何の目的で・どの資料を読むのか」が分かるようにする。
-- ただし正答に必要な情報や結論を先に言わない。
-- 「以下の資料を読んで答えなさい」のようなgenericな一文だけで済ませない。
-- BはAの単なる言換えではなく、後半で情報の用途・場面が変わることを自然に示す。
-- 大学入試センター冊子に置いて違和感のない簡潔な試験文体にする。
+題材だけ共通で、設問同士が独立したworksheetにはしない。
 
-## 共通A（21〜28）
+### 2. 情報依存を設計してから選択肢を書く
 
-### A 問1 — 21・22
-- 中国語の会話文
-- 内容一致を7〜8程度の**日本語選択肢**から二つ選ぶ
-- テーマ・論点・登場人物の立場を導入する
+`cross_source` は飾りのmetadataではない。
 
-### A 問2 — 23〜26
-- 調査・資料読解の4枠
-- 表、グラフ、説明文＋図などを使う
-- `main_2026`：2枠 + 1枠 + 1枠
-- `makeup_2026`：2枠 + 2枠
-- 本試の表/グラフ型では**中国語選択肢中心**
-- 追試のグラフ型は中国語選択肢、説明文＋図の統合型は日本語選択肢も可
-- 四つの独立単選問題に分解しない
+- 一つの資料だけを残しても正答が一意なら `cross_source` と呼ばない
+- 本当に複数資料を使わせる設問では、各資料単独では候補が複数残り、組み合わせて初めて決まるようにする
+- 誤答肢は、一資料だけならもっともらしいが別資料との照合で落ちる near-miss を優先する
+- visual / table / chart / flow は、その関係を視覚化する意味があるときだけ使う
 
-### A 問3 — 27・28
-- 講演内容、説明のまとめ、構造化memo等のまとまりある中国語資料
-- 6〜8程度の**日本語選択肢**から二つ選ぶ
+すべての設問を無理にcross-source化しない。single-sourceの自然な理解問題も残す。
 
-## B：family別
+### 3. 誤答肢に「誤読経路」を持たせる
 
-### `main_2026`
-- 問1 29・30：中国語 checklist / 条件資料を読み、**日本語選択肢**から二つ選ぶ
-- 問2 31・32：中国語 profile / candidate と中国語の希望・条件を照合し、対象名・記号等の短い選択肢から選ぶ
-- 問2 33：照合過程から追加すべき情報項目等を**日本語選択肢**から一つ選ぶ
-- 問3 34：中国語 flowchart / rule tree / process を読み、一般原則を**中国語選択肢**から一つ選ぶ
-- 問3 35・36：中国語の二つのcaseを、A/B/C/D等の短い分類・結果選択肢へ適用する
+正答以外を単なるデタラメにしない。
 
-### `makeup_2026`
-- 問1 29・30：SNS / timetable / 日付 / 曜日 / 条件等を組み合わせ、日付・時刻等の**日本語選択肢**から二つ選ぶ
-- 問2 31・32：map / memo / system diagram等の複合資料を読み、**日本語選択肢**中心に二つ選ぶ
-- 問2 33・34：flyer / instructions / safety notice 等を読み、**日本語選択肢**中心に二つ選ぶ
-- 問3 35・36：中国語reflection / summary / opinion textから、**日本語選択肢**で二つ選ぶ
+- 条件の一部だけ満たす
+- 数値・範囲・主体・時点を一箇所ずらす
+- 一資料の事実は正しいが結論が違う
+- 因果や必要条件を逆にする
 
-## 原创性の境界
+一語だけ、常識だけ、選択肢の長さだけで正答できるshortcutを避ける。
 
-**再現してよい／むしろ再現すべきもの**：
-- A/B、21〜36、A=8枠/B=8枠
-- 上記の問1/問2/問3の役割
-- 「二つ選べ」が多いこと
-- taskごとの日本語/中国語選択肢の分布
-- 本試型/追試型の資料→設問の接続方法
-- A/B導入文から資料・設問へ入る冊子上の読書リズム
+### 4. 冊子として自然に書く
 
-**必ず原创にするもの**：
-- テーマと具体的場面
-- 登場人物・施設名
-- 中国語本文
-- 数値と図表データ
-- 選択肢の具体的内容
-- 正答を決める具体的論理関係
-- case内容
+- 中国語は自然な現代簡体字。HSK穴埋め教材や母語者向け圧縮ニュースの文体にしない
+- 日本語の導入・設問は短い試験文体にする。解き方を説明するAI文体にしない
+- `subsection_intros_ja.A/B` はfull Q4で必須。誰が何のために読むかを示すが、答えや読み方を先に教えない
+- Bの導入はAの言い換えではなく、情報の用途・局面が変わることを自然に示す
+- 資料を短いカードへ細切れにしすぎず、共通テスト冊子らしい情報密度を保つ
+- 数量資料は重い計算ではなく、比較・割合・増減・条件判断を測る
+- 題材上必要な低頻度語だけ最小限にglossする
 
-**禁止**：
-- ペットを別の動物や別の商品に置き換えただけ
-- 自動運転を別の交通サービスに置き換えただけ
-- 公式の文・選択肢・数値・caseを軽く言い換える
-- 「原创」を優先しすぎて2026 Q4の型から離れる
-- 全選択肢を機械的に中国語または日本語へ統一する
+### 5. 原创性は内容と論理で作る
 
-## 文体・設問
+公式問題から再現してよいのは、選択した2026 familyのstudent-facing grammarである。
 
-- 中国語は自然な現代簡体字。
-- 日本語設問・導入文は大学入試センター冊子に置いて違和感のない簡潔な試験文体。
-- option language は上記family/task grammarに従う。
-- 語注は必要最小限。
-- 1つの資料を細切れカードにしすぎない。共通テストらしい情報密度を保つ。
-- visualは位置・経路・因果・階層・手順など、視覚化する意味がある場合に使う。
-- 正答集合は一意。誤答肢には部分一致、条件見落とし、因果逆転、範囲誤読などの自然な誤読経路を持たせる。
+必ず新規にするもの：
+- scenarioの具体内容
+- 人物・施設名
+- 全中国語本文
+- 数値・図表データ
+- case
+- 選択肢文
+- 正答を決める具体的論理
 
-## Blueprint
+名詞だけ差し替えたreskin、公式文章の軽い言換えは禁止。
 
-{{ blueprint_yaml }}
+## 出力前の内部チェック
 
-## 2026 Q4 Generation Profile
+JSONを返す前に、少なくとも次を内部で検証する。
+
+1. 指定familyのslot/task scaffoldから外れていないか
+2. A/B導入とscenario progressionが自然か
+3. 正答または正答集合が資料だけから一意か
+4. `cross_source` と宣言した各taskがsingle-source ablationを通るか
+5. visual materialが装飾になっていないか
+6. distractorが局所的にもっともらしく、keyword shortcutがないか
+7. 直接理解ばかり、同じ認知操作ばかりになっていないか
+8. option languageがReference Patternsのtask roleに合うか
+9. 内容・数値・case・判断ロジックが原创か
+10. 全体が細切れworksheetではなく一つのDNC Q4として読めるか
+
+## Production Profile — authoritative authoring contract
 
 {{ generation_profile_yaml }}
 
-## 2026 Q4 Surface Grammar
+## 2026 Reference Patterns — family-specific observed surface
 
-{{ surface_grammar }}
+{{ reference_patterns_yaml }}
 
-## Q4 Template
+## Output Template
 
 {{ template_yaml }}
 
-## Detailed Item-Writing Direction
-
-{{ item_writing_direction }}
-
-## Item Spec
+## Item Spec — highest priority for this run
 
 {{ item_spec_json }}
 
-## JSON設計
+## Output contract
 
+- JSONのみ。Markdown fenceや説明文は禁止
 - `schema_version`: `"0.2"`
-- `workflow.blueprint_version`: `"R8-2026-main-tsui-v3"`
-- fullの場合は `surface_family` を `main_2026` / `makeup_2026` のどちらかにする
-- fullの場合は `subsection_intros_ja.A/B` を必ず含める
-- fullでは answer_number 21〜36を一度ずつ使用
-- materials と tasks は subsection(A/B) と order を持つ
-- task.response_mode: `single_choice` / `multi_select` / `multi_slot_choice`
-- `dependency_mode` を明示
-- evidence locator を人間が確認できる粒度で記述
-- single_choice / multi_select は正答以外の全選択肢について `distractor_rationales_ja`
-- multi_slot_choice は各slotの `slot_distractor_rationales_ja`
-- `quality_notes.ambiguity_risk` は原則 low
-
-出力前に必ず確認：
-
-1. A/B導入文が自然で、答えを先に言っていないか。
-2. 21〜28は「会話2 → 調査資料4 → 講演/memo2」になっているか。
-3. 29〜36は指定familyのB構造に一致するか。
-4. 各taskのoption languageが2026 familyの使い分けに合うか。
-5. 本文やcaseの換皮ではなく内容は原创か。
-6. 逆に原创性を意識しすぎて一般的なworksheetになっていないか。
-7. 資料・選択肢の情報密度が共通テスト冊子に近いか。
-8. 正答が一意か。
-
-**JSON以外を出力しない。**
+- `workflow.blueprint_version`: `"R8-2026-main-tsui-v4"`
+- fullでは `subsection_intros_ja.A/B` を含める
+- `dependency_mode` と、人間が追える粒度の `evidence` を各taskに記録する
+- single-choice / multi-select の全誤答肢に `distractor_rationales_ja` を付ける
+- multi-slot choice は各slotの誤答理由を `slot_distractor_rationales_ja` に記録する
+- `quality_notes.ambiguity_risk` は原則 `low`
