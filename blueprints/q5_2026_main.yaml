@@ -45,6 +45,19 @@ surface_features:
   - shared-option multi-slot lexical fill
   - whole-text consistency multi-select
 
+quality_calibration:
+  lexical_questions:
+    - options should compete within the same part of speech and nearby semantic field
+    - do not make the key recoverable by spotting one obvious antonym among three near-synonyms
+    - prefer cases where at least two options are locally possible and broader context resolves the choice
+  interpretation_questions:
+    - distractors should reuse real textual information with a scope, causal, temporal, or perspective error
+    - avoid one-line paraphrase questions whose wrong options are unrelated to the passage
+  late_questions:
+    - the final three questions must not ask the same thesis three times in different wording
+    - distribute inference, organization/summary, and whole-text consistency across the late set
+    - at least one task should require integrating separated paragraphs
+
 schema_requirements:
   article:
     - paragraphs with stable paragraph_id
@@ -60,11 +73,16 @@ schema_requirements:
     - preserve question_no separately from answer numbers
 
 human_qa:
-  - article naturalness
-  - paragraph coherence
-  - anchor accuracy
-  - answer uniqueness
-  - distractor plausibility
-  - whole-text reasoning quality
+  - article_naturalness
+  - paragraph_coherence
+  - anchor_accuracy
+  - answer_uniqueness
+  - distractor_plausibility
+  - lexical_distractor_strength
+  - local_options_compete
+  - whole_text_reasoning_quality
+  - late_question_operation_diversity
+  - shortcut_resistance
+  - official_difficulty_calibrated
   - copyright/originality check
   - booklet pagination
