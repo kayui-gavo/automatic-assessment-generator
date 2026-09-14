@@ -25,6 +25,8 @@ class SectionQAChecks(BaseModel):
     answer_uniqueness: bool = False
     distractors_plausible: bool = False
     surface_fidelity_2026: bool = False
+    official_difficulty_calibrated: bool = False
+    shortcut_resistance: bool = False
     originality_ok: bool = False
     layout_readable: bool = False
     no_solution_leak: bool = False
@@ -61,30 +63,45 @@ SECTION_SPECIFIC_QA: dict[str, tuple[str, ...]] = {
         "polyphone_context_unambiguous",
         "pinyin_diacritic_layout",
         "dialogue_naturalness",
+        "lexical_load_official_like",
+        "phonetic_confusability_sufficient",
+        "no_visual_counting_shortcut",
     ),
     "Q2": (
         "lexical_usage_correct",
         "inappropriate_rule_unambiguous",
         "ordering_unique",
         "token_pool_natural",
+        "ordering_token_granularity",
+        "ordering_requires_syntax",
+        "distractor_tokens_locally_plausible",
     ),
     "Q3": (
         "pinyin_correctness",
         "translation_semantics_correct",
         "distractor_error_taxonomy_correct",
         "not_word_for_word_only",
+        "near_miss_distractors",
+        "no_keyword_shortcut",
+        "semantic_operation_diversity",
     ),
     "Q4": (
         "information_journey",
         "visual_materials_necessary",
         "source_integrity_ok",
         "surface_family_correct",
+        "cross_source_dependency_real",
+        "cognitive_operation_diversity",
+        "template_repetition_risk_checked",
     ),
     "Q5": (
         "article_naturalness",
         "paragraph_coherence",
         "anchor_accuracy",
         "whole_text_reasoning_quality",
+        "lexical_distractor_strength",
+        "local_options_compete",
+        "late_question_operation_diversity",
         "copyright_originality_check",
         "long_text_pagination_readable",
     ),
