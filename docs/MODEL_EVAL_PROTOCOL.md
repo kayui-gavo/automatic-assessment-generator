@@ -32,10 +32,11 @@ For one comparison round:
 2. Generate the same section request independently with each candidate model/configuration.
 3. Never let one candidate see another candidate's output.
 4. Run deterministic validation on every output.
-5. Run Blind Review in a fresh chat that is independent of the authoring run.
-6. Have the Human QA reviewer evaluate candidates without being told which model produced which candidate whenever practical.
-7. Record rework time and defect categories before revising anything.
-8. Do not promote a model based on one unusually good item. Repeat across multiple sections and at least several independent exam projects.
+5. Run Blind Review in a **memory-isolated context**: non-personalized Temporary Chat for manual ChatGPT operation, or a stateless isolated API request. An ordinary new chat is not sufficient evidence of isolation when cross-chat memory may apply.
+6. Give the reviewer only the student-visible candidate surface. Do not expose answer keys, rationales, evidence locators, intended cognitive-operation labels, or internal Q1 A/B/C pinyin.
+7. Have the Human QA reviewer evaluate candidates without being told which model produced which candidate whenever practical.
+8. Record rework time and defect categories before revising anything.
+9. Do not promote a model based on one unusually good item. Repeat across multiple sections and at least several independent exam projects.
 
 Do not use the generating model's self-rating as an evaluation metric.
 
@@ -109,7 +110,7 @@ A more expensive model should not be promoted merely because it is stronger in g
 
 ## Reviewer diversity
 
-Fresh-chat isolation is mandatory. Model diversity is useful but secondary.
+Memory-isolated context is mandatory. Model diversity is useful but secondary.
 
 Using a different strong reviewer model for Q4/Q5 can be an additional audit when available, especially for high-stakes releases, but it is not a substitute for Human QA. Requiring a second paid model for every section before there is evidence of measurable benefit would add process cost without proving better items.
 
