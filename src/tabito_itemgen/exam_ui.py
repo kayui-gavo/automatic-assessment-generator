@@ -464,8 +464,12 @@ def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None
         st.caption("warning · " + warning)
 
     st.markdown("#### Blind Review")
-    st.caption(f"{PREFERRED_MODEL} · {MIN_REASONING_LEVEL.title()} · 新对话")
-    st.caption("reviewer 只能看到学生侧题面；不得使用生成、修订、答案或教师标注所在的对话。")
+    st.caption(
+        f"{PREFERRED_MODEL} · {MIN_REASONING_LEVEL.title()} · 非个性化 Temporary Chat"
+    )
+    st.caption(
+        "只把 Blind Review Prompt 放进非个性化 Temporary Chat；不要让 memory、个性化、生成/修订历史或教师标注进入 reviewer 上下文。"
+    )
 
     review_request = create_section_review_request(root, manifest.exam_id, ref.section)
     st.download_button(
@@ -475,7 +479,7 @@ def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None
     )
 
     isolated = st.checkbox(
-        "已在全新对话中完成，reviewer 未看过本题的生成或修订过程",
+        "已在非个性化 Temporary Chat 中完成，且 reviewer 未看过本题的生成、修订、答案或教师标注",
         key=f"isolated-review-{ref.section}-{section_fingerprint(section)[:8]}",
     )
     review_json = st.text_area(
@@ -497,6 +501,7 @@ def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None
                 model_label=PREFERRED_MODEL,
                 reasoning_level=MIN_REASONING_LEVEL,
                 fresh_chat_confirmed=True,
+                context_mode="non_personalized_temporary_chat",
                 authoring_context_seen=False,
             )
             st.rerun()
