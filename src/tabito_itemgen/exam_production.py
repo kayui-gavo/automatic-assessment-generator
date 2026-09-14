@@ -32,6 +32,7 @@ from .io import dump_json, load_json
 from .model_policy import (
     POLICY_VERSION,
     PREFERRED_MODEL,
+    context_is_memory_isolated,
     execution_is_review_grade,
     reasoning_is_review_grade,
 )
@@ -282,7 +283,11 @@ def _review_execution_errors(section, execution: ReviewExecution) -> list[str]:
             f"review execution policy {execution.policy_version!r} is not current {POLICY_VERSION!r}"
         )
     if not execution.fresh_chat_confirmed:
-        errors.append("blind review was not confirmed as a fresh chat")
+        errors.append("blind review was not confirmed as an independent context")
+    if not context_is_memory_isolated(execution.context_mode):
+        errors.append(
+            f"blind review context mode {execution.context_mode!r} is not confirmed memory-isolated"
+        )
     if execution.authoring_context_seen:
         errors.append("blind reviewer had access to authoring/revision context")
     if not reasoning_is_review_grade(execution.reasoning_level):
@@ -306,6 +311,7 @@ def import_section_review(
     model_label: str = PREFERRED_MODEL,
     reasoning_level: str = "unknown",
     fresh_chat_confirmed: bool = False,
+    context_mode: str = "unknown",
     authoring_context_seen: bool = False,
 ) -> Path:
     manifest = load_manifest(manifest_path(root, exam_id))
@@ -326,6 +332,7 @@ def import_section_review(
         model_label=model_label,
         reasoning_level=reasoning_level,
         fresh_chat_confirmed=fresh_chat_confirmed,
+        context_mode=context_mode,
         authoring_context_seen=authoring_context_seen,
     )
     dump_json(section_review_execution_path(root, exam_id, section_name), execution.model_dump())
