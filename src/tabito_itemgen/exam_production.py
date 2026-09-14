@@ -555,6 +555,17 @@ def exam_release_readiness(root: Path, exam_id: str) -> Readiness:
     return Readiness(exam_id, exam_fingerprint(root, exam_id), tuple(gates))
 
 
+def _review_execution_snapshot(root: Path, exam_id: str, manifest: ExamManifest) -> dict[str, dict]:
+    snapshot: dict[str, dict] = {}
+    for ref in manifest.sections:
+        path = section_review_execution_path(root, exam_id, ref.section)
+        if not path.exists():
+            raise ValueError(f"missing review execution record for {ref.section}")
+        execution = ReviewExecution.model_validate(load_json(path))
+        snapshot[ref.section] = execution.model_dump()
+    return snapshot
+
+
 def approve_exam(root: Path, exam_id: str) -> tuple[Path, Readiness]:
     readiness = exam_release_readiness(root, exam_id)
     if not readiness.ready:
@@ -574,6 +585,8 @@ def approve_exam(root: Path, exam_id: str) -> tuple[Path, Readiness]:
     artifact_path = exam_artifact_manifest_path(root, exam_id)
     artifact_snapshot = load_json(artifact_path)
     artifact_source_dir = root / "output" / exam_id
+    draft_manifest = load_manifest(source / "exam.json")
+    review_execution_snapshot = _review_execution_snapshot(root, exam_id, draft_manifest)
 
     shutil.copytree(source, target)
     shutil.copytree(artifact_source_dir, target / "artifacts")
@@ -593,6 +606,8 @@ def approve_exam(root: Path, exam_id: str) -> tuple[Path, Readiness]:
         "exam_fingerprint": readiness.fingerprint,
         "approved_at": _now(),
         "approved_path": str(target.relative_to(root)),
+        "model_policy_version": POLICY_VERSION,
+        "section_review_execution": review_execution_snapshot,
         "artifact_manifest_sha256": sha256_file(artifact_path),
         "artifact_manifest": artifact_snapshot,
         "gates": [
