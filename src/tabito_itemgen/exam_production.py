@@ -513,9 +513,34 @@ def _artifact_gate(root: Path, exam_id: str) -> Gate:
 def save_exam_human_qa(root: Path, exam_id: str, qa: ExamHumanQA) -> Path:
     if qa.exam_id != exam_id:
         raise ValueError("exam Human QA exam_id does not match")
+
     artifact_gate = _artifact_gate(root, exam_id)
     if not artifact_gate.passed:
         raise ValueError("final Exam QA requires current preflighted PDFs: " + artifact_gate.detail)
+
+    if qa.disposition == "approve":
+        manifest = load_manifest(manifest_path(root, exam_id))
+        validation = validate_exam(manifest_path(root, exam_id))
+        prerequisite_errors: list[str] = []
+        if not validation.passed:
+            prerequisite_errors.append("exam validation failed: " + "; ".join(validation.errors))
+        for ref in manifest.sections:
+            if not ref.path:
+                prerequisite_errors.append(f"{ref.section} has not been generated")
+                continue
+            readiness = section_release_readiness(root, exam_id, ref.section)
+            if not readiness.ready:
+                detail = " | ".join(
+                    f"{gate.name}: {gate.detail}"
+                    for gate in readiness.gates
+                    if not gate.passed
+                )
+                prerequisite_errors.append(f"{ref.section} is not Ready: {detail}")
+        if prerequisite_errors:
+            raise ValueError(
+                "Final Exam QA approve requires every section to be Ready: "
+                + " | ".join(prerequisite_errors)
+            )
 
     artifact_path = exam_artifact_manifest_path(root, exam_id)
     artifact = ArtifactManifest.model_validate(load_json(artifact_path))
