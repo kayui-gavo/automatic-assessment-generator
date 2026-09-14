@@ -20,6 +20,7 @@ def test_full_exam_renderer_writes_one_student_and_teacher_booklet(tmp_path):
     assert teacher and teacher.exists()
 
     text = student.read_text(encoding="utf-8")
+    teacher_text = teacher.read_text(encoding="utf-8")
     for number in range(1, 6):
         assert f"第{number}問" in text
     assert "試験時間 80分" in text
@@ -31,6 +32,13 @@ def test_full_exam_renderer_writes_one_student_and_teacher_booklet(tmp_path):
     assert r"\par\n" not in text
     assert r"\clearpage\n" not in text
     assert r"\smallskip\n" not in text
+
+    # Long CJK labels in horizontal bar charts wrap instead of running outside A4.
+    assert r"\pgfplotsset{xbar/.append style={y tick label style={text width=2.6cm,align=right}}}" in text
+    # Teacher annotations may contain Unicode symbols not covered by Latin serif fonts.
+    # Keep the student typography unchanged, but make the teacher main font CJK-capable.
+    assert r"{\setmainfont{Noto Serif CJK JP}}" not in text
+    assert r"{\setmainfont{Noto Serif CJK JP}}" in teacher_text
 
     q1 = text.split("第1問", 1)[1].split("第2問", 1)[0]
     assert r"\uline{开}" in q1
