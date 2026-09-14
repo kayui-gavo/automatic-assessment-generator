@@ -11,7 +11,7 @@
   "q4_topic_request": "地域防災イベント",
   "q5_topic_request": "古い商店街の共同配送と店主の変化",
   "sections": [
-    {"section": "Q1", "section_id": "TABITO-CN-PILOT-EXAM-001-Q1", "path": "q1_v3.json", "expected_score": 24, "answer_start": 1, "answer_end": 6, "state": "draft", "fingerprint": null},
+    {"section": "Q1", "section_id": "TABITO-CN-PILOT-EXAM-001-Q1", "path": "q1_v4.json", "expected_score": 24, "answer_start": 1, "answer_end": 6, "state": "draft", "fingerprint": null},
     {"section": "Q2", "section_id": "TABITO-CN-PILOT-EXAM-001-Q2", "path": "q2_v4.json", "expected_score": 16, "answer_start": 7, "answer_end": 12, "state": "draft", "fingerprint": null},
     {"section": "Q3", "section_id": "TABITO-CN-PILOT-EXAM-001-Q3", "path": "q3_v5.json", "expected_score": 40, "answer_start": 13, "answer_end": 20, "state": "draft", "fingerprint": null},
     {"section": "Q4", "section_id": "TABITO-CN-PILOT-EXAM-001-Q4", "path": "q4_v3.json", "expected_score": 60, "answer_start": 21, "answer_end": 36, "state": "draft", "fingerprint": null},
