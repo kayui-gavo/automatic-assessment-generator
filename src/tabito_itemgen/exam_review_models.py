@@ -19,6 +19,24 @@ class SectionReview(BaseModel):
     overall_comment_ja: str
 
 
+class ReviewExecution(BaseModel):
+    """Operator-recorded provenance for one blind-review run.
+
+    The reviewer model cannot prove that it ran in a fresh chat, so this record is
+    intentionally saved by the production workflow rather than emitted by the model.
+    """
+
+    schema_version: Literal["0.1"] = "0.1"
+    section: SectionKind
+    section_id: str
+    candidate_fingerprint: str = Field(min_length=64, max_length=64)
+    policy_version: str = Field(min_length=1)
+    model_label: str = Field(min_length=1)
+    reasoning_level: Literal["instant", "medium", "high", "extra_high", "pro", "unknown"]
+    fresh_chat_confirmed: bool = False
+    authoring_context_seen: bool = False
+
+
 class SectionQAChecks(BaseModel):
     chinese_naturalness: bool = False
     japanese_instruction_naturalness: bool = False
