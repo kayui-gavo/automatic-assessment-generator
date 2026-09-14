@@ -2,6 +2,7 @@ from tabito_itemgen.model_policy import (
     MIN_REASONING_LEVEL,
     POLICY_VERSION,
     PREFERRED_MODEL,
+    context_is_memory_isolated,
     execution_is_review_grade,
     execution_protocol,
     profile_for,
@@ -19,15 +20,22 @@ def test_production_policy_uses_sol_high():
         assert profile.reasoning_level == "high"
 
 
-def test_blind_review_requires_fresh_chat_but_generation_revision_only_recommend_it():
+def test_blind_review_requires_memory_isolated_context():
     assert profile_for("review").fresh_chat == "required"
     assert profile_for("generate").fresh_chat == "recommended"
     assert profile_for("revision").fresh_chat == "recommended"
 
     protocol = execution_protocol("review", "Q4")
-    assert "MUST use a fresh chat" in protocol
+    assert "MUST use an independent context" in protocol
+    assert "non-personalized Temporary Chat" in protocol
+    assert "ordinary new chat is not sufficient" in protocol
     assert "Do not use Instant / low-effort mode" in protocol
     assert "answer keys" in protocol
+
+    assert context_is_memory_isolated("non_personalized_temporary_chat")
+    assert context_is_memory_isolated("stateless_api")
+    assert context_is_memory_isolated("other_memory_isolated")
+    assert not context_is_memory_isolated("unknown")
 
 
 def test_only_high_or_stronger_reasoning_is_review_grade():
