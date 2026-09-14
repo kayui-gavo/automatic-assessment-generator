@@ -6,6 +6,7 @@ from pathlib import Path
 
 from jinja2 import Template
 
+from .blind_surface import blind_section_dict
 from .io import load_json
 from .models import Item
 from .production import item_fingerprint
@@ -70,27 +71,9 @@ def create_q4_request(
 
 
 def _blind_item_dict(item: Item) -> dict:
-    data = item.model_dump()
-    # Keep only what a solver should be allowed to infer from the visible booklet.
-    # In particular, surface_family is author-side classification: the reviewer
-    # must infer whether the item actually reads like main_2026 or makeup_2026.
-    data.pop("surface_family", None)
-    data.pop("quality_notes", None)
-    data.pop("workflow", None)
-    data.pop("scenario_summary_ja", None)
-    data.pop("difficulty", None)
-    data.pop("topic", None)
-    for material in data["materials"]:
-        material.pop("bundle_id", None)
-    for task in data["tasks"]:
-        for slot in task["answer_slots"]:
-            slot.pop("correct_option", None)
-        task.pop("dependency_mode", None)
-        task.pop("evidence", None)
-        task.pop("rationale_ja", None)
-        task.pop("distractor_rationales_ja", None)
-        task.pop("slot_distractor_rationales_ja", None)
-    return data
+    """Backward-compatible wrapper around the shared student-visible scrubber."""
+
+    return blind_section_dict(item)
 
 
 def create_review_request(root: Path, item_path: Path) -> Path:
