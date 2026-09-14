@@ -53,10 +53,17 @@ quality_calibration:
   interpretation_questions:
     - distractors should reuse real textual information with a scope, causal, temporal, or perspective error
     - avoid one-line paraphrase questions whose wrong options are unrelated to the passage
+  distractor_design:
+    - every serious reading distractor should preserve at least one true proposition or real passage detail whenever possible
+    - make the decisive error local: one wrong scope, causal link, temporal relation, actor, generalization, or responsibility assignment
+    - do not use absurd reversals such as cancelling an activity that the passage explicitly says continued unless the option also contains enough true detail to compete
+    - a student should need to locate the exact logical mismatch, not merely choose the only reasonable-sounding option
+    - for multi-select whole-text items, wrong options should be partially supported by the passage and fail on one added or overgeneralized clause
   late_questions:
     - the final three questions must not ask the same thesis three times in different wording
     - distribute inference, organization/summary, and whole-text consistency across the late set
     - at least one task should require integrating separated paragraphs
+    - Q9-Q11 should test different cognitive operations even when they draw on overlapping paragraphs
 
 schema_requirements:
   article:
