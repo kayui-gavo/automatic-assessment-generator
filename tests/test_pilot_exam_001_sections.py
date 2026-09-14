@@ -11,7 +11,7 @@ PILOT = ROOT / "pilots" / "exam_001"
 
 
 def test_pilot_exam_001_active_sections_are_schema_valid():
-    for filename in ("q1_v4.json", "q2_v4.json", "q3_v5.json", "q4_v3.json", "q5_v5.json"):
+    for filename in ("q1_v4.json", "q2_v4.json", "q3_v5.json", "q4_v4.json", "q5_v5.json"):
         result = validate_section_file(PILOT / filename)
         assert result.errors == (), f"{filename}: {result.errors}"
 
@@ -94,8 +94,8 @@ def test_pilot_exam_001_q3_v5_uses_balanced_near_miss_answers():
     assert all(tasks["Q3-B2"].distractor_error_types.values())
 
 
-def test_pilot_exam_001_q4_v3_uses_japanese_prompts_and_real_cross_source_reasoning():
-    section = load_section(PILOT / "q4_v3.json")
+def test_pilot_exam_001_q4_v4_has_genuine_cross_source_ablation_resistance():
+    section = load_section(PILOT / "q4_v4.json")
     tasks = {task.task_id: task for task in section.tasks}
 
     assert tasks["A2b"].prompt_ja == "グラフの内容と一致するものを一つ選べ。"
@@ -105,9 +105,18 @@ def test_pilot_exam_001_q4_v3_uses_japanese_prompts_and_real_cross_source_reason
     integrative = tasks["A2c"]
     assert integrative.dependency_mode == "cross_source"
     assert {item.material_id for item in integrative.evidence} == {"A-M4", "A-M5"}
-    correct = integrative.options[integrative.answer_slots[0].correct_option - 1]
-    assert "不知道活动内容是最常见的不参加原因" in correct
-    assert "四个项目的报名人数都增加了" in correct
+    assert integrative.answer_slots[0].correct_option == 1
+    assert "不知道活动内容是最常见" in integrative.options[0]
+    assert "不知道活动内容是最常见" in integrative.options[1]
+    assert "四个项目的报名人数都增加了" in integrative.options[0]
+    assert "四个项目的报名人数都增加了" in integrative.options[2]
+
+    synthesis = tasks["A3"]
+    assert synthesis.dependency_mode == "cross_source"
+    assert {item.material_id for item in synthesis.evidence} == {"A-M4", "A-M5", "A-M6"}
+    assert [slot.correct_option for slot in synthesis.answer_slots] == [2, 6]
+    assert "时间不合适" in synthesis.options[1]
+    assert "四つの体験項目すべて" in synthesis.options[5]
 
 
 def test_pilot_exam_001_q5_v5_anchors_are_visible_and_answer_range_is_complete():
@@ -171,7 +180,7 @@ def test_pilot_exam_001_manifest_uses_current_revisions():
         "Q1": "q1_v4.json",
         "Q2": "q2_v4.json",
         "Q3": "q3_v5.json",
-        "Q4": "q4_v3.json",
+        "Q4": "q4_v4.json",
         "Q5": "q5_v5.json",
     }
 
