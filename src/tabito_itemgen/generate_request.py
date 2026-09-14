@@ -15,17 +15,22 @@ BLUEPRINT_VERSION = "R8-2026-main-tsui-v4"
 
 
 def _reference_context(root: Path) -> dict[str, str]:
-    """Compact production context shared by legacy Q4 author/review/revision prompts."""
+    """Generation-safe context kept for backward compatibility with older callers."""
 
     return {
         "generation_profile_yaml": (
             root / "blueprints" / "q4_2026_generation_profile.yaml"
         ).read_text(encoding="utf-8"),
-        "reference_patterns_yaml": (
-            root / "blueprints" / "q4_2026_reference_patterns.yaml"
-        ).read_text(encoding="utf-8"),
         "template_yaml": (root / "templates" / "q4.yaml").read_text(encoding="utf-8"),
     }
+
+
+def _review_reference_context(root: Path) -> dict[str, str]:
+    context = _reference_context(root)
+    context["reference_patterns_yaml"] = (
+        root / "blueprints" / "q4_2026_reference_patterns.yaml"
+    ).read_text(encoding="utf-8")
+    return context
 
 
 def create_q4_request(
@@ -85,7 +90,7 @@ def create_review_request(root: Path, item_path: Path) -> Path:
     fingerprint = item_fingerprint(item)
     prompt_path = root / "prompts" / "review_q4.md"
     prompt = Template(prompt_path.read_text(encoding="utf-8")).render(
-        **_reference_context(root),
+        **_review_reference_context(root),
         item_json=blind_json,
         candidate_fingerprint=fingerprint,
     )
