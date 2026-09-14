@@ -1,6 +1,7 @@
 from tabito_itemgen.exam_models import ExamHumanQA, ExamQAChecks
 from tabito_itemgen.exam_production import (
     exam_fingerprint,
+    exam_release_readiness,
     import_section_review,
     load_manifest,
     manifest_path,
@@ -13,6 +14,7 @@ from tabito_itemgen.exam_review_models import SECTION_SPECIFIC_QA, SectionHumanQ
 from tabito_itemgen.io import dump_json
 from tabito_itemgen.section_io import load_section, section_fingerprint
 
+from tests.artifact_factory import write_clean_artifacts
 from tests.full_exam_factory import build_exam
 
 
@@ -48,6 +50,7 @@ def test_changing_q3_invalidates_q3_and_exam_qa_but_not_other_sections(tmp_path)
     for section_name in ("Q1", "Q2", "Q3", "Q4", "Q5"):
         _approve_section_evidence(tmp_path, manifest.exam_id, section_name)
 
+    write_clean_artifacts(tmp_path, manifest.exam_id)
     exam_qa = ExamHumanQA(
         exam_id=manifest.exam_id,
         reviewer="Exam QA",
@@ -55,6 +58,7 @@ def test_changing_q3_invalidates_q3_and_exam_qa_but_not_other_sections(tmp_path)
         checks=ExamQAChecks(**{name: True for name in ExamQAChecks.model_fields}),
     )
     save_exam_human_qa(tmp_path, manifest.exam_id, exam_qa)
+    assert exam_release_readiness(tmp_path, manifest.exam_id).ready
     before = exam_fingerprint(tmp_path, manifest.exam_id)
 
     current = load_manifest(manifest_path(tmp_path, manifest.exam_id))
@@ -71,3 +75,7 @@ def test_changing_q3_invalidates_q3_and_exam_qa_but_not_other_sections(tmp_path)
     assert section_release_readiness(tmp_path, manifest.exam_id, "Q2").ready
     assert section_release_readiness(tmp_path, manifest.exam_id, "Q4").ready
     assert section_release_readiness(tmp_path, manifest.exam_id, "Q5").ready
+    release = exam_release_readiness(tmp_path, manifest.exam_id)
+    assert not release.ready
+    artifact = next(gate for gate in release.gates if gate.name == "artifact preflight")
+    assert "stale" in artifact.detail
