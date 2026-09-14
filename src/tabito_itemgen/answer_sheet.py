@@ -57,8 +57,11 @@ def _mark(number: int) -> str:
 
 
 def _row(number: int, option_count: int) -> str:
-    marks = r"\quad ".join(_mark(option) for option in range(1, option_count + 1))
-    return rf"\noindent\textbf{{{number:02d}}}\quad {marks}\par\vspace{{0.22em}}"
+    marks = r"\hspace{0.38em}".join(_mark(option) for option in range(1, option_count + 1))
+    return (
+        rf"\noindent\textbf{{{number:02d}}}\hspace{{0.8em}}"
+        rf"{{\small {marks}}}\par\vspace{{0.20em}}"
+    )
 
 
 def render_answer_sheet_tex(
@@ -85,11 +88,13 @@ def render_answer_sheet_tex(
 \usepackage{xeCJK}
 \usepackage{multicol}
 \usepackage{array}
+\usepackage{needspace}
 """
     tex += _font_setup()
     tex += r"""
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0pt}
+\setlength{\columnsep}{1.8em}
 \pagestyle{empty}
 \begin{document}
 """
