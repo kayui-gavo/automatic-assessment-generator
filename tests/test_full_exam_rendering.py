@@ -32,6 +32,13 @@ def test_full_exam_renderer_writes_one_student_and_teacher_booklet(tmp_path):
     assert r"\clearpage\n" not in text
     assert r"\smallskip\n" not in text
 
+    q1 = text.split("第1問", 1)[1].split("第2問", 1)[0]
+    assert r"\uline{開}" in q1
+    assert r"\uline{忙}" in q1
+    assert "kāi" not in q1
+    assert "máng" not in q1
+    assert "míngtiān" not in q1
+
     q2 = text.split("第2問", 1)[1].split("第3問", 1)[0]
     q4 = text.split("第4問", 1)[1].split("第5問", 1)[0]
     assert q2.count(r"\large\textbf{C}") == 1
