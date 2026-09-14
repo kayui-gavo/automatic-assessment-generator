@@ -267,6 +267,7 @@ def cmd_exam_import_review(args: argparse.Namespace) -> int:
             model_label=args.model,
             reasoning_level=args.reasoning,
             fresh_chat_confirmed=args.fresh_chat_confirmed,
+            context_mode=args.context_mode,
             authoring_context_seen=args.authoring_context_seen,
         )
     except (ValueError, FileNotFoundError) as exc:
@@ -274,7 +275,9 @@ def cmd_exam_import_review(args: argparse.Namespace) -> int:
         return 1
     print(out)
     if not args.fresh_chat_confirmed:
-        print("WARNING: blind-review release gate will fail until a fresh-chat review is imported")
+        print("WARNING: blind-review release gate requires an independently executed review")
+    if args.context_mode == "unknown":
+        print("WARNING: blind-review release gate requires a confirmed memory-isolated context")
     return 0
 
 
@@ -370,7 +373,18 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument(
         "--fresh-chat-confirmed",
         action="store_true",
-        help="Confirm that the reviewer ran in a new chat with no authoring/revision context",
+        help="Confirm that the reviewer ran in an independent context with no authoring/revision context",
+    )
+    command.add_argument(
+        "--context-mode",
+        choices=[
+            "non_personalized_temporary_chat",
+            "stateless_api",
+            "other_memory_isolated",
+            "unknown",
+        ],
+        default="unknown",
+        help="Record how cross-chat memory/personalization was excluded from the blind reviewer",
     )
     command.add_argument(
         "--authoring-context-seen",
