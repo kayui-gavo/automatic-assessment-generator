@@ -16,6 +16,7 @@ from .exam_models import (
     Q5Section,
 )
 from .exam_production import exam_fingerprint, load_manifest, manifest_path
+from .exam_surface import ordering_surface_parts, q5_surface_segments, section_instruction
 from .models import Item
 from .presentation import (
     owner_task_for_order,
@@ -27,14 +28,6 @@ from .presentation import (
 )
 from .render import _font_setup, _material_block, _task_block, compile_xelatex, latex_escape
 from .section_io import load_section
-
-_SECTION_INSTRUCTIONS = {
-    1: "次の問い（A～D）に答えよ。",
-    2: "次の問い（A～C）に答えよ。",
-    3: "次の問い（A・B）に答えよ。",
-    4: "次の問い（A・B）に答えよ。",
-    5: "次の問いに答えよ。",
-}
 
 
 def _box(number: int) -> str:
@@ -58,68 +51,36 @@ def _options(options: list[str], *, chinese: bool = False) -> str:
 
 
 def _ordering_frame(task: Q2OrderingTask) -> str:
-    parts = task.sentence_frame_zh.split("＿＿")
-    blank_count = len(parts) - 1
-    if blank_count != len(task.correct_sequence):
-        raise ValueError(
-            f"{task.task_id}: sentence frame has {blank_count} blanks but "
-            f"correct_sequence has {len(task.correct_sequence)} positions"
-        )
-    if len(task.answer_positions) != len(task.answer_slots):
-        raise ValueError(f"{task.task_id}: answer_positions and answer_slots must have the same length")
-
-    slot_by_position = {
-        position: slot for position, slot in zip(task.answer_positions, task.answer_slots, strict=True)
-    }
-    fragments = [latex_escape(parts[0])]
-    for position in range(1, blank_count + 1):
-        slot = slot_by_position.get(position)
-        if slot is None:
-            fragments.append(r"\underline{\hspace{4.0em}}")
+    fragments: list[str] = []
+    for part in ordering_surface_parts(task):
+        if part.answer_number is not None:
+            fragments.append(_box(part.answer_number))
+        elif part.text:
+            fragments.append(latex_escape(part.text))
         else:
-            fragments.append(_box(slot.answer_number))
-        fragments.append(latex_escape(parts[position]))
+            fragments.append(r"\underline{\hspace{4.0em}}")
     return "".join(fragments)
 
 
 def _breakable_underline(source: str, *, chunk_size: int = 10) -> str:
-    """Underline CJK prose while leaving legal line-break opportunities.
-
-    ``ulem`` does not reliably find break points inside long unspaced CJK text.
-    Breaking the source into invisible adjacent underline chunks prevents the
-    very large overfull boxes found by the Pilot 001 PDF preflight.
-    """
+    """Underline CJK prose while leaving legal line-break opportunities."""
 
     chunks = [source[index : index + chunk_size] for index in range(0, len(source), chunk_size)]
     return r"\allowbreak{}".join(rf"\uline{{{latex_escape(chunk)}}}" for chunk in chunks)
 
 
 def _q5_paragraph_text(section: Q5Section, paragraph: ArticleParagraph) -> str:
-    """Render stable Q5 anchors without leaking internal anchor ids into prose."""
-
-    text = latex_escape(paragraph.text_zh)
-    anchors = [anchor for anchor in section.anchors if anchor.paragraph_id == paragraph.paragraph_id]
-
-    for anchor in anchors:
-        marker_tex = ""
-        if anchor.marker_label:
-            marker = latex_escape(f"〔{anchor.marker_label}〕")
-            marker_tex = rf"{{\small\textbf{{{marker}}}}}"
-            if marker in text:
-                text = text.replace(marker, marker_tex, 1)
-
-        if anchor.kind == "blank" and marker_tex:
-            text = text.replace(
-                marker_tex,
-                marker_tex + r"\,\underline{\hspace{4.2em}}",
-                1,
-            )
-        elif anchor.source_excerpt:
-            excerpt = latex_escape(anchor.source_excerpt)
-            if excerpt in text:
-                text = text.replace(excerpt, _breakable_underline(anchor.source_excerpt), 1)
-
-    return text
+    fragments: list[str] = []
+    for segment in q5_surface_segments(section, paragraph):
+        if segment.kind == "marker":
+            fragments.append(rf"{{\small\textbf{{{latex_escape(segment.text)}}}}}")
+        elif segment.kind == "blank":
+            fragments.append(r"\,\underline{\hspace{4.2em}}")
+        elif segment.kind == "underline":
+            fragments.append(_breakable_underline(segment.text))
+        else:
+            fragments.append(latex_escape(segment.text))
+    return "".join(fragments)
 
 
 def _teacher_note(title: str, body: str) -> str:
@@ -131,7 +92,7 @@ def _teacher_note(title: str, body: str) -> str:
 
 
 def _section_header(number: int, score: int) -> str:
-    instruction = _SECTION_INSTRUCTIONS[number]
+    instruction = section_instruction(number)
     return (
         _tex_line(r"\Needspace{8\baselineskip}")
         + _tex_line(
@@ -203,8 +164,10 @@ def _render_q2(section: Q2Section, teacher: bool) -> str:
             tex += _tex_line(rf"\noindent {latex_escape(task.prompt_ja)}\par")
             tex += _tex_line(rf"\noindent {latex_escape(task.source_ja)}\par\smallskip")
             tex += _tex_line(rf"\noindent{{\zhfont {_ordering_frame(task)}}}\par\smallskip")
-            for token in task.token_pool:
+            for index, token in enumerate(task.token_pool, start=1):
                 tex += rf"\optnum{{{token.token_id}}}\ {{\zhfont {latex_escape(token.text_zh)}}}\quad "
+                if index == 4:
+                    tex += _tex_line(r"\par\smallskip")
             tex += _tex_line(r"\par")
             if teacher:
                 answer = ", ".join(
@@ -252,13 +215,7 @@ def _render_q3(section: Q3Section, teacher: bool) -> str:
 
 
 def _print_safe_q4(section: Item) -> Item:
-    """Normalize symbols that are unreliable in the Latin fallback font.
-
-    Q4 material rendering uses the legacy renderer, where units such as ℃ may
-    otherwise be assigned to the Latin main font.  The semantic content is not
-    changed: only the print representation is normalized to the widely
-    supported degree sign plus C.
-    """
+    """Normalize symbols that are unreliable in the Latin fallback font."""
 
     return Item.model_validate_json(section.model_dump_json().replace("℃", "°C"))
 
@@ -305,9 +262,6 @@ def _render_q5(section: Q5Section, teacher: bool) -> str:
             rf"\noindent{{\zhfont {_q5_paragraph_text(section, paragraph)}}}\par\vspace{{0.55em}}"
         )
 
-    # Keep the source text visually separate from the questions.  Pilot 001
-    # showed that mixing the last paragraphs with Q1/Q2 produced a dense page
-    # followed by an almost empty final page.
     tex += _tex_line(r"\clearpage")
     for task in sorted(section.tasks, key=lambda value: value.question_no):
         if task.question_no == 7:
