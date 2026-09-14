@@ -51,23 +51,34 @@ jobs:
 
           root = Path("ci-work")
           manifest, _ = build_exam(root, "main_2026")
-          outputs = render_exam(root, manifest.exam_id, compile_pdf=True)
           out = Path("ci-artifacts")
           out.mkdir(exist_ok=True)
-          for key in (
-              "student_tex", "student_pdf",
-              "teacher_tex", "teacher_pdf",
-              "answer_sheet_tex", "answer_sheet_pdf",
-              "answer_key", "scoring_scheme", "artifact_manifest",
-          ):
-              path = outputs[key]
-              if path is None or not path.exists():
-                  raise SystemExit(f"missing output: {key}")
-              shutil.copy2(path, out / path.name)
-          for log in (root / "output" / manifest.exam_id).glob("*.log"):
-              shutil.copy2(log, out / log.name)
+          error = None
+          try:
+              outputs = render_exam(root, manifest.exam_id, compile_pdf=True)
+              required = (
+                  "student_tex", "student_pdf",
+                  "teacher_tex", "teacher_pdf",
+                  "answer_sheet_tex", "answer_sheet_pdf",
+                  "answer_key", "scoring_scheme", "artifact_manifest",
+              )
+              for key in required:
+                  path = outputs[key]
+                  if path is None or not path.exists():
+                      raise RuntimeError(f"missing output: {key}")
+          except Exception as exc:
+              error = exc
+          finally:
+              output_dir = root / "output" / manifest.exam_id
+              if output_dir.exists():
+                  for path in output_dir.iterdir():
+                      if path.is_file() and path.suffix in {".tex", ".pdf", ".json", ".log"}:
+                          shutil.copy2(path, out / path.name)
+          if error is not None:
+              raise error
           PY
       - name: Render and preflight real Pilot Exam 001
+        if: success()
         run: |
           python - <<'PY'
           import shutil
@@ -82,21 +93,31 @@ jobs:
           target.parent.mkdir(parents=True, exist_ok=True)
           shutil.copytree(source, target)
 
-          outputs = render_exam(root, exam_id, compile_pdf=True)
           out = Path("pilot-artifacts")
           out.mkdir(exist_ok=True)
-          for key in (
-              "student_tex", "student_pdf",
-              "teacher_tex", "teacher_pdf",
-              "answer_sheet_tex", "answer_sheet_pdf",
-              "answer_key", "scoring_scheme", "artifact_manifest",
-          ):
-              path = outputs[key]
-              if path is None or not path.exists():
-                  raise SystemExit(f"missing Pilot output: {key}")
-              shutil.copy2(path, out / path.name)
-          for log in (root / "output" / exam_id).glob("*.log"):
-              shutil.copy2(log, out / log.name)
+          error = None
+          try:
+              outputs = render_exam(root, exam_id, compile_pdf=True)
+              required = (
+                  "student_tex", "student_pdf",
+                  "teacher_tex", "teacher_pdf",
+                  "answer_sheet_tex", "answer_sheet_pdf",
+                  "answer_key", "scoring_scheme", "artifact_manifest",
+              )
+              for key in required:
+                  path = outputs[key]
+                  if path is None or not path.exists():
+                      raise RuntimeError(f"missing Pilot output: {key}")
+          except Exception as exc:
+              error = exc
+          finally:
+              output_dir = root / "output" / exam_id
+              if output_dir.exists():
+                  for path in output_dir.iterdir():
+                      if path.is_file() and path.suffix in {".tex", ".pdf", ".json", ".log"}:
+                          shutil.copy2(path, out / path.name)
+          if error is not None:
+              raise error
           PY
       - name: Upload schema fixture artifacts
         if: always()
@@ -119,4 +140,4 @@ jobs:
             pilot-artifacts/*.pdf
             pilot-artifacts/*.json
             pilot-artifacts/*.log
-          if-no-files-found: error
+          if-no-files-found: ignore
