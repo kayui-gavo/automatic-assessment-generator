@@ -54,6 +54,17 @@ def _validate_q1(section: Q1Section) -> ValidationResult:
             for word in words:
                 if not _has_tone_mark(word.pinyin):
                     errors.append(f"{task.task_id}: pinyin for {word.label!r} has no Unicode tone mark")
+                if task.target in {"initial", "final"} and _hanzi_count(word.hanzi) >= 2:
+                    if word.target_index is None:
+                        errors.append(
+                            f"{task.task_id}: multi-character Q1 A/B word {word.hanzi!r} "
+                            "requires target_index for the underlined target character"
+                        )
+                if task.target == "tone_pattern" and word.target_index is not None:
+                    warnings.append(
+                        f"{task.task_id}: tone-pattern word {word.hanzi!r} has target_index; "
+                        "Q1 C normally compares the whole word"
+                    )
 
             hanzi_lengths = [_hanzi_count(word.hanzi) for word in words]
             if hanzi_lengths and all(length <= 1 for length in hanzi_lengths):
