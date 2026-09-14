@@ -86,7 +86,7 @@ def _discover_exams(root: Path) -> dict[str, Path]:
 
 
 def _status_badge(text: str, kind: str = "") -> str:
-    return f'<span class="pill {kind}">{html.escape(text)}</span>'
+    return f'<span class="status-label {kind}">{html.escape(text)}</span>'
 
 
 def _section_path(exam_path: Path, ref) -> Path | None:
@@ -116,6 +116,23 @@ def _section_status(root: Path, manifest, exam_path: Path, ref) -> tuple[str, st
 
 def _answer_badge(number: int) -> str:
     return f'<span class="answer-badge">{number}</span>'
+
+
+def _q1_hanzi_html(word, *, underline_target: bool) -> str:
+    escaped = html.escape(word.hanzi)
+    if not underline_target:
+        return escaped
+    target_index = word.target_index
+    if target_index is None and len(word.hanzi) == 1:
+        target_index = 1
+    if target_index is None:
+        return escaped
+    index = target_index - 1
+    return (
+        html.escape(word.hanzi[:index])
+        + f"<u>{html.escape(word.hanzi[index])}</u>"
+        + html.escape(word.hanzi[index + 1 :])
+    )
 
 
 def _html_options(options: list[str]) -> None:
@@ -151,9 +168,22 @@ def _preview_simple_section(section, teacher: bool = False) -> None:
                     f'{_answer_badge(task.answer_slot.answer_number)}</div>',
                     unsafe_allow_html=True,
                 )
-                st.markdown(f"**{task.headword.hanzi}**　{task.headword.pinyin}")
+                underline_target = task.target in {"initial", "final"}
+                headword = _q1_hanzi_html(task.headword, underline_target=underline_target)
+                st.markdown(
+                    f'<div class="q1-word"><b>見出し</b>　{headword}</div>',
+                    unsafe_allow_html=True,
+                )
+                rows = []
                 for word in task.candidates:
-                    st.markdown(f"{word.label}　{word.hanzi}　{word.pinyin}")
+                    surface = _q1_hanzi_html(word, underline_target=underline_target)
+                    rows.append(
+                        f'<span class="q1-choice"><b>{html.escape(word.label)}</b>　{surface}</span>'
+                    )
+                st.markdown(
+                    f'<div class="q1-choice-row">{"".join(rows)}</div>',
+                    unsafe_allow_html=True,
+                )
             else:
                 for line in task.lines:
                     st.markdown(f"**{line.speaker}**：{line.pinyin}")
@@ -513,22 +543,9 @@ def _render_export(root: Path, manifest) -> None:
 
 
 def main() -> None:
-    st.set_page_config(page_title="TABITO 中国語模試 Workbench", page_icon="📘", layout="wide")
+    st.set_page_config(page_title="TABITO 中国語模試", page_icon="📘", layout="wide")
     st.markdown(APP_CSS, unsafe_allow_html=True)
     root = _root()
-    st.markdown(
-        '<div class="tabito-kicker">TABITO EDUCATION · EXAM PRODUCTION</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        '<div class="tabito-title">共通テスト中国語 模試制作 Workbench</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        '<div class="tabito-sub">2026 本試験＋追試験を一次蓝本に、Q1–Q5を別々に作り、'
-        '1冊の200点模試としてreleaseする。</div>',
-        unsafe_allow_html=True,
-    )
 
     exams = _discover_exams(root)
     sidebar_labels = ["＋ 新建完整模試", *exams]
@@ -539,11 +556,12 @@ def main() -> None:
             if selected_id in label:
                 default = index
                 break
-    selection = st.sidebar.selectbox("模試 project", sidebar_labels, index=default)
+    st.sidebar.markdown('<div class="sidebar-title">中国語模試</div>', unsafe_allow_html=True)
+    selection = st.sidebar.selectbox("模試", sidebar_labels, index=default, label_visibility="collapsed")
 
     if selection == "＋ 新建完整模試":
         _create_exam_panel(root)
-        st.info("一套模試只创建一个 Exam project，但 Q1–Q5 会分别生成、审题和返修。")
+        st.caption("Q1–Q5 は個別に生成・審査し、最後に一冊の模試として確認します。")
         return
 
     exam_path = exams[selection]
@@ -551,13 +569,14 @@ def main() -> None:
     is_approved = "approved" in exam_path.parts
     st.session_state["selected_exam_id"] = manifest.exam_id
     family_label = "2026 本試験型" if manifest.exam_family == "main_2026" else "2026 追試験型"
-    st.markdown(f"## {html.escape(manifest.title_ja)}")
     st.markdown(
-        '<div class="status-row">'
-        + _status_badge(family_label)
-        + _status_badge("200点")
-        + _status_badge("80分")
-        + _status_badge("50解答欄")
+        f'<div class="workspace-heading">{html.escape(manifest.title_ja)}</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="workspace-meta">'
+        + html.escape(family_label)
+        + ' <span>·</span> 200点 <span>·</span> 80分 <span>·</span> 50解答欄 <span>·</span> '
         + _status_badge(
             manifest.workflow.state.upper(), "ok" if manifest.workflow.state == "approved" else ""
         )
@@ -565,14 +584,14 @@ def main() -> None:
         unsafe_allow_html=True,
     )
     if is_approved:
-        st.success("正式模試 · 已进入 Approved 库。此页面为只读审阅；如需改题，请创建新版本。")
+        st.caption("Approved · 只读。需要改题时请创建新版本。")
 
-    overview, section_tab, release_tab = st.tabs(["整卷概览", "当前大题", "Final Release"])
+    overview, section_tab, release_tab = st.tabs(["整卷", "大题", "Release"])
     with overview:
-        st.markdown("### Q1–Q5 production status")
+        st.markdown("### Q1–Q5")
         for ref in manifest.sections:
             status, kind = _section_status(root, manifest, exam_path, ref)
-            cols = st.columns([0.7, 2.4, 1.2, 1.3])
+            cols = st.columns([0.65, 2.5, 1.2, 1.2])
             cols[0].markdown(f"**{ref.section}**")
             cols[1].markdown(SECTION_LABELS[ref.section])
             cols[2].markdown(f"{ref.expected_score}点 · {ref.answer_start}–{ref.answer_end}")
@@ -583,14 +602,14 @@ def main() -> None:
             for error in validation.errors:
                 st.markdown(f"- {error}")
         elif all(ref.path for ref in manifest.sections):
-            st.success("整卷 deterministic validation 通过：200点 / 80分 / 1–50。")
+            st.caption("deterministic validation · PASS · 200点 / 80分 / 1–50")
         if validation.warnings:
-            with st.expander(f"整卷 warning · {len(validation.warnings)}"):
+            with st.expander(f"Warnings · {len(validation.warnings)}"):
                 for warning in validation.warnings:
                     st.markdown(f"- {warning}")
 
         if all(ref.path and (exam_path.parent / ref.path).exists() for ref in manifest.sections):
-            st.markdown("### 连续学生册预览")
+            st.markdown("### 学生册预览")
             for ref in manifest.sections:
                 _render_section_preview(load_section(exam_path.parent / ref.path), teacher=False)
                 st.markdown("---")
@@ -656,7 +675,7 @@ def main() -> None:
                 with review_view:
                     result = validate_section_file(path)
                     if result.passed:
-                        st.success("Deterministic QA PASS")
+                        st.caption("Deterministic QA · PASS")
                     else:
                         st.error("Deterministic QA FAIL")
                     for error in result.errors:
@@ -695,6 +714,7 @@ def main() -> None:
                         readiness = section_release_readiness(
                             root, manifest.exam_id, section_name
                         )
+                        st.markdown('<div class="gate-list">', unsafe_allow_html=True)
                         for gate in readiness.gates:
                             st.markdown(
                                 _status_badge(
@@ -705,6 +725,7 @@ def main() -> None:
                             )
                             if not gate.passed:
                                 st.caption(gate.detail)
+                        st.markdown('</div>', unsafe_allow_html=True)
                         _section_human_qa_form(root, manifest, ref, section)
                         review_file = (
                             root
@@ -761,8 +782,8 @@ def main() -> None:
 
     with release_tab:
         if is_approved:
-            st.markdown("### Formal release")
-            st.success("该模試已完成 release。Approved 内容不在原 ID 上覆盖。")
+            st.markdown("### Release")
+            st.caption("该模試已完成 release。Approved 内容不在原 ID 上覆盖。")
             _render_export(root, manifest)
         else:
             st.markdown("### Final Exam QA")
