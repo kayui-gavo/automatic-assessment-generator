@@ -29,7 +29,12 @@ from .exam_review_models import (
 )
 from .exam_validation import ValidationResult, validate_exam, validate_section_file
 from .io import dump_json, load_json
-from .model_policy import POLICY_VERSION, PREFERRED_MODEL, reasoning_is_review_grade
+from .model_policy import (
+    POLICY_VERSION,
+    PREFERRED_MODEL,
+    execution_is_review_grade,
+    reasoning_is_review_grade,
+)
 from .models import Item
 from .production import parse_chat_json
 from .section_io import load_section, save_section_draft, section_fingerprint, section_id
@@ -283,6 +288,11 @@ def _review_execution_errors(section, execution: ReviewExecution) -> list[str]:
     if not reasoning_is_review_grade(execution.reasoning_level):
         errors.append(
             f"blind review reasoning level {execution.reasoning_level!r} is below production grade"
+        )
+    elif not execution_is_review_grade(execution.model_label, execution.reasoning_level):
+        errors.append(
+            "blind review model/reasoning combination is not allowed by current production policy: "
+            f"{execution.model_label!r} / {execution.reasoning_level!r}"
         )
     return errors
 
