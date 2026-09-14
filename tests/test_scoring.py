@@ -5,6 +5,18 @@ def _key() -> dict[int, int]:
     return {number: 1 for number in range(1, 51)}
 
 
+def _valid_key_for(family: str) -> dict[int, int]:
+    """Build a synthetic author key that respects multi-select uniqueness."""
+
+    key = _key()
+    scheme = scoring_scheme(family)
+    for group in scheme.groups:
+        if group.comparison_mode == "set" and len(group.answer_numbers) > 1:
+            for index, number in enumerate(group.answer_numbers, start=1):
+                key[number] = index
+    return key
+
+
 def test_scoring_schemes_cover_exactly_200_points() -> None:
     for family in ("main_2026", "makeup_2026"):
         scheme = scoring_scheme(family)
@@ -14,14 +26,14 @@ def test_scoring_schemes_cover_exactly_200_points() -> None:
 
 
 def test_perfect_response_scores_200() -> None:
-    author = _key()
     for family in ("main_2026", "makeup_2026"):
+        author = _valid_key_for(family)
         result = score_responses(family, author, author)
         assert result.earned == 200
 
 
 def test_q2_ordering_is_all_or_nothing_and_order_sensitive() -> None:
-    author = _key()
+    author = _valid_key_for("main_2026")
     author[9] = 2
     author[10] = 4
     response = dict(author)
@@ -34,7 +46,7 @@ def test_q2_ordering_is_all_or_nothing_and_order_sensitive() -> None:
 
 
 def test_main_q4_linked_star_group_is_order_insensitive_but_all_or_nothing() -> None:
-    author = _key()
+    author = _valid_key_for("main_2026")
     author[23] = 2
     author[24] = 5
     response = dict(author)
@@ -52,7 +64,7 @@ def test_main_q4_linked_star_group_is_order_insensitive_but_all_or_nothing() -> 
 
 
 def test_main_q4_each_five_group_awards_partial_credit_by_selected_choice() -> None:
-    author = _key()
+    author = _valid_key_for("main_2026")
     author[21] = 4
     author[22] = 8
     response = dict(author)
