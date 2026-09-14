@@ -8,6 +8,7 @@ from jinja2 import Template
 from .exam_models import ExamManifest, Q1Section, Q2Section, Q3Section, Q5Section
 from .exam_production import exam_workspace_dir, load_manifest, manifest_path
 from .exam_review_models import SectionReview
+from .model_policy import execution_protocol
 from .models import Item
 from .section_io import load_section, section_fingerprint
 
@@ -84,6 +85,10 @@ def _section_spec(manifest: ExamManifest, section: str) -> dict:
     return base
 
 
+def _with_execution_protocol(stage: str, section: str, prompt: str) -> str:
+    return execution_protocol(stage, section) + "\n\n---\n\n" + prompt
+
+
 def create_exam_section_request(root: Path, exam_id: str, section: str) -> tuple[Path, Path]:
     manifest = load_manifest(manifest_path(root, exam_id))
     if section not in SECTION_MODELS:
@@ -109,6 +114,7 @@ def create_exam_section_request(root: Path, exam_id: str, section: str) -> tuple
             json_schema=json.dumps(SECTION_MODELS[section].model_json_schema(), ensure_ascii=False, indent=2),
         )
 
+    prompt = _with_execution_protocol("generate", section, prompt)
     request_path = request_dir / f"{section.lower()}.request.md"
     request_path.write_text(prompt, encoding="utf-8")
     return request_path, spec_path
@@ -172,6 +178,7 @@ def create_section_review_request(root: Path, exam_id: str, section: str) -> Pat
         blind_json=json.dumps(blind_section_dict(section_data), ensure_ascii=False, indent=2),
         review_schema=json.dumps(SectionReview.model_json_schema(), ensure_ascii=False, indent=2),
     )
+    prompt = _with_execution_protocol("review", section, prompt)
     out = exam_workspace_dir(root, exam_id) / "reviews" / f"{section.lower()}.review_request.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(prompt, encoding="utf-8")
@@ -202,6 +209,7 @@ def create_section_revision_request(root: Path, exam_id: str, section: str) -> P
         review_json=review_path.read_text(encoding="utf-8"),
         json_schema=json.dumps(SECTION_MODELS[section].model_json_schema(), ensure_ascii=False, indent=2),
     )
+    prompt = _with_execution_protocol("revision", section, prompt)
     out = exam_workspace_dir(root, exam_id) / "reviews" / f"{section.lower()}.revision_request.md"
     out.write_text(prompt, encoding="utf-8")
     return out
