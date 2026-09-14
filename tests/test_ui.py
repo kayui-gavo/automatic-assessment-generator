@@ -23,7 +23,8 @@ def test_full_exam_ui_source_compiles_and_keeps_legacy_q4_ui():
     assert "Final Exam QA" in source
     assert "Approve → 正式模試库" in source
     assert "Blind Review" in source
-    assert "全新对话" in source
+    assert "Temporary Chat" in source
+    assert "non_personalized_temporary_chat" in source
     assert "PREFERRED_MODEL" in source
     assert "MIN_REASONING_LEVEL" in source
     assert "TABITO EDUCATION · EXAM PRODUCTION" not in source
