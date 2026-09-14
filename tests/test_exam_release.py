@@ -1,6 +1,18 @@
+from pathlib import Path
+
+import pytest
+
+from tabito_itemgen.artifact_preflight import (
+    ArtifactCheck,
+    ArtifactManifest,
+    sha256_file,
+    write_artifact_manifest,
+)
 from tabito_itemgen.exam_models import ExamHumanQA, ExamQAChecks
 from tabito_itemgen.exam_production import (
     approve_exam,
+    exam_artifact_manifest_path,
+    exam_fingerprint,
     exam_release_readiness,
     exam_release_record_path,
     import_section_review,
@@ -50,6 +62,33 @@ def _complete_section_qa(root, exam_id, section_name):
     save_section_human_qa(root, exam_id, section_name, qa)
 
 
+def _write_clean_artifacts(root: Path, exam_id: str) -> Path:
+    out = root / "output" / exam_id
+    out.mkdir(parents=True, exist_ok=True)
+    checks = []
+    for name in ("student", "teacher", "answer_sheet"):
+        tex = out / f"{name}.tex"
+        pdf = out / f"{name}.pdf"
+        tex.write_text("synthetic release fixture\n", encoding="utf-8")
+        pdf.write_bytes(b"%PDF-1.4\nsynthetic release fixture\n")
+        checks.append(
+            ArtifactCheck(
+                name=name,
+                tex_path=str(tex),
+                pdf_path=str(pdf),
+                pdf_sha256=sha256_file(pdf),
+                page_count=1,
+            )
+        )
+    artifact = ArtifactManifest(
+        exam_id=exam_id,
+        exam_fingerprint=exam_fingerprint(root, exam_id),
+        renderer_revision="test-renderer-revision",
+        checks=tuple(checks),
+    )
+    return write_artifact_manifest(artifact, exam_artifact_manifest_path(root, exam_id))
+
+
 def test_ordered_multislot_review_does_not_accept_reversed_q2_answers(tmp_path):
     manifest, _ = build_exam(tmp_path, "main_2026")
     ref = next(ref for ref in manifest.sections if ref.section == "Q2")
@@ -73,13 +112,29 @@ def test_ordered_multislot_review_does_not_accept_reversed_q2_answers(tmp_path):
     assert ordered_task in blind.detail
 
 
-def test_exam_release_requires_all_sections_and_final_exam_qa(tmp_path):
+def test_final_exam_qa_requires_current_preflighted_artifact(tmp_path):
+    manifest, _ = build_exam(tmp_path, "main_2026")
+    qa = ExamHumanQA(
+        exam_id=manifest.exam_id,
+        reviewer="Exam QA",
+        disposition="approve",
+        checks=ExamQAChecks(**{name: True for name in ExamQAChecks.model_fields}),
+    )
+    with pytest.raises(ValueError, match="preflighted PDFs"):
+        save_exam_human_qa(tmp_path, manifest.exam_id, qa)
+
+
+def test_exam_release_requires_sections_artifacts_and_final_exam_qa(tmp_path):
     manifest, _ = build_exam(tmp_path, "main_2026")
     readiness = exam_release_readiness(tmp_path, manifest.exam_id)
     assert not readiness.ready
 
     for section_name in ("Q1", "Q2", "Q3", "Q4", "Q5"):
         _complete_section_qa(tmp_path, manifest.exam_id, section_name)
+    assert not exam_release_readiness(tmp_path, manifest.exam_id).ready
+
+    artifact_path = _write_clean_artifacts(tmp_path, manifest.exam_id)
+    assert artifact_path.exists()
     assert not exam_release_readiness(tmp_path, manifest.exam_id).ready
 
     final_qa = ExamHumanQA(
@@ -98,5 +153,32 @@ def test_exam_release_requires_all_sections_and_final_exam_qa(tmp_path):
     approved_manifest = load_json(target / "exam.json")
     assert approved_manifest["workflow"]["state"] == "approved"
     assert all(ref["state"] == "approved" for ref in approved_manifest["sections"])
+    assert (target / "artifacts" / "student.pdf").exists()
+    assert (target / "artifacts" / "teacher.pdf").exists()
+    assert (target / "artifacts" / "answer_sheet.pdf").exists()
     record = load_json(exam_release_record_path(tmp_path, manifest.exam_id))
     assert record["exam_fingerprint"] == release.fingerprint
+    assert record["artifact_manifest_sha256"]
+
+
+def test_artifact_change_invalidates_final_exam_qa(tmp_path):
+    manifest, _ = build_exam(tmp_path, "main_2026")
+    for section_name in ("Q1", "Q2", "Q3", "Q4", "Q5"):
+        _complete_section_qa(tmp_path, manifest.exam_id, section_name)
+    _write_clean_artifacts(tmp_path, manifest.exam_id)
+
+    final_qa = ExamHumanQA(
+        exam_id=manifest.exam_id,
+        reviewer="Exam QA",
+        disposition="approve",
+        checks=ExamQAChecks(**{name: True for name in ExamQAChecks.model_fields}),
+    )
+    save_exam_human_qa(tmp_path, manifest.exam_id, final_qa)
+    assert exam_release_readiness(tmp_path, manifest.exam_id).ready
+
+    student_pdf = tmp_path / "output" / manifest.exam_id / "student.pdf"
+    student_pdf.write_bytes(student_pdf.read_bytes() + b"changed")
+    readiness = exam_release_readiness(tmp_path, manifest.exam_id)
+    assert not readiness.ready
+    artifact_gate = next(gate for gate in readiness.gates if gate.name == "artifact preflight")
+    assert "changed after preflight" in artifact_gate.detail
