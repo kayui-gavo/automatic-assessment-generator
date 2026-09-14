@@ -11,7 +11,7 @@ PILOT = ROOT / "pilots" / "exam_001"
 
 
 def test_pilot_exam_001_active_sections_are_schema_valid():
-    for filename in ("q1_v4.json", "q2_v4.json", "q3_v5.json", "q4_v3.json", "q5_v4.json"):
+    for filename in ("q1_v4.json", "q2_v4.json", "q3_v5.json", "q4_v3.json", "q5_v5.json"):
         result = validate_section_file(PILOT / filename)
         assert result.errors == (), f"{filename}: {result.errors}"
 
@@ -110,8 +110,8 @@ def test_pilot_exam_001_q4_v3_uses_japanese_prompts_and_real_cross_source_reason
     assert "四个项目的报名人数都增加了" in correct
 
 
-def test_pilot_exam_001_q5_v4_anchors_are_visible_and_answer_range_is_complete():
-    section = load_section(PILOT / "q5_v4.json")
+def test_pilot_exam_001_q5_v5_anchors_are_visible_and_answer_range_is_complete():
+    section = load_section(PILOT / "q5_v5.json")
     paragraphs = {paragraph.paragraph_id: paragraph.text_zh for paragraph in section.paragraphs}
     for anchor in section.anchors:
         text = paragraphs[anchor.paragraph_id]
@@ -122,8 +122,8 @@ def test_pilot_exam_001_q5_v4_anchors_are_visible_and_answer_range_is_complete()
     assert numbers == list(range(37, 51))
 
 
-def test_pilot_exam_001_q5_v4_removes_giveaway_lexical_item_and_diversifies_late_questions():
-    section = load_section(PILOT / "q5_v4.json")
+def test_pilot_exam_001_q5_v5_uses_competing_near_miss_distractors():
+    section = load_section(PILOT / "q5_v5.json")
     tasks = {task.task_id: task for task in section.tasks}
 
     q4 = tasks["Q5-Q4"]
@@ -134,12 +134,34 @@ def test_pilot_exam_001_q5_v4_removes_giveaway_lexical_item_and_diversifies_late
         "我们特意给晚到的客人留了两个座位。",
     ]
     assert q4.answer_slots[0].correct_option == 2
-    assert "永远" not in q4.options
 
-    assert tasks["Q5-Q9"].answer_slots[0].correct_option == 2
+    q7 = tasks["Q5-Q7"]
+    assert "店名を残したが" in q7.options[1]
+    assert "共有表で進度を確認したものの" in q7.options[2]
+    assert "色付きのクリップを導入したが" in q7.options[3]
+
+    q9 = tasks["Q5-Q9"]
+    assert q9.answer_slots[0].correct_option == 2
+    assert all("商品" in option or "配送" in option for option in q9.options)
+
+    q11 = tasks["Q5-Q11"]
+    assert q11.operation == "whole_text_consistency"
+    assert q11.answer_slots[0].correct_option == 2
+    assert q11.answer_slots[1].correct_option == 5
+    assert "共有表" in q11.options[0]
+    assert "商品判断" in q11.options[2]
+    assert "共通ルール" in q11.options[3]
+
+
+def test_pilot_exam_001_q5_v5_diversifies_late_questions():
+    section = load_section(PILOT / "q5_v5.json")
+    tasks = {task.task_id: task for task in section.tasks}
+
+    assert tasks["Q5-Q9"].operation == "content_understanding"
+    assert tasks["Q5-Q10"].operation == "sentence_choice"
     assert tasks["Q5-Q10"].anchor_refs == ["A3", "A4"]
     assert tasks["Q5-Q11"].operation == "whole_text_consistency"
-    assert tasks["Q5-Q10"].prompt_ja != tasks["Q5-Q9"].prompt_ja
+    assert len({tasks[name].prompt_ja for name in ("Q5-Q9", "Q5-Q10", "Q5-Q11")}) == 3
 
 
 def test_pilot_exam_001_manifest_uses_current_revisions():
@@ -150,12 +172,12 @@ def test_pilot_exam_001_manifest_uses_current_revisions():
         "Q2": "q2_v4.json",
         "Q3": "q3_v5.json",
         "Q4": "q4_v3.json",
-        "Q5": "q5_v4.json",
+        "Q5": "q5_v5.json",
     }
 
 
-def test_pilot_exam_001_q5_v4_uses_natural_relationship_wording():
-    section = load_section(PILOT / "q5_v4.json")
+def test_pilot_exam_001_q5_v5_uses_natural_relationship_wording():
+    section = load_section(PILOT / "q5_v5.json")
     paragraphs = {paragraph.paragraph_id: paragraph.text_zh for paragraph in section.paragraphs}
 
     assert "自己和店里人的关系越来越〔空欄A〕" in paragraphs["P2"]
