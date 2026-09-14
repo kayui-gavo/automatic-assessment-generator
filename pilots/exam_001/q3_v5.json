@@ -37,7 +37,7 @@
       "source_text": "この資料は、内容が難しいというより、説明の順序が分かりにくい。",
       "prompt_ja": "日本語の意味に最も近い中国語を選べ。",
       "options": [
-        "Zhè fèn cáiliào bùdàn nèiróng hěn nán, érqiě shuōmíng de shùnxù yě bù róngyì lǐjiě.",
+        "Zhè fèn cáiliào búdàn nèiróng hěn nán, érqiě shuōmíng de shùnxù yě bù róngyì lǐjiě.",
         "Zhè fèn cáiliào yīnwèi nèiróng hěn nán, suǒyǐ shuōmíng de shùnxù bù róngyì lǐjiě.",
         "Zhè fèn cáiliào de nèiróng bǐ shuōmíng de shùnxù gèng nán lǐjiě.",
         "Zhè fèn cáiliào yǔqí shuō nèiróng nán, bùrú shuō shuōmíng de shùnxù bù róngyì lǐjiě."
@@ -126,7 +126,7 @@
       "subsection": "B",
       "order": 6,
       "direction": "zh_to_ja",
-      "source_text": "Zhè jiàn shì bú shì bùnéng zuò, zhǐshì xiànzài jiù kāishǐ dehuà, zhǔnbèi shíjiān kǒngpà bùgòu.",
+      "source_text": "Zhè jiàn shì bú shì bùnéng zuò, zhǐshì xiànzài jiù kāishǐ dehuà, zhǔnbèi shíjiān kǒngpà búgòu.",
       "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
       "options": [
         "これはできないわけではないので、今すぐ始めれば準備時間も十分だろう。",
