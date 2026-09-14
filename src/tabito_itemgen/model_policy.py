@@ -9,6 +9,11 @@ POLICY_VERSION = "manual-chat-sol-high-2026-09-v1"
 PREFERRED_MODEL = "GPT-5.6 Sol"
 MIN_REASONING_LEVEL = "high"
 ACCEPTED_REVIEW_REASONING = frozenset({"high", "extra_high", "pro"})
+REVIEW_MODEL_REASONING: dict[str, frozenset[str]] = {
+    "GPT-5.6 Sol": frozenset({"high", "extra_high"}),
+    "GPT-5.6 Sol Pro": frozenset({"pro"}),
+    "GPT-6 Pro": frozenset({"pro"}),
+}
 
 
 @dataclass(frozen=True)
@@ -62,6 +67,11 @@ def reasoning_is_review_grade(reasoning_level: str) -> bool:
     return reasoning_level.strip().lower() in ACCEPTED_REVIEW_REASONING
 
 
+def execution_is_review_grade(model_label: str, reasoning_level: str) -> bool:
+    allowed = REVIEW_MODEL_REASONING.get(model_label.strip())
+    return allowed is not None and reasoning_level.strip().lower() in allowed
+
+
 def execution_protocol(stage: Stage, section: str) -> str:
     profile = profile_for(stage)
     freshness = "MUST" if profile.fresh_chat == "required" else "SHOULD"
@@ -77,7 +87,8 @@ def execution_protocol(stage: Stage, section: str) -> str:
             f"- context rule: {profile.context_rule}",
             "- Do not use Instant / low-effort mode for production generation, review, or revision.",
             "",
-            "The model name is not itself a quality gate. Deterministic validation, blind solving, "
-            "Human QA, and PDF preflight remain mandatory.",
+            "For Blind Review, the saved model/reasoning combination must satisfy the current "
+            "production policy. Model strength does not replace deterministic validation, blind "
+            "solving, Human QA, or PDF preflight.",
         ]
     )
