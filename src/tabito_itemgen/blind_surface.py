@@ -27,10 +27,6 @@ HIDDEN_AUTHOR_KEYS = frozenset(
         "operations",
         "anchor_refs",
         "operation",
-        # Q5 source_excerpt is author-side anchor metadata. The visible passage
-        # still contains the actual text; the reviewer must read it rather than
-        # receiving a pre-linked evidence excerpt.
-        "source_excerpt",
     }
 )
 
@@ -48,15 +44,17 @@ def _strip_author_keys(value):
 
 
 def blind_section_dict(section) -> dict:
-    """Return the candidate information an independent solver may see.
+    """Return the information an independent solver may legitimately see.
 
-    The result is deliberately stricter than merely deleting answer keys. It
-    removes authoring metadata that can reveal where evidence lives or what
-    semantic operation was intended.
+    The result is stricter than merely deleting answer keys: author-side evidence
+    links and intended cognitive-operation labels are removed. At the same time,
+    metadata that is necessary to reconstruct the visible booklet is preserved.
+    For example, Q5 ``source_excerpt`` identifies the text visibly underlined in
+    the student booklet, so hiding it would make the review surface *less* faithful.
 
-    Q1 needs one section-specific rule: pinyin is internal metadata for A/B/C
-    and must be hidden, while D is itself a pinyin-dialogue task and therefore
-    keeps the pinyin that candidates actually read.
+    Q1 needs one section-specific rule: pinyin is internal metadata for A/B/C and
+    must be hidden, while D is itself a pinyin-dialogue task and therefore keeps
+    the pinyin that candidates actually read.
     """
 
     data = _strip_author_keys(section.model_dump())
