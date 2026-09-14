@@ -39,6 +39,7 @@ def _approve_section_evidence(root, exam_id, section_name):
         review.model_dump_json(),
         reasoning_level="high",
         fresh_chat_confirmed=True,
+        context_mode="non_personalized_temporary_chat",
     )
     qa = SectionHumanQA(
         section=section_name,
