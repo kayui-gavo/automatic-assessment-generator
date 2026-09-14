@@ -14,6 +14,8 @@
 
 詳細な公式reference sequenceは作者には与えない。Production Profileより細かい2026実題の並びを推測して再現しようとせず、profileが許すvariationの中で原创設計する。
 
+ただし、2026両familyに共通するAのhard anchorは明示的に維持する：**21・22は会話を読んで二つ選ぶ導入、23〜26は調査・構造化資料の読解、27・28は講演・説明・memo等を整理して二つ選ぶ締め**とする。BはItem Specで指定されたfamilyのProduction Profileに従う。
+
 ## 作成手順
 
 ### 1. 先に大問の情報設計を作る
