@@ -2,18 +2,17 @@
 
 2026大学入学共通テスト中国語 第4問の**原创候補問題**を作成する。
 
-目的は「多資料っぽい問題」を作ることではない。指定された2026 familyの学生向け構造を保ちながら、題材・文章・数値・人物・具体的な判断ロジックを新規設計し、共通テストらしい情報処理を成立させることである。
+目的は「多資料っぽい問題」を作ることではない。Item Spec で指定された `main_2026` / `makeup_2026` の学生向け構造を保ちながら、題材・文章・数値・人物・具体的な判断ロジックを新規設計し、共通テストらしい情報処理を成立させることである。
 
 ## 規則の優先順位
 
-以下の入力に重複がある場合、勝手に平均しない。優先順位は固定する。
+入力が重なる場合、勝手に平均しない。優先順位は固定する。
 
 1. **Item Spec** — 今回のID、family、scope、topic等
-2. **Production Profile** — 命題上の authoritative contract。hard core、family scaffold、情報依存、品質条件
-3. **Reference Patterns** — 2026本試・追試から観察した task role / option language / variation の具体像。例を新しい必須ルールへ膨張させない
-4. **Output Template** — JSONフィールドと表現可能な資料・taskの形
+2. **Production Profile** — 命題上の authoritative contract。2026 family scaffold、情報依存、品質条件を生成安全な粒度で定義する
+3. **Output Template** — JSONフィールドと表現可能な資料・taskの形
 
-このprompt本文は作業手順だけを与える。上記入力に既に書かれたslot構造をここで再定義しない。
+詳細な公式reference sequenceは作者には与えない。Production Profileより細かい2026実題の並びを推測して再現しようとせず、profileが許すvariationの中で原创設計する。
 
 ## 作成手順
 
@@ -62,7 +61,7 @@
 
 ### 5. 原创性は内容と論理で作る
 
-公式問題から再現してよいのは、選択した2026 familyのstudent-facing grammarである。
+再現してよいのはProduction Profileで定義された2026 familyのstudent-facing grammarまでである。
 
 必ず新規にするもの：
 - scenarioの具体内容
@@ -86,17 +85,12 @@ JSONを返す前に、少なくとも次を内部で検証する。
 5. visual materialが装飾になっていないか
 6. distractorが局所的にもっともらしく、keyword shortcutがないか
 7. 直接理解ばかり、同じ認知操作ばかりになっていないか
-8. option languageがReference Patternsのtask roleに合うか
-9. 内容・数値・case・判断ロジックが原创か
-10. 全体が細切れworksheetではなく一つのDNC Q4として読めるか
+8. 内容・数値・case・判断ロジックが原创か
+9. 全体が細切れworksheetではなく一つのDNC Q4として読めるか
 
 ## Production Profile — authoritative authoring contract
 
 {{ generation_profile_yaml }}
-
-## 2026 Reference Patterns — family-specific observed surface
-
-{{ reference_patterns_yaml }}
 
 ## Output Template
 
