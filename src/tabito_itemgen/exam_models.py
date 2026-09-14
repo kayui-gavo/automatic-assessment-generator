@@ -29,6 +29,15 @@ class PinyinWord(BaseModel):
     label: str
     hanzi: str
     pinyin: str
+    # 1-based character position underlined on the student booklet for Q1 A/B.
+    # C compares the tone pattern of the whole word and normally leaves this null.
+    target_index: int | None = Field(default=None, ge=1)
+
+    @model_validator(mode="after")
+    def validate_target_index(self) -> PinyinWord:
+        if self.target_index is not None and self.target_index > len(self.hanzi):
+            raise ValueError("PinyinWord target_index exceeds hanzi length")
+        return self
 
 
 class Q1PhoneticCountTask(BaseModel):
