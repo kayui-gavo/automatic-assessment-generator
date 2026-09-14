@@ -5,12 +5,18 @@ on:
     paths:
       - "src/tabito_itemgen/exam_*.py"
       - "src/tabito_itemgen/render.py"
+      - "src/tabito_itemgen/answer_sheet.py"
+      - "src/tabito_itemgen/scoring.py"
+      - "src/tabito_itemgen/artifact_preflight.py"
       - "tests/full_exam_factory.py"
       - "tests/test_full_exam_compile.py"
       - "tests/test_pilot_exam_001_render.py"
       - "tests/test_render_portability.py"
       - "tests/test_full_exam_rendering.py"
       - "tests/test_chart_rendering.py"
+      - "tests/test_answer_sheet.py"
+      - "tests/test_scoring.py"
+      - "tests/test_artifact_preflight.py"
       - "pilots/exam_001/**"
       - "blueprints/**"
       - "prompts/**"
@@ -34,9 +40,10 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             texlive-xetex texlive-latex-extra texlive-pictures texlive-lang-chinese \
             texlive-plain-generic fonts-noto-cjk
-      - name: Generate continuous full-exam schema fixture
+      - name: Render and preflight continuous full-exam schema fixture
         run: |
           python - <<'PY'
+          import shutil
           from pathlib import Path
 
           from tests.full_exam_factory import build_exam
@@ -44,16 +51,23 @@ jobs:
 
           root = Path("ci-work")
           manifest, _ = build_exam(root, "main_2026")
-          outputs = render_exam(root, manifest.exam_id, compile_pdf=False)
+          outputs = render_exam(root, manifest.exam_id, compile_pdf=True)
           out = Path("ci-artifacts")
           out.mkdir(exist_ok=True)
-          for key in ("student_tex", "teacher_tex", "answer_key"):
+          for key in (
+              "student_tex", "student_pdf",
+              "teacher_tex", "teacher_pdf",
+              "answer_sheet_tex", "answer_sheet_pdf",
+              "answer_key", "scoring_scheme", "artifact_manifest",
+          ):
               path = outputs[key]
               if path is None or not path.exists():
                   raise SystemExit(f"missing output: {key}")
-              (out / path.name).write_bytes(path.read_bytes())
+              shutil.copy2(path, out / path.name)
+          for log in (root / "output" / manifest.exam_id).glob("*.log"):
+              shutil.copy2(log, out / log.name)
           PY
-      - name: Generate real Pilot Exam 001 booklet
+      - name: Render and preflight real Pilot Exam 001
         run: |
           python - <<'PY'
           import shutil
@@ -68,32 +82,22 @@ jobs:
           target.parent.mkdir(parents=True, exist_ok=True)
           shutil.copytree(source, target)
 
-          outputs = render_exam(root, exam_id, compile_pdf=False)
+          outputs = render_exam(root, exam_id, compile_pdf=True)
           out = Path("pilot-artifacts")
           out.mkdir(exist_ok=True)
-          for key in ("student_tex", "teacher_tex", "answer_key"):
+          for key in (
+              "student_tex", "student_pdf",
+              "teacher_tex", "teacher_pdf",
+              "answer_sheet_tex", "answer_sheet_pdf",
+              "answer_key", "scoring_scheme", "artifact_manifest",
+          ):
               path = outputs[key]
               if path is None or not path.exists():
                   raise SystemExit(f"missing Pilot output: {key}")
-              (out / path.name).write_bytes(path.read_bytes())
+              shutil.copy2(path, out / path.name)
+          for log in (root / "output" / exam_id).glob("*.log"):
+              shutil.copy2(log, out / log.name)
           PY
-      - name: Compile fixture and Pilot PDFs with diagnostics
-        run: |
-          status=0
-          for directory in ci-artifacts pilot-artifacts; do
-            for tex in student.tex teacher.tex; do
-              echo "=== compiling ${directory}/${tex} ==="
-              if ! (cd "$directory" && xelatex -interaction=nonstopmode -halt-on-error "$tex" > "${tex%.tex}.xelatex.log" 2>&1); then
-                echo "=== XeLaTeX failure: ${directory}/${tex} ==="
-                tail -n 120 "${directory}/${tex%.tex}.xelatex.log"
-                status=1
-              elif ! test -s "${directory}/${tex%.tex}.pdf"; then
-                echo "missing PDF: ${directory}/${tex%.tex}.pdf"
-                status=1
-              fi
-            done
-          done
-          exit "$status"
       - name: Upload schema fixture artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -103,7 +107,7 @@ jobs:
             ci-artifacts/*.tex
             ci-artifacts/*.pdf
             ci-artifacts/*.json
-            ci-artifacts/*.xelatex.log
+            ci-artifacts/*.log
           if-no-files-found: error
       - name: Upload Pilot Exam 001 preview
         if: always()
@@ -114,5 +118,5 @@ jobs:
             pilot-artifacts/*.tex
             pilot-artifacts/*.pdf
             pilot-artifacts/*.json
-            pilot-artifacts/*.xelatex.log
+            pilot-artifacts/*.log
           if-no-files-found: error
