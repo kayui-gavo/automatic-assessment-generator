@@ -347,8 +347,11 @@ def _section_human_qa_form(root: Path, manifest, ref, section) -> None:
             biggest_rework_cause=biggest,
             note=note,
         )
-        save_section_human_qa(root, manifest.exam_id, ref.section, qa)
-        st.rerun()
+        try:
+            save_section_human_qa(root, manifest.exam_id, ref.section, qa)
+            st.rerun()
+        except Exception as exc:
+            st.error(str(exc))
 
 
 def _create_exam_panel(root: Path) -> None:
@@ -378,6 +381,22 @@ def _create_exam_panel(root: Path) -> None:
 
 
 def _render_exam_qa(root: Path, manifest) -> None:
+    try:
+        readiness = exam_release_readiness(root, manifest.exam_id)
+    except Exception as exc:
+        st.warning(str(exc))
+        return
+
+    section_gates = [gate for gate in readiness.gates if gate.name.endswith(" release")]
+    if section_gates and not all(gate.passed for gate in section_gates):
+        st.caption("Q1–Q5 全部 Ready 后进入 Final Exam QA。")
+        return
+
+    artifact_gate = next((gate for gate in readiness.gates if gate.name == "artifact preflight"), None)
+    if artifact_gate is None or not artifact_gate.passed:
+        st.caption("先生成并通过当前版本的 PDF preflight，再进行 Final Exam QA。")
+        return
+
     existing = None
     path = exam_qa_path(root, manifest.exam_id)
     if path.exists():
@@ -386,6 +405,7 @@ def _render_exam_qa(root: Path, manifest) -> None:
         except Exception:
             existing = None
 
+    st.markdown("#### Final Exam QA")
     qa_values = {}
     for name in ExamQAChecks.model_fields:
         qa_values[name] = st.checkbox(
@@ -395,10 +415,15 @@ def _render_exam_qa(root: Path, manifest) -> None:
         )
 
     reviewer = st.text_input("整卷审题人", value=existing.reviewer if existing else "TABITO 教研")
+    disposition_options = ["revise", "approve", "reject"]
     disposition = st.selectbox(
         "整卷结论",
-        ["revise", "approve", "reject"],
-        index=["revise", "approve", "reject"].index(existing.disposition) if existing else 0,
+        disposition_options,
+        index=(
+            disposition_options.index(existing.disposition)
+            if existing and existing.disposition in disposition_options
+            else 0
+        ),
     )
     note = st.text_area("整卷备注", value=existing.note if existing else "", height=80)
     timing = existing.timing if existing else ExamQATiming()
@@ -508,6 +533,7 @@ def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None
         except Exception as exc:
             st.error(str(exc))
 
+    blind_passed = False
     try:
         readiness = section_release_readiness(root, manifest.exam_id, ref.section)
         for gate in readiness.gates:
@@ -515,10 +541,16 @@ def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None
             st.markdown(f"{mark} {gate.name}")
             if not gate.passed:
                 st.caption(gate.detail)
+        blind = next((gate for gate in readiness.gates if gate.name == "blind review"), None)
+        blind_passed = bool(blind and blind.passed)
     except Exception as exc:
         st.warning(str(exc))
 
-    _section_human_qa_form(root, manifest, ref, section)
+    if blind_passed:
+        st.divider()
+        _section_human_qa_form(root, manifest, ref, section)
+    else:
+        st.caption("Blind Review 通过后进入 Human QA。")
 
     review_file = root / "workspace" / "exams" / manifest.exam_id / "reviews" / f"{ref.section.lower()}.review.json"
     if review_file.exists():
@@ -637,7 +669,7 @@ def main() -> None:
                     _render_section_preview(section, teacher=True)
             else:
                 student, teacher, review, revision = st.tabs(
-                    ["学生预览", "教师标注", "Review / QA", "修订"]
+                    ["学生预览", "教师标注", "Review", "修订"]
                 )
                 with student:
                     _render_section_preview(section, teacher=False)
@@ -653,8 +685,6 @@ def main() -> None:
             st.caption("Approved · 只读。修改时创建新版本。")
             _render_export(root, manifest)
         else:
-            _render_exam_qa(root, manifest)
-            st.divider()
             try:
                 readiness = exam_release_readiness(root, manifest.exam_id)
                 for gate in readiness.gates:
@@ -662,12 +692,19 @@ def main() -> None:
                     st.markdown(f"{mark} {gate.name}")
                     if not gate.passed:
                         st.caption(gate.detail)
-                if readiness.ready and st.button("Approve → 正式模試库", type="primary"):
+            except Exception as exc:
+                readiness = None
+                st.warning(str(exc))
+
+            st.divider()
+            _render_export(root, manifest)
+            st.divider()
+            _render_exam_qa(root, manifest)
+
+            if readiness is not None and readiness.ready:
+                if st.button("Approve → 正式模試库", type="primary"):
                     approve_exam(root, manifest.exam_id)
                     st.rerun()
-            except Exception as exc:
-                st.warning(str(exc))
-            _render_export(root, manifest)
 
 
 if __name__ == "__main__":
