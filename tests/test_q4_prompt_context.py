@@ -31,25 +31,31 @@ def test_current_q4_production_sources_share_one_baseline_version():
     )["baseline"] == EXPECTED
 
 
-def test_q4_authoring_context_has_only_three_production_layers():
-    expected_keys = {
-        "generation_profile_yaml",
-        "reference_patterns_yaml",
-        "template_yaml",
-    }
+def test_q4_authoring_context_is_compact_and_generation_safe():
+    expected_keys = {"generation_profile_yaml", "template_yaml"}
     assert set(_q4_context(ROOT)) == expected_keys
     assert set(_reference_context(ROOT)) == expected_keys
 
 
-def test_q4_generation_prompt_does_not_reinject_retired_duplicate_documents():
+def test_q4_generation_prompt_uses_safe_profile_not_detailed_official_sequence():
     prompt = (ROOT / "prompts" / "generate_q4.md").read_text(encoding="utf-8")
 
     assert "{{ generation_profile_yaml }}" in prompt
-    assert "{{ reference_patterns_yaml }}" in prompt
     assert "{{ template_yaml }}" in prompt
     assert "{{ item_spec_json }}" in prompt
 
+    assert "{{ reference_patterns_yaml }}" not in prompt
     assert "{{ blueprint_yaml }}" not in prompt
     assert "{{ surface_grammar }}" not in prompt
     assert "{{ item_writing_direction }}" not in prompt
     assert "R8-2026-main-tsui-v3" not in prompt
+
+
+def test_detailed_reference_patterns_are_reviewer_only():
+    generation = (ROOT / "prompts" / "generate_q4.md").read_text(encoding="utf-8")
+    revision = (ROOT / "prompts" / "revise_q4.md").read_text(encoding="utf-8")
+    review = (ROOT / "prompts" / "review_q4.md").read_text(encoding="utf-8")
+
+    assert "{{ reference_patterns_yaml }}" not in generation
+    assert "{{ reference_patterns_yaml }}" not in revision
+    assert "{{ reference_patterns_yaml }}" in review
