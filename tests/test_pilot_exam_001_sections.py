@@ -11,7 +11,7 @@ PILOT = ROOT / "pilots" / "exam_001"
 
 
 def test_pilot_exam_001_active_sections_are_schema_valid():
-    for filename in ("q1_v3.json", "q2_v4.json", "q3_v5.json", "q4_v3.json", "q5_v4.json"):
+    for filename in ("q1_v4.json", "q2_v4.json", "q3_v5.json", "q4_v3.json", "q5_v4.json"):
         result = validate_section_file(PILOT / filename)
         assert result.errors == (), f"{filename}: {result.errors}"
 
@@ -21,8 +21,8 @@ def test_pilot_exam_001_whole_exam_validates():
     assert result.errors == (), result.errors
 
 
-def test_pilot_exam_001_q1_v3_uses_target_characters_and_hidden_pinyin_metadata():
-    section = load_section(PILOT / "q1_v3.json")
+def test_pilot_exam_001_q1_v4_uses_target_characters_and_neutral_tone():
+    section = load_section(PILOT / "q1_v4.json")
     tasks = {task.task_id: task for task in section.tasks}
 
     for task_id in ("Q1-A", "Q1-B"):
@@ -37,9 +37,14 @@ def test_pilot_exam_001_q1_v3_uses_target_characters_and_hidden_pinyin_metadata(
     assert tasks["Q1-A"].answer_slot.correct_option == 3
     assert tasks["Q1-B"].answer_slot.correct_option == 2
 
+    c2 = tasks["Q1-C2"]
+    assert c2.headword.pinyin == "zhīshi"
+    assert [word.pinyin for word in c2.candidates] == ["yīfu", "dōngxi", "tōngzhī", "guānxì"]
+    assert c2.answer_slot.correct_option == 2
 
-def test_pilot_exam_001_q1_v3_dialogues_require_combined_evidence():
-    section = load_section(PILOT / "q1_v3.json")
+
+def test_pilot_exam_001_q1_v4_dialogues_require_combined_evidence():
+    section = load_section(PILOT / "q1_v4.json")
     tasks = {task.task_id: task for task in section.tasks}
 
     d1 = tasks["Q1-D1"]
@@ -62,7 +67,7 @@ def test_pilot_exam_001_q2_v4_uses_syntax_level_ordering():
     assert tasks["Q2-B"].options == ["产生", "造成", "带来", "发挥"]
 
     c1 = {token.text_zh for token in tasks["Q2-C1"].token_pool}
-    assert {"惊讶得", "好一会儿", "什么", "都说不出来"}.issubset(c1)
+    assert {"惊讶得", "好一会儿", "都", "说不出话来"}.issubset(c1)
     assert {"过了一会儿", "才", "能够", "说出话来"}.issubset(c1)
 
     c2 = {token.text_zh for token in tasks["Q2-C2"].token_pool}
@@ -83,6 +88,8 @@ def test_pilot_exam_001_q3_v5_uses_balanced_near_miss_answers():
     tasks = {task.task_id: task for task in section.tasks}
     assert "bù yídìng" in tasks["Q3-A3"].options[0]
     assert "yídìng bùnéng" in tasks["Q3-A3"].options[2]
+    assert tasks["Q3-B2"].source_text.startswith("Zhè jiàn shì bú shì")
+    assert tasks["Q3-B3"].source_text.count("bú shì") == 1
     assert tasks["Q3-B2"].answer_slot.correct_option == 4
     assert all(tasks["Q3-B2"].distractor_error_types.values())
 
@@ -139,7 +146,7 @@ def test_pilot_exam_001_manifest_uses_current_revisions():
     manifest = json.loads((PILOT / "exam.json").read_text(encoding="utf-8"))
     paths = {ref["section"]: ref["path"] for ref in manifest["sections"]}
     assert paths == {
-        "Q1": "q1_v3.json",
+        "Q1": "q1_v4.json",
         "Q2": "q2_v4.json",
         "Q3": "q3_v5.json",
         "Q4": "q4_v3.json",
