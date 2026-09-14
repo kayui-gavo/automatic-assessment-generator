@@ -11,7 +11,7 @@ PILOT = ROOT / "pilots" / "exam_001"
 
 
 def test_pilot_exam_001_active_sections_are_schema_valid():
-    for filename in ("q1_v2.json", "q2_v3.json", "q3_v3.json", "q4_v3.json", "q5_v3.json"):
+    for filename in ("q1_v3.json", "q2_v4.json", "q3_v3.json", "q4_v3.json", "q5_v3.json"):
         result = validate_section_file(PILOT / filename)
         assert result.errors == (), f"{filename}: {result.errors}"
 
@@ -21,32 +21,58 @@ def test_pilot_exam_001_whole_exam_validates():
     assert result.errors == (), result.errors
 
 
-def test_pilot_exam_001_q1_v2_preserves_dialogue_timeline():
-    section = load_section(PILOT / "q1_v2.json")
-    task = next(task for task in section.tasks if task.task_id == "Q1-D2")
-    lines = [line.pinyin for line in task.lines]
-
-    assert any("yào mǎi de dōngxi yǒu diǎn duō" in line for line in lines)
-    assert all("língshí yǒu diǎn duō" not in line for line in lines)
-    assert task.answer_slot.correct_option == 2
-
-
-def test_pilot_exam_001_q2_v3_removes_obvious_garbage_distractors():
-    section = load_section(PILOT / "q2_v3.json")
+def test_pilot_exam_001_q1_v3_uses_target_characters_and_hidden_pinyin_metadata():
+    section = load_section(PILOT / "q1_v3.json")
     tasks = {task.task_id: task for task in section.tasks}
 
-    assert tasks["Q2-A"].options == ["核对", "承认", "证明", "保证"]
-    assert tasks["Q2-B"].options == ["确认", "核对", "说明", "怀疑"]
-    assert "把" not in tasks["Q2-B"].options
+    for task_id in ("Q1-A", "Q1-B"):
+        task = tasks[task_id]
+        for word in [task.headword, *task.candidates]:
+            assert len(word.hanzi) >= 2
+            assert word.target_index is not None
+            assert 1 <= word.target_index <= len(word.hanzi)
+
+    assert tasks["Q1-A"].headword.hanzi == "条件"
+    assert tasks["Q1-A"].headword.target_index == 2
+    assert tasks["Q1-A"].answer_slot.correct_option == 3
+    assert tasks["Q1-B"].answer_slot.correct_option == 2
+
+
+def test_pilot_exam_001_q1_v3_dialogues_require_combined_evidence():
+    section = load_section(PILOT / "q1_v3.json")
+    tasks = {task.task_id: task for task in section.tasks}
+
+    d1 = tasks["Q1-D1"]
+    lines = [line.pinyin for line in d1.lines]
+    assert any("sì diǎn yǐhòu" in line for line in lines)
+    assert any("sì diǎn bàn" in line and "sìshí fēnzhōng" in line for line in lines)
+    assert d1.answer_slot.correct_option == 3
+
+    d2 = tasks["Q1-D2"]
+    assert any("yǎnjing róngyì lèi" in line.pinyin for line in d2.lines)
+    assert any("wǎngshàng mǎi kěnéng láibují" in line.pinyin for line in d2.lines)
+    assert d2.answer_slot.correct_option == 2
+
+
+def test_pilot_exam_001_q2_v4_uses_syntax_level_ordering():
+    section = load_section(PILOT / "q2_v4.json")
+    tasks = {task.task_id: task for task in section.tasks}
+
+    assert tasks["Q2-A"].options == ["推测", "断定", "证明", "保证"]
+    assert tasks["Q2-B"].options == ["产生", "造成", "带来", "发挥"]
 
     c1 = {token.text_zh for token in tasks["Q2-C1"].token_pool}
-    assert {"虽然", "但是", "已经", "才"}.issubset(c1)
-    assert "被" not in c1
+    assert {"惊讶得", "好一会儿", "什么", "都说不出来"}.issubset(c1)
+    assert {"过了一会儿", "才", "能够", "说出话来"}.issubset(c1)
 
     c2 = {token.text_zh for token in tasks["Q2-C2"].token_pool}
-    assert {"在到车站以前", "我只看了一遍", "朋友刚发来的地图", "就找到入口"}.issubset(c2)
-    assert "被朋友" not in c2
-    assert "虽然入口" not in c2
+    assert {"得", "先", "做完作业", "才能"}.issubset(c2)
+    assert {"可以", "不做作业", "就", "马上"}.issubset(c2)
+
+    for task_id in ("Q2-C1", "Q2-C2"):
+        task = tasks[task_id]
+        long_tokens = [token for token in task.token_pool if len(token.text_zh) >= 6]
+        assert len(long_tokens) < 3
 
 
 def test_pilot_exam_001_q3_correct_positions_are_balanced():
@@ -87,8 +113,8 @@ def test_pilot_exam_001_manifest_uses_current_revisions():
     manifest = json.loads((PILOT / "exam.json").read_text(encoding="utf-8"))
     paths = {ref["section"]: ref["path"] for ref in manifest["sections"]}
     assert paths == {
-        "Q1": "q1_v2.json",
-        "Q2": "q2_v3.json",
+        "Q1": "q1_v3.json",
+        "Q2": "q2_v4.json",
         "Q3": "q3_v3.json",
         "Q4": "q4_v3.json",
         "Q5": "q5_v3.json",
