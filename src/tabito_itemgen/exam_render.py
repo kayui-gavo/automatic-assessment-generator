@@ -72,8 +72,8 @@ def _breakable_underline(source: str, *, chunk_size: int = 10) -> str:
 def _q1_word_surface(word, *, underline_target: bool) -> str:
     """Render only the Hanzi shown to candidates; pinyin remains authoring metadata.
 
-    Official Q1 A/B underlines one target character inside a lexical item.  The
-    target_index field is 1-based.  Legacy one-character fixtures without an
+    Official Q1 A/B underlines one target character inside a lexical item. The
+    target_index field is 1-based. Legacy one-character fixtures without an
     explicit target remain renderable by underlining that sole character.
     """
 
@@ -318,6 +318,7 @@ def _document_preamble(title: str, teacher: bool) -> str:
 \usepackage{pgfplots}
 \usepackage{xcolor}
 \pgfplotsset{compat=1.18}
+\pgfplotsset{xbar/.append style={y tick label style={text width=2.6cm,align=right}}}
 """
     tex += _font_setup()
     tex += r"""
