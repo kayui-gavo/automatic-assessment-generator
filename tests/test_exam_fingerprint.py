@@ -32,7 +32,14 @@ def _approve_section_evidence(root, exam_id, section_name):
         issues=[],
         overall_comment_ja="独立解答は著者キーと一致した。",
     )
-    import_section_review(root, exam_id, section_name, review.model_dump_json())
+    import_section_review(
+        root,
+        exam_id,
+        section_name,
+        review.model_dump_json(),
+        reasoning_level="high",
+        fresh_chat_confirmed=True,
+    )
     qa = SectionHumanQA(
         section=section_name,
         section_id=ref.section_id,
