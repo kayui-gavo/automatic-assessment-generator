@@ -357,6 +357,33 @@ def save_section_human_qa(
         raise ValueError("section Human QA identity does not match candidate")
     if qa.candidate_fingerprint != current:
         raise ValueError("section Human QA was completed for a different candidate version")
+
+    if qa.disposition == "approve":
+        review_path = section_review_path(root, exam_id, section_name)
+        execution_path = section_review_execution_path(root, exam_id, section_name)
+        review_errors: list[str] = []
+        if not review_path.exists():
+            review_errors.append("review JSON not saved")
+        else:
+            try:
+                review = SectionReview.model_validate(load_json(review_path))
+                review_errors.extend(_review_errors(section, review))
+            except (ValidationError, ValueError, OSError) as exc:
+                review_errors.append(str(exc))
+        if not execution_path.exists():
+            review_errors.append("blind review execution record not saved")
+        else:
+            try:
+                execution = ReviewExecution.model_validate(load_json(execution_path))
+                review_errors.extend(_review_execution_errors(section, execution))
+            except (ValidationError, ValueError, OSError) as exc:
+                review_errors.append(str(exc))
+        if review_errors:
+            raise ValueError(
+                "Human QA approve requires a current passing Blind Review: "
+                + "; ".join(review_errors)
+            )
+
     path = section_qa_path(root, exam_id, section_name)
     path.parent.mkdir(parents=True, exist_ok=True)
     dump_json(path, qa.model_dump())
