@@ -38,27 +38,23 @@ def _blueprint_path(root: Path, manifest: ExamManifest, section: str) -> Path:
 
 
 def _q4_context(root: Path) -> dict[str, str]:
-    """Minimal production context for Q4 authoring.
+    """Generation-safe production context for Q4 authoring.
 
-    Human-facing research docs remain in the repository, but the author model receives
-    only the production contract, observed family patterns, and output template. This
-    avoids asking the model to reconcile five near-duplicate descriptions of the same
-    2026 surface grammar.
+    Detailed observed reference patterns are intentionally reviewer-only. The author
+    receives the production profile plus output template, which preserves the current
+    family grammar without encouraging slot-by-slot reskinning of an official paper.
     """
 
     return {
         "generation_profile_yaml": (
             root / "blueprints" / "q4_2026_generation_profile.yaml"
         ).read_text(encoding="utf-8"),
-        "reference_patterns_yaml": (
-            root / "blueprints" / "q4_2026_reference_patterns.yaml"
-        ).read_text(encoding="utf-8"),
         "template_yaml": (root / "templates" / "q4.yaml").read_text(encoding="utf-8"),
     }
 
 
 def _q4_review_contract(root: Path) -> str:
-    """Return only the authoritative Q4 rules needed by reviewer/reviser models."""
+    """Return detailed Q4 surface references only to reviewer models."""
 
     profile = (root / "blueprints" / "q4_2026_generation_profile.yaml").read_text(
         encoding="utf-8"
@@ -69,7 +65,7 @@ def _q4_review_contract(root: Path) -> str:
     return (
         "# Q4 Production Profile — authoritative contract\n"
         + profile
-        + "\n\n# Q4 Reference Patterns — observed family surface\n"
+        + "\n\n# Q4 Reference Patterns — reviewer-only observed surface\n"
         + patterns
     )
 
@@ -194,7 +190,7 @@ def create_section_revision_request(root: Path, exam_id: str, section: str) -> P
     if not review_path.exists():
         raise ValueError("review JSON is missing")
     if section == "Q4":
-        blueprint = _q4_review_contract(root)
+        blueprint = _q4_context(root)["generation_profile_yaml"]
     else:
         blueprint = _blueprint_path(root, manifest, section).read_text(encoding="utf-8")
     template = Template((root / "prompts" / "revise_section.md").read_text(encoding="utf-8"))
