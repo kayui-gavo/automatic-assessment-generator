@@ -14,6 +14,25 @@ def _answer_badge(number: int) -> str:
     return f'<span class="answer-badge">{number}</span>'
 
 
+def _q1_hanzi_html(word, *, underline_target: bool) -> str:
+    escaped = html.escape(word.hanzi)
+    if not underline_target:
+        return escaped
+    target_index = word.target_index
+    if target_index is None and len(word.hanzi) == 1:
+        target_index = 1
+    if target_index is None:
+        return escaped
+    index = target_index - 1
+    return (
+        html.escape(word.hanzi[:index])
+        + f'<span style="text-decoration:underline;text-underline-offset:3px">'
+        + html.escape(word.hanzi[index])
+        + "</span>"
+        + html.escape(word.hanzi[index + 1 :])
+    )
+
+
 def _options(options: list[str]) -> None:
     rows = []
     for index, option in enumerate(options, start=1):
@@ -40,17 +59,8 @@ def _official_header(section) -> None:
 
 
 def _ordering_html(task: Q2OrderingTask) -> str:
-    rendered = []
-    for part in ordering_surface_parts(task):
-        if part.answer_number is not None:
-            rendered.append(_answer_badge(part.answer_number))
-        elif part.text:
-            rendered.append(html.escape(part.text))
-        else:
-            rendered.append('<span class="ordering-blank">　　　　　</span>')
     # ordering_surface_parts represents an unasked blank with answer_number=None
-    # and empty text.  Alternate text/blank entries, so materialize those empty
-    # entries as visible underlines.
+    # and empty text.  Materialize those entries as visible underlines.
     result: list[str] = []
     for part in ordering_surface_parts(task):
         if part.answer_number is not None:
@@ -58,7 +68,10 @@ def _ordering_html(task: Q2OrderingTask) -> str:
         elif part.text:
             result.append(html.escape(part.text))
         else:
-            result.append('<span style="display:inline-block;min-width:5em;border-bottom:1px solid #333">&nbsp;</span>')
+            result.append(
+                '<span style="display:inline-block;min-width:5em;'
+                'border-bottom:1px solid #333">&nbsp;</span>'
+            )
     return "".join(result)
 
 
@@ -69,9 +82,14 @@ def _q5_paragraph_html(section: Q5Section, paragraph) -> str:
         if segment.kind == "marker":
             parts.append(f'<span class="anchor-marker"><b>{escaped}</b></span>')
         elif segment.kind == "blank":
-            parts.append('<span style="display:inline-block;min-width:5em;border-bottom:1.5px solid #222;margin:0 .15em">&nbsp;</span>')
+            parts.append(
+                '<span style="display:inline-block;min-width:5em;'
+                'border-bottom:1.5px solid #222;margin:0 .15em">&nbsp;</span>'
+            )
         elif segment.kind == "underline":
-            parts.append(f'<span style="text-decoration:underline;text-underline-offset:3px">{escaped}</span>')
+            parts.append(
+                f'<span style="text-decoration:underline;text-underline-offset:3px">{escaped}</span>'
+            )
         else:
             parts.append(escaped)
     return "".join(parts)
@@ -86,7 +104,10 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
         current = None
         for task in sorted(section.tasks, key=lambda value: value.answer_slot.answer_number):
             if task.subsection != current:
-                st.markdown(f'<div class="exam-section">{task.subsection}</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="exam-section">{task.subsection}</div>',
+                    unsafe_allow_html=True,
+                )
                 current = task.subsection
             if hasattr(task, "headword"):
                 st.markdown(
@@ -94,10 +115,25 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
                     f'{_answer_badge(task.answer_slot.answer_number)}</div>',
                     unsafe_allow_html=True,
                 )
-                st.markdown(f"**{task.headword.hanzi}**　{task.headword.pinyin}")
-                for word in task.candidates:
-                    st.markdown(f"{word.label}　{word.hanzi}　{word.pinyin}")
+                underline_target = task.target in {"initial", "final"}
+                headword = _q1_hanzi_html(task.headword, underline_target=underline_target)
+                st.markdown(
+                    f'<div class="q1-word"><b>見出し</b>　{headword}</div>',
+                    unsafe_allow_html=True,
+                )
+                candidates = "".join(
+                    '<span class="q1-choice">'
+                    f'<b>{html.escape(word.label)}</b>　'
+                    f'{_q1_hanzi_html(word, underline_target=underline_target)}'
+                    '</span>'
+                    for word in task.candidates
+                )
+                st.markdown(
+                    f'<div class="q1-choice-row">{candidates}</div>',
+                    unsafe_allow_html=True,
+                )
             else:
+                # Q1-D is intentionally pinyin-only on the student surface.
                 for line in task.lines:
                     st.markdown(f"**{line.speaker}**：{line.pinyin}")
                 st.markdown(
@@ -108,7 +144,8 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
             _options(task.options)
             if teacher:
                 st.caption(
-                    f"正答 [{task.answer_slot.answer_number}] {task.answer_slot.correct_option} · {task.rationale_ja}"
+                    f"正答 [{task.answer_slot.answer_number}] {task.answer_slot.correct_option} · "
+                    f"{task.rationale_ja}"
                 )
         return
 
@@ -116,10 +153,16 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
         current = None
         for task in sorted(section.tasks, key=lambda value: value.order):
             if task.subsection != current:
-                st.markdown(f'<div class="exam-section">{task.subsection}</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="exam-section">{task.subsection}</div>',
+                    unsafe_allow_html=True,
+                )
                 current = task.subsection
             if isinstance(task, Q2OrderingTask):
-                st.markdown(f'<div class="exam-prompt">{html.escape(task.prompt_ja)}</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="exam-prompt">{html.escape(task.prompt_ja)}</div>',
+                    unsafe_allow_html=True,
+                )
                 st.markdown(html.escape(task.source_ja))
                 st.markdown(
                     f'<div class="source-text">{_ordering_html(task)}</div>',
@@ -145,7 +188,8 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
                 _options(task.options)
                 if teacher:
                     st.caption(
-                        f"正答 [{task.answer_slot.answer_number}] {task.answer_slot.correct_option} · {task.rationale_ja}"
+                        f"正答 [{task.answer_slot.answer_number}] {task.answer_slot.correct_option} · "
+                        f"{task.rationale_ja}"
                     )
         return
 
@@ -153,7 +197,10 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
         current = None
         for task in sorted(section.tasks, key=lambda value: value.answer_slot.answer_number):
             if task.subsection != current:
-                st.markdown(f'<div class="exam-section">{task.subsection}</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="exam-section">{task.subsection}</div>',
+                    unsafe_allow_html=True,
+                )
                 current = task.subsection
             st.markdown(
                 f'<div class="exam-prompt">{html.escape(task.prompt_ja)} '
@@ -164,7 +211,8 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
             _options(task.options)
             if teacher:
                 st.caption(
-                    f"正答 [{task.answer_slot.answer_number}] {task.answer_slot.correct_option} · {task.rationale_ja}"
+                    f"正答 [{task.answer_slot.answer_number}] {task.answer_slot.correct_option} · "
+                    f"{task.rationale_ja}"
                 )
                 for option, reasons in task.distractor_error_types.items():
                     detail = task.distractor_rationales_ja.get(option, "")
@@ -180,7 +228,10 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
         st.markdown("---")
         for task in sorted(section.tasks, key=lambda value: value.question_no):
             badges = "".join(_answer_badge(slot.answer_number) for slot in task.answer_slots)
-            st.markdown(f'<div class="exam-question">問 {task.question_no}</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="exam-question">問 {task.question_no}</div>',
+                unsafe_allow_html=True,
+            )
             st.markdown(
                 f'<div class="exam-prompt">{html.escape(task.prompt_ja)} {badges}</div>',
                 unsafe_allow_html=True,
