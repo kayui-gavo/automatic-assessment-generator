@@ -24,6 +24,7 @@ from .validate import validate_item_file
 
 _TONE_MARK_RE = re.compile(r"[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜĀÁǍÀĒÉĚÈĪÍǏÌŌÓǑÒŪÚǓÙǕǗǙǛ]")
 _KANA_RE = re.compile(r"[\u3040-\u30ff]")
+_HANZI_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff]")
 
 
 @dataclass(frozen=True)
@@ -40,6 +41,10 @@ def _has_tone_mark(text: str) -> bool:
     return bool(_TONE_MARK_RE.search(text))
 
 
+def _hanzi_count(text: str) -> int:
+    return len(_HANZI_RE.findall(text))
+
+
 def _validate_q1(section: Q1Section) -> ValidationResult:
     errors: list[str] = []
     warnings: list[str] = []
@@ -49,6 +54,18 @@ def _validate_q1(section: Q1Section) -> ValidationResult:
             for word in words:
                 if not _has_tone_mark(word.pinyin):
                     errors.append(f"{task.task_id}: pinyin for {word.label!r} has no Unicode tone mark")
+
+            hanzi_lengths = [_hanzi_count(word.hanzi) for word in words]
+            if hanzi_lengths and all(length <= 1 for length in hanzi_lengths):
+                warnings.append(
+                    f"{task.task_id}: phonetic set is entirely single-character; "
+                    "check official-like lexical load instead of elementary drill difficulty"
+                )
+            elif sum(length >= 2 for length in hanzi_lengths) < 2:
+                warnings.append(
+                    f"{task.task_id}: phonetic set has very little multi-character lexical load; "
+                    "check for visual/elementary shortcuts"
+                )
         elif isinstance(task, Q1DialogueTask):
             missing = [line.speaker for line in task.lines if not _has_tone_mark(line.pinyin)]
             if missing:
@@ -67,6 +84,28 @@ def _validate_q2(section: Q2Section) -> ValidationResult:
         if isinstance(task, Q2OrderingTask):
             if len(task.token_pool) != 8 or len(task.correct_sequence) != 4:
                 errors.append(f"{task.task_id}: ordering task must use 8 tokens and a 4-token answer")
+
+            token_lengths = {
+                token.token_id: _hanzi_count(token.text_zh) for token in task.token_pool
+            }
+            clause_sized = [
+                token_id for token_id, length in token_lengths.items() if length >= 6
+            ]
+            if len(clause_sized) >= 3:
+                warnings.append(
+                    f"{task.task_id}: ordering pool contains {len(clause_sized)} tokens with 6+ Hanzi; "
+                    "check whether this has become clause shuffling instead of sentence assembly"
+                )
+            long_correct = [
+                token_id
+                for token_id in task.correct_sequence
+                if token_lengths.get(token_id, 0) >= 5
+            ]
+            if len(long_correct) >= 3:
+                warnings.append(
+                    f"{task.task_id}: {len(long_correct)} of 4 correct tokens are long phrase/clause units; "
+                    "check syntax-level ordering difficulty"
+                )
         else:
             if task.answer_slot.correct_option > len(task.options):
                 errors.append(f"{task.task_id}: correct option exceeds option count")
