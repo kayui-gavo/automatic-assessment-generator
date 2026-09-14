@@ -22,6 +22,8 @@ SECTION_MODELS = {
     "Q5": Q5Section,
 }
 
+Q4_BLUEPRINT_VERSION = "R8-2026-main-tsui-v4"
+
 
 def _blueprint_path(root: Path, manifest: ExamManifest, section: str) -> Path:
     if section == "Q1":
@@ -36,14 +38,40 @@ def _blueprint_path(root: Path, manifest: ExamManifest, section: str) -> Path:
 
 
 def _q4_context(root: Path) -> dict[str, str]:
+    """Minimal production context for Q4 authoring.
+
+    Human-facing research docs remain in the repository, but the author model receives
+    only the production contract, observed family patterns, and output template. This
+    avoids asking the model to reconcile five near-duplicate descriptions of the same
+    2026 surface grammar.
+    """
+
     return {
-        "blueprint_yaml": (root / "blueprints" / "common_test_chinese.yaml").read_text(encoding="utf-8"),
-        "generation_profile_yaml": (root / "blueprints" / "q4_2026_generation_profile.yaml").read_text(encoding="utf-8"),
-        "reference_patterns_yaml": (root / "blueprints" / "q4_2026_reference_patterns.yaml").read_text(encoding="utf-8"),
-        "surface_grammar": (root / "docs" / "Q4_SURFACE_GRAMMAR_2026.md").read_text(encoding="utf-8"),
+        "generation_profile_yaml": (
+            root / "blueprints" / "q4_2026_generation_profile.yaml"
+        ).read_text(encoding="utf-8"),
+        "reference_patterns_yaml": (
+            root / "blueprints" / "q4_2026_reference_patterns.yaml"
+        ).read_text(encoding="utf-8"),
         "template_yaml": (root / "templates" / "q4.yaml").read_text(encoding="utf-8"),
-        "item_writing_direction": (root / "docs" / "ITEM_WRITING_DIRECTION_2026.md").read_text(encoding="utf-8"),
     }
+
+
+def _q4_review_contract(root: Path) -> str:
+    """Return only the authoritative Q4 rules needed by reviewer/reviser models."""
+
+    profile = (root / "blueprints" / "q4_2026_generation_profile.yaml").read_text(
+        encoding="utf-8"
+    )
+    patterns = (root / "blueprints" / "q4_2026_reference_patterns.yaml").read_text(
+        encoding="utf-8"
+    )
+    return (
+        "# Q4 Production Profile — authoritative contract\n"
+        + profile
+        + "\n\n# Q4 Reference Patterns — observed family surface\n"
+        + patterns
+    )
 
 
 def _section_spec(manifest: ExamManifest, section: str) -> dict:
@@ -70,7 +98,7 @@ def _section_spec(manifest: ExamManifest, section: str) -> dict:
                 "difficulty": "official_like",
                 "domain": "auto",
                 "notes": manifest.notes,
-                "blueprint_version": "R8-2026-main-tsui-v3",
+                "blueprint_version": Q4_BLUEPRINT_VERSION,
             }
         )
     elif section == "Q5":
@@ -107,12 +135,16 @@ def create_exam_section_request(root: Path, exam_id: str, section: str) -> tuple
             item_spec_json=json.dumps(spec, ensure_ascii=False, indent=2),
         )
     else:
-        template = Template((root / "prompts" / f"generate_{section.lower()}.md").read_text(encoding="utf-8"))
+        template = Template(
+            (root / "prompts" / f"generate_{section.lower()}.md").read_text(encoding="utf-8")
+        )
         blueprint = _blueprint_path(root, manifest, section).read_text(encoding="utf-8")
         prompt = template.render(
             item_spec_json=json.dumps(spec, ensure_ascii=False, indent=2),
             section_blueprint=blueprint,
-            json_schema=json.dumps(SECTION_MODELS[section].model_json_schema(), ensure_ascii=False, indent=2),
+            json_schema=json.dumps(
+                SECTION_MODELS[section].model_json_schema(), ensure_ascii=False, indent=2
+            ),
         )
 
     prompt = _with_execution_protocol("generate", section, prompt)
@@ -135,11 +167,7 @@ def create_section_review_request(root: Path, exam_id: str, section: str) -> Pat
         raise ValueError(f"{section} has not been generated")
     section_data = load_section(manifest_path(root, exam_id).parent / ref.path)
     if section == "Q4":
-        blueprint = (
-            (root / "blueprints" / "q4_2026_generation_profile.yaml").read_text(encoding="utf-8")
-            + "\n\n"
-            + (root / "docs" / "Q4_SURFACE_GRAMMAR_2026.md").read_text(encoding="utf-8")
-        )
+        blueprint = _q4_review_contract(root)
     else:
         blueprint = _blueprint_path(root, manifest, section).read_text(encoding="utf-8")
     template = Template((root / "prompts" / "review_section.md").read_text(encoding="utf-8"))
@@ -166,11 +194,7 @@ def create_section_revision_request(root: Path, exam_id: str, section: str) -> P
     if not review_path.exists():
         raise ValueError("review JSON is missing")
     if section == "Q4":
-        blueprint = (
-            (root / "blueprints" / "q4_2026_generation_profile.yaml").read_text(encoding="utf-8")
-            + "\n\n"
-            + (root / "docs" / "Q4_SURFACE_GRAMMAR_2026.md").read_text(encoding="utf-8")
-        )
+        blueprint = _q4_review_contract(root)
     else:
         blueprint = _blueprint_path(root, manifest, section).read_text(encoding="utf-8")
     template = Template((root / "prompts" / "revise_section.md").read_text(encoding="utf-8"))
@@ -178,7 +202,9 @@ def create_section_revision_request(root: Path, exam_id: str, section: str) -> P
         section_blueprint=blueprint,
         item_json=section_path.read_text(encoding="utf-8"),
         review_json=review_path.read_text(encoding="utf-8"),
-        json_schema=json.dumps(SECTION_MODELS[section].model_json_schema(), ensure_ascii=False, indent=2),
+        json_schema=json.dumps(
+            SECTION_MODELS[section].model_json_schema(), ensure_ascii=False, indent=2
+        ),
     )
     prompt = _with_execution_protocol("revision", section, prompt)
     out = exam_workspace_dir(root, exam_id) / "reviews" / f"{section.lower()}.revision_request.md"
