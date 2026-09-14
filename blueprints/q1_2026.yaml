@@ -71,6 +71,12 @@ quality_calibration:
     - wrong candidates should share partial phonetic cues with the headword when possible
     - do not let character shape, word length, or a visibly unique spelling reveal the count before phonetic analysis
     - avoid candidate sets where the matching items are visually grouped or trivially identical in pinyin prefix
+  tone_pattern_diversity:
+    - C1 and C2 must not be two cosmetic copies of the same ordinary two-full-tone counting task
+    - across the two C tasks, vary the phonological feature when natural; a neutral-tone pattern is preferred for one task when suitable common vocabulary exists
+    - neutral tone must be represented internally without a tone mark and checked against actual standard pronunciation
+    - do not manufacture difficulty with rare vocabulary merely to obtain an unusual tone pattern
+    - if tone sandhi is represented as pronounced pinyin, apply the project convention consistently and require human pronunciation QA
   dialogue_load:
     - D1 and D2 must require integrating at least two utterances
     - use different comprehension functions across the two tasks
@@ -102,6 +108,7 @@ validator_scope:
     - elementary_single_character_set_warning
   explicitly_human:
     - real_pronunciation_correctness
+    - neutral_tone_correctness
     - lexical_level
     - natural_dialogue
     - official_difficulty_calibration
