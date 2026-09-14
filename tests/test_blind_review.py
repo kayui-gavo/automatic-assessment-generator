@@ -90,14 +90,17 @@ def test_q4_blind_surface_hides_evidence_and_operation_taxonomy(tmp_path):
         assert "rationale_ja" not in task
 
 
-def test_q5_blind_surface_does_not_prelink_questions_to_author_anchors(tmp_path):
+def test_q5_blind_surface_removes_prelinks_but_preserves_visible_underline(tmp_path):
     manifest, _ = build_exam(tmp_path, "main_2026")
     q5 = _section(tmp_path, manifest.exam_id, "Q5")
+
+    # source_excerpt is not an answer-side evidence pointer here: the renderer uses
+    # it to identify the span visibly underlined after 〔下線部1〕 in the booklet.
+    q5.anchors[0].source_excerpt = "她觉得这种做法很有意思。"
     blind = blind_section_dict(q5)
 
     for task in blind["tasks"]:
         assert "anchor_refs" not in task
         assert "operation" not in task
         assert "rationale_ja" not in task
-    for anchor in blind["anchors"]:
-        assert "source_excerpt" not in anchor
+    assert blind["anchors"][0]["source_excerpt"] == "她觉得这种做法很有意思。"
