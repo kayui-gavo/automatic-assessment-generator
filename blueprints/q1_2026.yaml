@@ -12,6 +12,12 @@ structure:
     target: initial
     candidate_count: 4
     count_choices: [一つ, 二つ, 三つ, 四つ, なし]
+    booklet_surface:
+      - show_hanzi_only
+      - underline_exactly_one_target_character_per_word
+      - do_not_show_pinyin
+    schema:
+      target_index: required_for_multi_character_words
   B:
     answers: [2]
     task_type: phonetic_count
@@ -19,6 +25,12 @@ structure:
     candidate_count: 4
     tone_ignored: true
     count_choices: [一つ, 二つ, 三つ, 四つ, なし]
+    booklet_surface:
+      - show_hanzi_only
+      - underline_exactly_one_target_character_per_word
+      - do_not_show_pinyin
+    schema:
+      target_index: required_for_multi_character_words
   C:
     answers: [3, 4]
     tasks: 2
@@ -26,6 +38,11 @@ structure:
     target: tone_pattern
     candidate_count: 4
     count_choices: [一つ, 二つ, 三つ, 四つ, なし]
+    booklet_surface:
+      - show_whole_hanzi_word
+      - do_not_show_pinyin
+    schema:
+      target_index: normally_null
   D:
     answers: [5, 6]
     tasks: 2
@@ -39,6 +56,10 @@ structure:
       - concern
       - reason
       - conversation_meaning
+
+internal_representation:
+  pinyin: required_for_validation_and_rationale_but_hidden_from_student_in_A_B_C
+  target_index: one_based_character_position_for_A_B_underline
 
 quality_calibration:
   lexical_level:
@@ -58,6 +79,8 @@ quality_calibration:
 human_qa_required:
   - pinyin_correctness
   - initial_final_analysis_correctness
+  - target_character_underlining_correct
+  - pinyin_not_visible_in_student_A_B_C
   - tone_correctness
   - yi_bu_tone_sandhi_handling
   - polyphone_context_unambiguous
@@ -74,6 +97,7 @@ validator_scope:
     - candidate_counts
     - option_counts
     - unicode_tone_mark_presence
+    - target_index_for_multi_character_A_B
     - answer_metadata_consistency
     - elementary_single_character_set_warning
   explicitly_human:
