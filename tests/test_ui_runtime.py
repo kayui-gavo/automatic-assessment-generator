@@ -16,7 +16,8 @@ def test_default_home_is_full_exam_creation_not_q4_pilot():
     buttons = [button.label for button in at.button]
     assert "＋ 新建完整模試" in buttons
     markdown_values = [element.value for element in at.markdown]
-    assert any("共通テスト中国語 模試制作 Workbench" in value for value in markdown_values)
+    assert any("新建完整模試" in value for value in markdown_values)
+    assert not any("模試制作 Workbench" in value for value in markdown_values)
 
 
 def test_full_exam_workbench_exposes_main_and_makeup_blueprints():
