@@ -321,6 +321,12 @@ def _document_preamble(title: str, teacher: bool) -> str:
 \pgfplotsset{xbar/.append style={y tick label style={text width=2.6cm,align=right}}}
 """
     tex += _font_setup()
+    if teacher:
+        tex += r"""
+\IfFontExistsTF{Noto Serif CJK JP}
+  {\setmainfont{Noto Serif CJK JP}}
+  {}
+"""
     tex += r"""
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0pt}
