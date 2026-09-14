@@ -35,21 +35,35 @@ from tabito_itemgen.section_io import load_section, section_fingerprint
 from tests.full_exam_factory import build_exam
 
 
-def _complete_section_qa(root, exam_id, section_name):
+def _review_for(root, exam_id, section_name) -> SectionReview:
     manifest = load_manifest(manifest_path(root, exam_id))
     ref = next(ref for ref in manifest.sections if ref.section == section_name)
     section = load_section(manifest_path(root, exam_id).parent / ref.path)
-    fingerprint = section_fingerprint(section)
-    review = SectionReview(
+    return SectionReview(
         section=section_name,
         section_id=ref.section_id,
-        candidate_fingerprint=fingerprint,
+        candidate_fingerprint=section_fingerprint(section),
         verdict="pass",
         independent_answers=section_author_answers(section),
         issues=[],
         overall_comment_ja="pass",
     )
-    import_section_review(root, exam_id, section_name, review.model_dump_json())
+
+
+def _complete_section_qa(root, exam_id, section_name):
+    manifest = load_manifest(manifest_path(root, exam_id))
+    ref = next(ref for ref in manifest.sections if ref.section == section_name)
+    section = load_section(manifest_path(root, exam_id).parent / ref.path)
+    fingerprint = section_fingerprint(section)
+    review = _review_for(root, exam_id, section_name)
+    import_section_review(
+        root,
+        exam_id,
+        section_name,
+        review.model_dump_json(),
+        reasoning_level="high",
+        fresh_chat_confirmed=True,
+    )
     qa = SectionHumanQA(
         section=section_name,
         section_id=ref.section_id,
@@ -105,11 +119,65 @@ def test_ordered_multislot_review_does_not_accept_reversed_q2_answers(tmp_path):
         issues=[],
         overall_comment_ja="reversed on purpose",
     )
-    import_section_review(tmp_path, manifest.exam_id, "Q2", review.model_dump_json())
+    import_section_review(
+        tmp_path,
+        manifest.exam_id,
+        "Q2",
+        review.model_dump_json(),
+        reasoning_level="high",
+        fresh_chat_confirmed=True,
+    )
     readiness = section_release_readiness(tmp_path, manifest.exam_id, "Q2")
     blind = next(gate for gate in readiness.gates if gate.name == "blind review")
     assert not blind.passed
     assert ordered_task in blind.detail
+
+
+def test_blind_review_requires_confirmed_fresh_chat(tmp_path):
+    manifest, _ = build_exam(tmp_path, "main_2026")
+    review = _review_for(tmp_path, manifest.exam_id, "Q1")
+
+    import_section_review(
+        tmp_path,
+        manifest.exam_id,
+        "Q1",
+        review.model_dump_json(),
+        reasoning_level="high",
+        fresh_chat_confirmed=False,
+    )
+    readiness = section_release_readiness(tmp_path, manifest.exam_id, "Q1")
+    blind = next(gate for gate in readiness.gates if gate.name == "blind review")
+    assert not blind.passed
+    assert "fresh chat" in blind.detail
+
+    import_section_review(
+        tmp_path,
+        manifest.exam_id,
+        "Q1",
+        review.model_dump_json(),
+        reasoning_level="high",
+        fresh_chat_confirmed=True,
+    )
+    readiness = section_release_readiness(tmp_path, manifest.exam_id, "Q1")
+    blind = next(gate for gate in readiness.gates if gate.name == "blind review")
+    assert blind.passed
+
+
+def test_blind_review_rejects_below_production_reasoning(tmp_path):
+    manifest, _ = build_exam(tmp_path, "main_2026")
+    review = _review_for(tmp_path, manifest.exam_id, "Q5")
+    import_section_review(
+        tmp_path,
+        manifest.exam_id,
+        "Q5",
+        review.model_dump_json(),
+        reasoning_level="medium",
+        fresh_chat_confirmed=True,
+    )
+    readiness = section_release_readiness(tmp_path, manifest.exam_id, "Q5")
+    blind = next(gate for gate in readiness.gates if gate.name == "blind review")
+    assert not blind.passed
+    assert "below production grade" in blind.detail
 
 
 def test_final_exam_qa_requires_current_preflighted_artifact(tmp_path):
