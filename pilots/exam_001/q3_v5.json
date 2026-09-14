@@ -1,0 +1,194 @@
+{
+  "schema_version": "0.5",
+  "section": "Q3",
+  "section_id": "TABITO-CN-PILOT-EXAM-001-Q3",
+  "title_ja": "表現力",
+  "score": 40,
+  "tasks": [
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-A1",
+      "subsection": "A",
+      "order": 1,
+      "direction": "ja_to_zh",
+      "source_text": "明日雨が降っても、予定どおり朝8時に出発するつもりです。",
+      "prompt_ja": "日本語の意味に最も近い中国語を選べ。",
+      "options": [
+        "Míngtiān rúguǒ xiàyǔ, wǒmen jiù dǎsuàn àn yuándìng jìhuà zǎoshang bā diǎn chūfā.",
+        "Míngtiān jíshǐ xiàyǔ, wǒmen yě dǎsuàn àn yuándìng jìhuà zǎoshang bā diǎn chūfā.",
+        "Míngtiān jíshǐ xiàyǔ, wǒmen yě dǎsuàn àn yuándìng jìhuà zǎoshang bā diǎn yǐhòu zài chūfā.",
+        "Míngtiān chúfēi bù xiàyǔ, wǒmen cái àn yuándìng jìhuà zǎoshang bā diǎn chūfā."
+      ],
+      "answer_slot": {"slot_id": "Q3-13", "answer_number": 13, "correct_option": 2},
+      "rationale_ja": "「即使……也……」で雨でも予定を変えない譲歩関係を表し、8時出発という時刻も保持している。",
+      "distractor_error_types": {"1": ["causal_relation", "pragmatic_force"], "3": ["scope", "aspect"], "4": ["scope", "modality"]},
+      "distractor_rationales_ja": {
+        "1": "出発時刻は同じだが、『雨でも』を『雨なら』という単純条件に変えている。",
+        "3": "譲歩関係は保つが、8時出発を『8時以後に出発』へずらしている。",
+        "4": "8時出発は残るが、『雨でも』を『雨が降らない場合に限る』へ反転させている。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-A2",
+      "subsection": "A",
+      "order": 2,
+      "direction": "ja_to_zh",
+      "source_text": "この資料は、内容が難しいというより、説明の順序が分かりにくい。",
+      "prompt_ja": "日本語の意味に最も近い中国語を選べ。",
+      "options": [
+        "Zhè fèn cáiliào bùdàn nèiróng hěn nán, érqiě shuōmíng de shùnxù yě bù róngyì lǐjiě.",
+        "Zhè fèn cáiliào yīnwèi nèiróng hěn nán, suǒyǐ shuōmíng de shùnxù bù róngyì lǐjiě.",
+        "Zhè fèn cáiliào de nèiróng bǐ shuōmíng de shùnxù gèng nán lǐjiě.",
+        "Zhè fèn cáiliào yǔqí shuō nèiróng nán, bùrú shuō shuōmíng de shùnxù bù róngyì lǐjiě."
+      ],
+      "answer_slot": {"slot_id": "Q3-14", "answer_number": 14, "correct_option": 4},
+      "rationale_ja": "「与其说A，不如说B」で、Aを全面否定せず、問題の中心をBに置く『AというよりB』を表す。",
+      "distractor_error_types": {"1": ["pragmatic_force"], "2": ["causal_relation"], "3": ["scope", "pragmatic_force"]},
+      "distractor_rationales_ja": {
+        "1": "内容の難しさと順序の分かりにくさを並列に追加し、どちらが中心かという比較を失う。",
+        "2": "二つの要素は残るが、内容の難しさを順序が分かりにくい原因に変えている。",
+        "3": "二要素を比較するが、原文とは逆に内容のほうが理解しにくいとしている。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-A3",
+      "subsection": "A",
+      "order": 3,
+      "direction": "ja_to_zh",
+      "source_text": "予約した時間より早く着いても、すぐに入れるとは限りません。",
+      "prompt_ja": "日本語の意味に最も近い中国語を選べ。",
+      "options": [
+        "Jíshǐ bǐ yùyuē de shíjiān zǎo dào, yě bù yídìng néng mǎshàng jìnqù.",
+        "Zhǐyào bǐ yùyuē de shíjiān zǎo dào, jiù yídìng néng mǎshàng jìnqù.",
+        "Jíshǐ bǐ yùyuē de shíjiān zǎo dào, yě yídìng bùnéng mǎshàng jìnqù.",
+        "Jíshǐ bǐ yùyuē de shíjiān wǎn dào, yě bù yídìng néng mǎshàng jìnqù."
+      ],
+      "answer_slot": {"slot_id": "Q3-15", "answer_number": 15, "correct_option": 1},
+      "rationale_ja": "『早く着いても』を「即使……」で、『必ずしもすぐ入れるとは限らない』を「不一定……」で表す。",
+      "distractor_error_types": {"2": ["scope", "modality"], "3": ["modality"], "4": ["lexical_meaning"]},
+      "distractor_rationales_ja": {
+        "2": "早着という条件を満たせば必ず入れるとして、原文の不確実性を反転させる。",
+        "3": "早着と譲歩は保つが、『入れるとは限らない』を『必ず入れない』に強めている。",
+        "4": "不確実性は保つが、『早く着く』を『遅く着く』へ変えている。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-A4",
+      "subsection": "A",
+      "order": 4,
+      "direction": "ja_to_zh",
+      "source_text": "私は彼が来ないと言ったのではなく、来られるかまだ分からないと言っただけです。",
+      "prompt_ja": "日本語の意味に最も近い中国語を選べ。",
+      "options": [
+        "Wǒ shuō tā bù lái, zhǐshì hái bù zhīdào tā wèishénme bù lái.",
+        "Wǒ bú shì shuō tā bù lái, ér shì shuō tā yídìng néng lái.",
+        "Wǒ bú shì shuō tā bù lái, zhǐshì shuō hái bù zhīdào tā néng bùnéng lái.",
+        "Wǒ bú shì bù zhīdào tā néng bùnéng lái, zhǐshì bù xiǎng gàosu nǐ."
+      ],
+      "answer_slot": {"slot_id": "Q3-16", "answer_number": 16, "correct_option": 3},
+      "rationale_ja": "『来ない』と断定したことを否定し、来られるかどうかが未確定だと述べた、という否定範囲とモダリティを保つ。",
+      "distractor_error_types": {"1": ["scope"], "2": ["modality"], "4": ["scope", "pragmatic_force"]},
+      "distractor_rationales_ja": {
+        "1": "来ないという断定を実際にしたことになり、否定範囲が逆。",
+        "2": "『来ないと断定していない』点は保つが、未確定を『必ず来られる』に強めている。",
+        "4": "来られるかどうかの話題は残るが、『まだ分からない』を『分かっているが言いたくない』に変える。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-B1",
+      "subsection": "B",
+      "order": 5,
+      "direction": "zh_to_ja",
+      "source_text": "Wǒ yuánlái yǐwéi tā wàng le, hòulái cái zhīdào tā zhǐshì bǎ shíjiān jì cuò le.",
+      "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
+      "options": [
+        "私は彼が時間を間違えて覚えたと思っていたが、あとで実は忘れていただけだと分かった。",
+        "私は彼が忘れたと思っていたが、あとで時間を間違えて覚えていただけだと分かった。",
+        "私は彼が忘れたと思っていたが、あとで場所を間違えて覚えていたのだと分かった。",
+        "私は最初から、彼は忘れたのではなく時間を間違えて覚えただけだと知っていた。"
+      ],
+      "answer_slot": {"slot_id": "Q3-17", "answer_number": 17, "correct_option": 2},
+      "rationale_ja": "当初の認識は『忘れた』、後から分かった事実は『時間を間違えて覚えていただけ』である。",
+      "distractor_error_types": {"1": ["aspect", "scope"], "3": ["lexical_meaning"], "4": ["aspect", "pragmatic_force"]},
+      "distractor_rationales_ja": {
+        "1": "二つの認識内容を逆の順序にしている。",
+        "3": "認識更新の構造は保つが、『時間』を『場所』に変えている。",
+        "4": "最終的な内容は近いが、『后来才知道』という後からの認識更新を失う。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-B2",
+      "subsection": "B",
+      "order": 6,
+      "direction": "zh_to_ja",
+      "source_text": "Zhè jiàn shì bùshì bùnéng zuò, zhǐshì xiànzài jiù kāishǐ dehuà, zhǔnbèi shíjiān kǒngpà bùgòu.",
+      "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
+      "options": [
+        "これはできないわけではないので、今すぐ始めれば準備時間も十分だろう。",
+        "これは今はできないが、準備時間を増やせば必ずできる。",
+        "これはできないわけではないが、今始めなければ準備時間が足りなくなるだろう。",
+        "これはできないわけではないが、今すぐ始めるなら準備時間が足りないかもしれない。"
+      ],
+      "answer_slot": {"slot_id": "Q3-18", "answer_number": 18, "correct_option": 4},
+      "rationale_ja": "実行可能性そのものは否定せず、『今すぐ始める場合』に準備時間不足の恐れがあると限定している。",
+      "distractor_error_types": {"1": ["modality"], "2": ["scope", "modality"], "3": ["scope", "causal_relation"]},
+      "distractor_rationales_ja": {
+        "1": "可能性は保つが、準備時間について『足りないかもしれない』を『十分だろう』へ反転させる。",
+        "2": "現在の実行可能性を否定し、さらに将来の成功を『必ず』と強めている。",
+        "3": "準備時間不足という懸念は残すが、条件を『今始めるなら』から『今始めなければ』へ反転させる。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-B3",
+      "subsection": "B",
+      "order": 7,
+      "direction": "zh_to_ja",
+      "source_text": "Tā bǎ nà fèn bàogào kàn le liǎng biàn, bùshì yīnwèi kàn bù dǒng, ér shì pà zìjǐ lòu diào le zhòngyào de shùzì.",
+      "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
+      "options": [
+        "彼がその報告を二度読んだのは、理解できなかったからではなく、重要な数字を見落としていないか心配だったからだ。",
+        "彼がその報告を二度読んだのは、重要な数字を見落としたからではなく、内容を理解できなかったからだ。",
+        "彼は重要な数字を見落とすのが心配だったので、その報告を一度だけ読んだ。",
+        "彼はその報告に間違った数字があるか確かめるため、二度読み直した。"
+      ],
+      "answer_slot": {"slot_id": "Q3-19", "answer_number": 19, "correct_option": 1},
+      "rationale_ja": "二度読んだ事実、理解困難が理由ではないこと、重要な数字の見落としを心配したことの三点を保つ。",
+      "distractor_error_types": {"2": ["causal_relation", "scope"], "3": ["aspect"], "4": ["lexical_meaning", "pragmatic_force"]},
+      "distractor_rationales_ja": {
+        "2": "二つの理由を入れ替え、原文が否定した『理解できないから』を理由にしている。",
+        "3": "見落としへの心配は保つが、読む回数を二度から一度へ変えている。",
+        "4": "二度確認する行動は近いが、『自分が重要な数字を見落とす心配』を『報告中の誤った数字を探す』に変えている。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-B4",
+      "subsection": "B",
+      "order": 8,
+      "direction": "zh_to_ja",
+      "source_text": "Zhǐyào bǎ yàodiǎn shuō qīngchu, bù yídìng fēi děi bǎ suǒyǒu xìjié dōu xiě jìnqù.",
+      "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
+      "options": [
+        "要点さえ明確なら、細かい点は一つも書いてはいけない。",
+        "すべての細かい点を書かなければ、要点を明確にすることはできない。",
+        "要点を明確にできれば、細かい点をすべて書き入れる必要があるとは限らない。",
+        "要点を明確にするより、細かい点をすべて書き入れるほうが重要だ。"
+      ],
+      "answer_slot": {"slot_id": "Q3-20", "answer_number": 20, "correct_option": 3},
+      "rationale_ja": "『只要』で要点を明確にすることを条件とし、『不一定非得』で全細部記載を必須とはしない。",
+      "distractor_error_types": {"1": ["scope", "modality"], "2": ["scope", "modality"], "4": ["pragmatic_force"]},
+      "distractor_rationales_ja": {
+        "1": "細部の全記載を不要とする点を『細部を書いてはいけない』という禁止へ強めすぎる。",
+        "2": "全細部記載を必要条件にして、原文の『必須とは限らない』を反転させる。",
+        "4": "要点と細部の重要度を逆転し、原文の条件・必要性判断を別の選好関係に変える。"
+      }
+    }
+  ],
+  "workflow": {"state": "draft", "generation_mode": "manual_chat", "blueprint_version": "R8-2026-full-v1"}
+}
