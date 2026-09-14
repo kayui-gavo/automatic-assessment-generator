@@ -1,10 +1,32 @@
 # TABITO Common Test Chinese Mock-Exam Workbench
 
-旅人教育の内部教研向け **大学入学共通テスト 中国語 模試制作 Workbench**。
+旅人教育の内部教研向け **大学入学共通テスト 中国語 模試制作システム**。
 
 v0.5 から製品の中心は Q4 単問ではなく、**80分・200点・解答番号1–50の完整模試 production** です。Q1–Q5 は別々に生成・審査・返修し、最後に1冊の問題冊子として組み上げます。
 
-LLM API は不要です。ChatGPT Plus を manual backend として使い、JSON / filesystem / Streamlit / XeLaTeX で production workflow を管理します。
+LLM API は必須ではありません。ChatGPT を manual backend として使い、JSON / filesystem / Streamlit / XeLaTeX で production workflow を管理します。
+
+## Model execution policy
+
+正式命题では、モデル名よりも **推理强度と review の独立性** を固定します。
+
+```text
+Generation     GPT-5.6 Sol · High     fresh chat recommended
+Blind Review   GPT-5.6 Sol · High+    fresh chat REQUIRED
+Revision       GPT-5.6 Sol · High     fresh chat recommended
+Human QA       人間                   release authority
+```
+
+ルール：
+
+- production generation / review / revision に Instant / low-effort mode を使わない。
+- Blind Review は、生成・返修・答案・rationale・教师标注を見ていない**全新对话**で実行する。
+- 同じ ChatGPT conversation 内で生成した問題をそのまま「blind review」しても、release evidence として認めない。
+- review import 時に model / reasoning / fresh-chat confirmation を candidate fingerprint と一緒に保存する。
+- candidate を1文字でも実質修改した場合、旧 review / Human QA は stale になる。
+- より強いモデルを使える場合も、deterministic validation / Blind Review / Human QA / PDF preflight を省略しない。
+
+現在の manual-chat production policy は `src/tabito_itemgen/model_policy.py` にあり、生成される prompt 自体にも execution protocol が付与されます。
 
 ## 起動
 
@@ -67,11 +89,11 @@ TOTAL 200点 / 80分 / 50解答欄
 ```text
 create Exam
    ↓
-Q1 request → import → review → Human QA
-Q2 request → import → review → Human QA
-Q3 request → import → review → Human QA
-Q4 request → import → review → Human QA
-Q5 request → import → review → Human QA
+Q1 request → import → isolated blind review → Human QA
+Q2 request → import → isolated blind review → Human QA
+Q3 request → import → isolated blind review → Human QA
+Q4 request → import → isolated blind review → Human QA
+Q5 request → import → isolated blind review → Human QA
    ↓
 Full Exam QA
    ↓
@@ -98,27 +120,28 @@ Release
 各大题で：
 
 ```text
-Generate Prompt
-→ ChatGPT Plus
+Generate Prompt (GPT-5.6 Sol · High)
 → JSON import
 → deterministic validation
-→ Blind Review
+→ Blind Review Prompt
+→ NEW CHAT / GPT-5.6 Sol · High+
+→ review import + execution provenance
 → Human QA
 → Revision Prompt（必要時）
 → 修订版 JSON 再导入
 ```
 
-修訂版を再導入すると、その section だけ `draft` に戻り、旧 Blind Review / Human QA は fingerprint mismatch により自動で stale になります。
+修訂版を再導入すると、その section だけ `draft` に戻り、旧 Blind Review / Human QA は fingerprint mismatch により自動で stale になります。返修に使った会話を次の Blind Review に再利用してはいけません。
 
 ### 3. Human QA
 
 共通チェックに加え、各 section 専用チェックを持ちます。
 
-- Q1：拼音、声母/韵母、声调、一/不变调、多音字、拼音版面、会话自然度
-- Q2：词汇用法、不适当项唯一性、语序唯一性、token pool 自然度
-- Q3：拼音、翻译语义、干扰项错误类型、逐词翻译化の回避
-- Q4：信息旅程、资料必要性、source integrity、2026 family fidelity
-- Q5：文章自然度、段落连贯、anchor、全文推理、著作权原创性、长文分页
+- Q1：拼音、声母/韵母、声调、一/不变调、多音字、拼音版面、会话自然度、词汇负荷、辨音竞争性
+- Q2：词汇用法、不适当项唯一性、语序唯一性、token 粒度、句法依赖、干扰 token 的局部可接续性
+- Q3：拼音、翻译语义、干扰项错误类型、near-miss、keyword shortcut、语义操作多样性
+- Q4：信息旅程、资料必要性、source integrity、2026 family fidelity、真正 cross-source dependency、认知操作多样性
+- Q5：文章自然度、段落连贯、anchor、全文推理、词汇干扰强度、局部选项竞争、后半题功能多样性、著作权原创性、长文分页
 
 Human QA では返工時間も保存します：
 
@@ -158,14 +181,29 @@ Q3 ready
 Q4 ready
 Q5 ready
 +
+PDF artifact preflight
++
 Final Exam Human QA
+```
+
+各 section の Blind Review gate は、正答一致だけでなく次も要求します。
+
+```text
+candidate fingerprint current
+review verdict = pass
+independent answers match
+no high-severity issue
+fresh chat confirmed
+no authoring/revision context seen
+reasoning >= High
+current model-policy version
 ```
 
 Approve は単なる copy ではありません。
 
 - exam / section state を `approved` に変更
 - `exam_bank/approved/<exam_id>/` に canonical copy を作成
-- release fingerprint / gates を記録
+- release fingerprint / gates / artifact evidence を記録
 - 同一 draft を除去
 - 同じ exam_id の別内容による上書きを禁止
 
@@ -208,10 +246,13 @@ Q4 は full Exam の Section 4 ですが、既存 Q4 JSON は引き続き load /
 ```text
 output/<exam_id>/
 ├── student.tex
-├── student.pdf       # XeLaTeX available 时
+├── student.pdf
 ├── teacher.tex
-├── teacher.pdf       # XeLaTeX available 时
-└── answer_key.json
+├── teacher.pdf
+├── answer_sheet.tex
+├── answer_sheet.pdf
+├── answer_key.json
+└── artifact_manifest.json
 ```
 
 1つの document 内で第1問→第5問を连续排版します。内部 ID、fingerprint、dependency metadata は学生版に出しません。
@@ -230,9 +271,14 @@ tabito-itemgen exam-import-section <EXAM_ID> Q1 q1_response.json
 # Full validation
 tabito-itemgen exam-validate <EXAM_ID>
 
-# Section blind review
+# Section blind review prompt
 tabito-itemgen exam-review-request <EXAM_ID> Q1
-tabito-itemgen exam-import-review <EXAM_ID> Q1 q1_review.json
+
+# Review は必ず全新对话で実行し、その事実を import 時に明示
+tabito-itemgen exam-import-review <EXAM_ID> Q1 q1_review.json \
+  --model "GPT-5.6 Sol" \
+  --reasoning high \
+  --fresh-chat-confirmed
 
 # Revision
 tabito-itemgen exam-revision-request <EXAM_ID> Q1
@@ -276,9 +322,9 @@ Live `workspace/exams/`, `exam_bank/draft/`, `exam_bank/approved/`, `output/` �
 
 既存 Q4 Pilot 001 は rejected、Pilot 002 / 003 v2 は Q4 surface regression 用に残します。
 
-## 今やらないこと
+## 次に測ること
 
-API、LangChain、multi-agent framework、vector DB、SQL DB、RAG、fine-tuning、IRT、自動正答率予測、React/Next.js 重前端は現段階では導入しません。
+現段階では API、multi-agent framework、vector DB、fine-tuning、自動正答率予測、重い front-end は導入しません。モデルを増やす前に、production defect と受験者データを取ります。
 
 まず測るのは：
 
@@ -286,6 +332,9 @@ API、LangChain、multi-agent framework、vector DB、SQL DB、RAG、fine-tuning
 2. 各 section の人工返工に何分かかるか
 3. 哪种 defect が何度起こるか
 4. PDF に手修正がどれだけ必要か
-5. 学生が実際に解いたときに不自然/多解/过易过难がどこで出るか
+5. 学生の section / item 解答時間
+6. item difficulty（正答率）
+7. distractor selection frequency
+8. 上位群・下位群で正答率がどれだけ分かれるか
 
-その実测结果だけを次の system upgrade に戻します。
+この実測がたまってから difficulty calibration / discrimination analysis / 必要なら IRT を導入します。`official_like` をモデルの自己申告だけで確定しません。
