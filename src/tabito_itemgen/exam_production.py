@@ -9,6 +9,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
+from .artifact_preflight import ArtifactManifest, sha256_file
 from .exam_models import (
     ExamHumanQA,
     ExamManifest,
@@ -180,6 +181,10 @@ def exam_qa_meta_path(root: Path, exam_id: str) -> Path:
 
 def exam_release_record_path(root: Path, exam_id: str) -> Path:
     return exam_workspace_dir(root, exam_id) / "release.json"
+
+
+def exam_artifact_manifest_path(root: Path, exam_id: str) -> Path:
+    return root / "output" / exam_id / "artifact_manifest.json"
 
 
 def _section_file(root: Path, manifest: ExamManifest, section: str) -> Path:
@@ -365,15 +370,62 @@ def exam_fingerprint(root: Path, exam_id: str) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _artifact_gate(root: Path, exam_id: str) -> Gate:
+    path = exam_artifact_manifest_path(root, exam_id)
+    if not path.exists():
+        return Gate("artifact preflight", False, "artifact_manifest.json not found; render with PDF preflight first")
+    try:
+        artifact = ArtifactManifest.model_validate(load_json(path))
+    except (ValidationError, ValueError, OSError) as exc:
+        return Gate("artifact preflight", False, str(exc))
+
+    if artifact.exam_id != exam_id:
+        return Gate("artifact preflight", False, "artifact manifest exam_id mismatch")
+    current_fingerprint = exam_fingerprint(root, exam_id)
+    if artifact.exam_fingerprint != current_fingerprint:
+        return Gate("artifact preflight", False, "PDF artifacts are stale for the current exam content")
+    if artifact.renderer_revision == "unknown":
+        return Gate("artifact preflight", False, "renderer revision is unknown")
+
+    required = {"student", "teacher", "answer_sheet"}
+    names = {check.name for check in artifact.checks}
+    if names != required:
+        return Gate("artifact preflight", False, f"artifact set must be exactly {sorted(required)}, got {sorted(names)}")
+    if not artifact.passed:
+        failed = [f"{check.name}: {'; '.join(check.errors)}" for check in artifact.checks if not check.passed]
+        return Gate("artifact preflight", False, " | ".join(failed))
+
+    out_dir = root / "output" / exam_id
+    for check in artifact.checks:
+        pdf = out_dir / f"{check.name}.pdf"
+        if not pdf.exists() or not check.pdf_sha256:
+            return Gate("artifact preflight", False, f"{check.name}.pdf missing from output")
+        if sha256_file(pdf) != check.pdf_sha256:
+            return Gate("artifact preflight", False, f"{check.name}.pdf changed after preflight")
+    return Gate("artifact preflight", True, f"pass · renderer {artifact.renderer_revision[:12]}")
+
+
 def save_exam_human_qa(root: Path, exam_id: str, qa: ExamHumanQA) -> Path:
     if qa.exam_id != exam_id:
         raise ValueError("exam Human QA exam_id does not match")
+    artifact_gate = _artifact_gate(root, exam_id)
+    if not artifact_gate.passed:
+        raise ValueError("final Exam QA requires current preflighted PDFs: " + artifact_gate.detail)
+
+    artifact_path = exam_artifact_manifest_path(root, exam_id)
+    artifact = ArtifactManifest.model_validate(load_json(artifact_path))
     path = exam_qa_path(root, exam_id)
     path.parent.mkdir(parents=True, exist_ok=True)
     dump_json(path, qa.model_dump())
     dump_json(
         exam_qa_meta_path(root, exam_id),
-        {"exam_id": exam_id, "exam_fingerprint": exam_fingerprint(root, exam_id), "saved_at": _now()},
+        {
+            "exam_id": exam_id,
+            "exam_fingerprint": exam_fingerprint(root, exam_id),
+            "artifact_manifest_sha256": sha256_file(artifact_path),
+            "renderer_revision": artifact.renderer_revision,
+            "saved_at": _now(),
+        },
     )
     return path
 
@@ -385,11 +437,19 @@ def _exam_qa_gate(root: Path, exam_id: str) -> Gate:
         return Gate("exam human QA", False, "exam Human QA not saved")
     try:
         qa = ExamHumanQA.model_validate(load_json(path))
-        saved = load_json(meta).get("exam_fingerprint")
+        saved_meta = load_json(meta)
     except (ValidationError, ValueError, OSError) as exc:
         return Gate("exam human QA", False, str(exc))
-    if saved != exam_fingerprint(root, exam_id):
+    if saved_meta.get("exam_fingerprint") != exam_fingerprint(root, exam_id):
         return Gate("exam human QA", False, "exam changed after final Human QA")
+
+    artifact_gate = _artifact_gate(root, exam_id)
+    if not artifact_gate.passed:
+        return Gate("exam human QA", False, "artifact changed after final Human QA: " + artifact_gate.detail)
+    artifact_path = exam_artifact_manifest_path(root, exam_id)
+    if saved_meta.get("artifact_manifest_sha256") != sha256_file(artifact_path):
+        return Gate("exam human QA", False, "PDF artifact manifest changed after final Human QA")
+
     failed = [name for name, value in qa.checks.model_dump().items() if not value]
     if qa.disposition != "approve" or failed:
         detail = f"disposition={qa.disposition}"
@@ -419,6 +479,7 @@ def exam_release_readiness(root: Path, exam_id: str) -> Readiness:
             f"{gate.name}: {gate.detail}" for gate in readiness.gates if not gate.passed
         )
         gates.append(Gate(f"{ref.section} release", readiness.ready, detail))
+    gates.append(_artifact_gate(root, exam_id))
     gates.append(_exam_qa_gate(root, exam_id))
     return Readiness(exam_id, exam_fingerprint(root, exam_id), tuple(gates))
 
@@ -439,7 +500,12 @@ def approve_exam(root: Path, exam_id: str) -> tuple[Path, Readiness]:
                 return target, readiness
         raise ValueError("approved exam_id already exists with different or unverifiable content")
 
+    artifact_path = exam_artifact_manifest_path(root, exam_id)
+    artifact_snapshot = load_json(artifact_path)
+    artifact_source_dir = root / "output" / exam_id
+
     shutil.copytree(source, target)
+    shutil.copytree(artifact_source_dir, target / "artifacts")
     approved_manifest = load_manifest(target / "exam.json")
     approved_manifest.workflow.state = "approved"
     for ref in approved_manifest.sections:
@@ -456,6 +522,8 @@ def approve_exam(root: Path, exam_id: str) -> tuple[Path, Readiness]:
         "exam_fingerprint": readiness.fingerprint,
         "approved_at": _now(),
         "approved_path": str(target.relative_to(root)),
+        "artifact_manifest_sha256": sha256_file(artifact_path),
+        "artifact_manifest": artifact_snapshot,
         "gates": [
             {"name": gate.name, "passed": gate.passed, "detail": gate.detail}
             for gate in readiness.gates
