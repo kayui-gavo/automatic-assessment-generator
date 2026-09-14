@@ -26,7 +26,7 @@ def _q1_hanzi_html(word, *, underline_target: bool) -> str:
     index = target_index - 1
     return (
         html.escape(word.hanzi[:index])
-        + f'<span style="text-decoration:underline;text-underline-offset:3px">'
+        + '<span style="text-decoration:underline;text-underline-offset:3px">'
         + html.escape(word.hanzi[index])
         + "</span>"
         + html.escape(word.hanzi[index + 1 :])
