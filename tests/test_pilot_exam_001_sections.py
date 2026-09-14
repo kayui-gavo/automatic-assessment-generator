@@ -11,7 +11,7 @@ PILOT = ROOT / "pilots" / "exam_001"
 
 
 def test_pilot_exam_001_active_sections_are_schema_valid():
-    for filename in ("q1_v4.json", "q2_v4.json", "q3_v5.json", "q4_v4.json", "q5_v5.json"):
+    for filename in ("q1_v4.json", "q2_v4.json", "q3_v5.json", "q4_v5.json", "q5_v5.json"):
         result = validate_section_file(PILOT / filename)
         assert result.errors == (), f"{filename}: {result.errors}"
 
@@ -94,8 +94,8 @@ def test_pilot_exam_001_q3_v5_uses_balanced_near_miss_answers():
     assert all(tasks["Q3-B2"].distractor_error_types.values())
 
 
-def test_pilot_exam_001_q4_v4_has_genuine_cross_source_ablation_resistance():
-    section = load_section(PILOT / "q4_v4.json")
+def test_pilot_exam_001_q4_v5_has_genuine_cross_source_ablation_resistance():
+    section = load_section(PILOT / "q4_v5.json")
     tasks = {task.task_id: task for task in section.tasks}
 
     assert tasks["A2b"].prompt_ja == "グラフの内容と一致するものを一つ選べ。"
@@ -117,6 +117,17 @@ def test_pilot_exam_001_q4_v4_has_genuine_cross_source_ablation_resistance():
     assert [slot.correct_option for slot in synthesis.answer_slots] == [2, 6]
     assert "时间不合适" in synthesis.options[1]
     assert "四つの体験項目すべて" in synthesis.options[5]
+
+
+def test_pilot_exam_001_q4_v5_does_not_overclaim_the_top_survey_items():
+    section = load_section(PILOT / "q4_v5.json")
+    materials = {material.material_id: material for material in section.materials}
+    body = materials["A-M6"].body
+
+    assert "什么时候采取行动" in body
+    assert "附近可以利用的急救资源" in body
+    assert "下一步怎么做" in body
+    assert "两个问题也都和‘遇到情况时怎么判断’有关" not in body
 
 
 def test_pilot_exam_001_q5_v5_anchors_are_visible_and_answer_range_is_complete():
@@ -180,7 +191,7 @@ def test_pilot_exam_001_manifest_uses_current_revisions():
         "Q1": "q1_v4.json",
         "Q2": "q2_v4.json",
         "Q3": "q3_v5.json",
-        "Q4": "q4_v4.json",
+        "Q4": "q4_v5.json",
         "Q5": "q5_v5.json",
     }
 
