@@ -12,7 +12,13 @@ from tabito_itemgen.exam_production import (
     save_section_human_qa,
     section_author_answers,
 )
-from tabito_itemgen.exam_review_models import SECTION_SPECIFIC_QA, SectionHumanQA, SectionQAChecks, SectionQATiming, SectionReview
+from tabito_itemgen.exam_review_models import (
+    SECTION_SPECIFIC_QA,
+    SectionHumanQA,
+    SectionQAChecks,
+    SectionQATiming,
+    SectionReview,
+)
 from tabito_itemgen.section_io import load_section, section_fingerprint
 
 from tests.artifact_factory import write_clean_artifacts
@@ -36,7 +42,14 @@ def _bind_section_release_evidence(root: Path, exam_id: str, section_name: str) 
         issues=[],
         overall_comment_ja="pass",
     )
-    import_section_review(root, exam_id, section_name, review.model_dump_json())
+    import_section_review(
+        root,
+        exam_id,
+        section_name,
+        review.model_dump_json(),
+        reasoning_level="high",
+        fresh_chat_confirmed=True,
+    )
     qa = SectionHumanQA(
         section=section_name,
         section_id=ref.section_id,
