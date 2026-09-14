@@ -21,9 +21,15 @@ from .exam_models import (
     SECTION_SPECS,
     SectionRef,
 )
-from .exam_review_models import SECTION_SPECIFIC_QA, SectionHumanQA, SectionReview
+from .exam_review_models import (
+    SECTION_SPECIFIC_QA,
+    ReviewExecution,
+    SectionHumanQA,
+    SectionReview,
+)
 from .exam_validation import ValidationResult, validate_exam, validate_section_file
 from .io import dump_json, load_json
+from .model_policy import POLICY_VERSION, PREFERRED_MODEL, reasoning_is_review_grade
 from .models import Item
 from .production import parse_chat_json
 from .section_io import load_section, save_section_draft, section_fingerprint, section_id
@@ -167,6 +173,10 @@ def section_review_path(root: Path, exam_id: str, section: str) -> Path:
     return exam_workspace_dir(root, exam_id) / "reviews" / f"{section.lower()}.review.json"
 
 
+def section_review_execution_path(root: Path, exam_id: str, section: str) -> Path:
+    return exam_workspace_dir(root, exam_id) / "reviews" / f"{section.lower()}.review_execution.json"
+
+
 def section_qa_path(root: Path, exam_id: str, section: str) -> Path:
     return exam_workspace_dir(root, exam_id) / "human_qa" / f"{section.lower()}.human_qa.json"
 
@@ -256,16 +266,61 @@ def _review_errors(section, review: SectionReview) -> list[str]:
     return errors
 
 
-def import_section_review(root: Path, exam_id: str, section_name: str, text: str) -> Path:
+def _review_execution_errors(section, execution: ReviewExecution) -> list[str]:
+    errors: list[str] = []
+    if execution.section != section.section or execution.section_id != section_id(section):
+        errors.append("review execution identity does not match candidate")
+    if execution.candidate_fingerprint != section_fingerprint(section):
+        errors.append("review execution record is stale")
+    if execution.policy_version != POLICY_VERSION:
+        errors.append(
+            f"review execution policy {execution.policy_version!r} is not current {POLICY_VERSION!r}"
+        )
+    if not execution.fresh_chat_confirmed:
+        errors.append("blind review was not confirmed as a fresh chat")
+    if execution.authoring_context_seen:
+        errors.append("blind reviewer had access to authoring/revision context")
+    if not reasoning_is_review_grade(execution.reasoning_level):
+        errors.append(
+            f"blind review reasoning level {execution.reasoning_level!r} is below production grade"
+        )
+    return errors
+
+
+def import_section_review(
+    root: Path,
+    exam_id: str,
+    section_name: str,
+    text: str,
+    *,
+    model_label: str = PREFERRED_MODEL,
+    reasoning_level: str = "unknown",
+    fresh_chat_confirmed: bool = False,
+    authoring_context_seen: bool = False,
+) -> Path:
     manifest = load_manifest(manifest_path(root, exam_id))
     section = load_section(_section_file(root, manifest, section_name))
     review = SectionReview.model_validate(parse_chat_json(text))
-    errors = _review_errors(section, review)
     if review.candidate_fingerprint != section_fingerprint(section):
         raise ValueError("review was produced for a different candidate version")
+
     path = section_review_path(root, exam_id, section_name)
     path.parent.mkdir(parents=True, exist_ok=True)
     dump_json(path, review.model_dump())
+
+    execution = ReviewExecution(
+        section=section_name,
+        section_id=section_id(section),
+        candidate_fingerprint=section_fingerprint(section),
+        policy_version=POLICY_VERSION,
+        model_label=model_label,
+        reasoning_level=reasoning_level,
+        fresh_chat_confirmed=fresh_chat_confirmed,
+        authoring_context_seen=authoring_context_seen,
+    )
+    dump_json(section_review_execution_path(root, exam_id, section_name), execution.model_dump())
+
+    errors = _review_errors(section, review) + _review_execution_errors(section, execution)
     ref = _ref_for(manifest, section_name)
     ref.state = "reviewed" if not errors else "draft"
     _save_manifest(manifest_path(root, exam_id), manifest)
@@ -323,12 +378,18 @@ def section_release_readiness(root: Path, exam_id: str, section_name: str) -> Re
     ]
 
     review_path = section_review_path(root, exam_id, section_name)
+    execution_path = section_review_execution_path(root, exam_id, section_name)
     if not review_path.exists():
         gates.append(Gate("blind review", False, "review JSON not saved"))
     else:
         try:
             review = SectionReview.model_validate(load_json(review_path))
             errors = _review_errors(section, review)
+            if not execution_path.exists():
+                errors.append("blind review execution record not saved")
+            else:
+                execution = ReviewExecution.model_validate(load_json(execution_path))
+                errors.extend(_review_execution_errors(section, execution))
             gates.append(Gate("blind review", not errors, "pass" if not errors else "; ".join(errors)))
         except (ValidationError, ValueError) as exc:
             gates.append(Gate("blind review", False, str(exc)))
