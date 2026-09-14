@@ -18,11 +18,13 @@ def test_full_exam_ui_source_compiles_and_keeps_legacy_q4_ui():
     exam_ui = root / "src" / "tabito_itemgen" / "exam_ui.py"
     source = exam_ui.read_text(encoding="utf-8")
     compile(source, str(exam_ui), "exec")
-    assert "共通テスト中国語 模試制作 Workbench" in source
+    assert 'page_title="TABITO 中国語模試"' in source
     assert "新建完整模試" in source
-    assert "Q1–Q5 production status" in source
+    assert "Q1–Q5" in source
     assert "Final Exam QA" in source
     assert "Approve → 正式模試库" in source
+    assert "TABITO EDUCATION · EXAM PRODUCTION" not in source
+    assert "共通テスト中国語 模試制作 Workbench" not in source
 
     legacy = root / "src" / "tabito_itemgen" / "ui_entrypoint.py"
     assert legacy.exists()
