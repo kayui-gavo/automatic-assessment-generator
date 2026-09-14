@@ -11,7 +11,7 @@ PILOT = ROOT / "pilots" / "exam_001"
 
 
 def test_pilot_exam_001_active_sections_are_schema_valid():
-    for filename in ("q1_v2.json", "q2_v2.json", "q3_v3.json", "q4_v3.json", "q5_v3.json"):
+    for filename in ("q1_v2.json", "q2_v3.json", "q3_v3.json", "q4_v3.json", "q5_v3.json"):
         result = validate_section_file(PILOT / filename)
         assert result.errors == (), f"{filename}: {result.errors}"
 
@@ -29,6 +29,24 @@ def test_pilot_exam_001_q1_v2_preserves_dialogue_timeline():
     assert any("yào mǎi de dōngxi yǒu diǎn duō" in line for line in lines)
     assert all("língshí yǒu diǎn duō" not in line for line in lines)
     assert task.answer_slot.correct_option == 2
+
+
+def test_pilot_exam_001_q2_v3_removes_obvious_garbage_distractors():
+    section = load_section(PILOT / "q2_v3.json")
+    tasks = {task.task_id: task for task in section.tasks}
+
+    assert tasks["Q2-A"].options == ["核对", "承认", "证明", "保证"]
+    assert tasks["Q2-B"].options == ["确认", "核对", "说明", "怀疑"]
+    assert "把" not in tasks["Q2-B"].options
+
+    c1 = {token.text_zh for token in tasks["Q2-C1"].token_pool}
+    assert {"虽然", "但是", "已经", "才"}.issubset(c1)
+    assert "被" not in c1
+
+    c2 = {token.text_zh for token in tasks["Q2-C2"].token_pool}
+    assert {"在到车站以前", "我只看了一遍", "朋友刚发来的地图", "就找到入口"}.issubset(c2)
+    assert "被朋友" not in c2
+    assert "虽然入口" not in c2
 
 
 def test_pilot_exam_001_q3_correct_positions_are_balanced():
@@ -70,7 +88,7 @@ def test_pilot_exam_001_manifest_uses_current_revisions():
     paths = {ref["section"]: ref["path"] for ref in manifest["sections"]}
     assert paths == {
         "Q1": "q1_v2.json",
-        "Q2": "q2_v2.json",
+        "Q2": "q2_v3.json",
         "Q3": "q3_v3.json",
         "Q4": "q4_v3.json",
         "Q5": "q5_v3.json",
