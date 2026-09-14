@@ -5,6 +5,7 @@ from pathlib import Path
 
 from jinja2 import Template
 
+from .blind_surface import blind_section_dict
 from .exam_models import ExamManifest, Q1Section, Q2Section, Q3Section, Q5Section
 from .exam_production import exam_workspace_dir, load_manifest, manifest_path
 from .exam_review_models import SectionReview
@@ -125,36 +126,6 @@ def create_all_section_requests(root: Path, exam_id: str) -> dict[str, Path]:
         section: create_exam_section_request(root, exam_id, section)[0]
         for section in ("Q1", "Q2", "Q3", "Q4", "Q5")
     }
-
-
-def _strip_keys(value):
-    hidden = {
-        "correct_option",
-        "rationale_ja",
-        "distractor_rationales_ja",
-        "slot_distractor_rationales_ja",
-        "distractor_error_types",
-        "token_rationales_ja",
-        "correct_sequence",
-        "quality_notes",
-        "workflow",
-        "originality_statement",
-        "surface_family",
-        "topic",
-        "scenario_summary_ja",
-        "dependency_mode",
-        "bundle_id",
-        "source_excerpt",
-    }
-    if isinstance(value, dict):
-        return {key: _strip_keys(child) for key, child in value.items() if key not in hidden}
-    if isinstance(value, list):
-        return [_strip_keys(child) for child in value]
-    return value
-
-
-def blind_section_dict(section) -> dict:
-    return _strip_keys(section.model_dump())
 
 
 def create_section_review_request(root: Path, exam_id: str, section: str) -> Path:
