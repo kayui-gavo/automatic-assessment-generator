@@ -11,16 +11,8 @@ from tabito_itemgen.exam_generate import (
     create_section_review_request,
     create_section_revision_request,
 )
-from tabito_itemgen.exam_models import (
-    ExamHumanQA,
-    ExamQAChecks,
-    ExamQATiming,
-    Q1Section,
-    Q2OrderingTask,
-    Q2Section,
-    Q3Section,
-    Q5Section,
-)
+from tabito_itemgen.exam_models import ExamHumanQA, ExamQAChecks, ExamQATiming
+from tabito_itemgen.exam_preview import render_simple_section_preview
 from tabito_itemgen.exam_production import (
     approve_exam,
     create_exam_project,
@@ -47,12 +39,7 @@ from tabito_itemgen.model_policy import MIN_REASONING_LEVEL, PREFERRED_MODEL
 from tabito_itemgen.models import Item
 from tabito_itemgen.paths import find_project_root
 from tabito_itemgen.section_io import load_section, section_fingerprint
-from tabito_itemgen.ui_app import (
-    APP_CSS,
-    OPTION_MARKS,
-    _render_booklet_preview,
-    _render_teacher_view,
-)
+from tabito_itemgen.ui_app import APP_CSS, _render_booklet_preview, _render_teacher_view
 
 SECTION_LABELS = {
     "Q1": "発音・ピンイン",
@@ -60,6 +47,105 @@ SECTION_LABELS = {
     "Q3": "表現力",
     "Q4": "複合的な資料の読み取り",
     "Q5": "長文読解",
+}
+
+SECTION_NAV_LABELS = {
+    "Q1": "发音・拼音",
+    "Q2": "词语",
+    "Q3": "表达",
+    "Q4": "综合资料",
+    "Q5": "长文阅读",
+}
+
+STATUS_COPY = {
+    "not_generated": ("未出题", "muted"),
+    "needs_fix": ("需修正", "bad"),
+    "draft": ("草稿", "muted"),
+    "blind_review": ("待独立审题", "warn"),
+    "teacher_qa": ("待教师确认", "warn"),
+    "ready": ("已就绪", "ok"),
+    "approved": ("已定稿", "ok"),
+}
+
+COMMON_QA_LABELS = {
+    "chinese_naturalness": "中文表达自然，没有生硬或歧义",
+    "japanese_instruction_naturalness": "日语设问自然，符合考试语体",
+    "answer_uniqueness": "正答唯一，答案依据充分",
+    "distractors_plausible": "干扰项有迷惑性，没有明显送分项",
+    "surface_fidelity_2026": "题型与 2026 共通考试风格一致",
+    "official_difficulty_calibrated": "难度接近官方，不靠生僻词硬拉难度",
+    "shortcut_resistance": "不能只靠关键词或形式特征直接猜答案",
+    "originality_ok": "内容原创，不是官方题的换皮改写",
+    "layout_readable": "题面排版清晰，学生阅读负担合理",
+    "no_solution_leak": "题面没有答案或解法泄露",
+}
+
+SPECIFIC_QA_LABELS = {
+    "pinyin_correctness": "拼音标注正确",
+    "initial_final_analysis_correctness": "声母 / 韵母判断正确",
+    "target_character_underlining_correct": "下划线字符位置正确",
+    "pinyin_hidden_in_student_a_b_c": "学生版 A / B / C 不显示内部拼音",
+    "tone_correctness": "声调判断正确",
+    "yi_bu_tone_sandhi_handling": "「一 / 不」变调处理正确",
+    "polyphone_context_unambiguous": "多音字语境明确，不会产生两种读法",
+    "pinyin_diacritic_layout": "拼音声调符号显示正常",
+    "dialogue_naturalness": "对话自然，像真实交际而不是练习句",
+    "lexical_load_official_like": "词汇负荷接近官方题",
+    "phonetic_confusability_sufficient": "辨音候选之间有足够竞争",
+    "no_visual_counting_shortcut": "不能靠字形、字数等视觉特征直接数出答案",
+    "lexical_usage_correct": "词汇用法与搭配正确",
+    "inappropriate_rule_unambiguous": "「不适当」题只有一个明确答案",
+    "ordering_unique": "语序题只有一种正确序列",
+    "token_pool_natural": "语序题 token 池自然，没有垃圾选项",
+    "ordering_token_granularity": "token 粒度合理，不是长句块拼接",
+    "ordering_requires_syntax": "语序题确实需要句法判断",
+    "distractor_tokens_locally_plausible": "干扰 token 在局部位置具有可接续性",
+    "translation_semantics_correct": "翻译语义准确，没有范围或语气偏移",
+    "distractor_error_taxonomy_correct": "干扰项错误类型标注与实际错误一致",
+    "not_word_for_word_only": "不是只靠单词一一对应就能解",
+    "near_miss_distractors": "至少有真正接近正答的 near-miss 干扰项",
+    "no_keyword_shortcut": "不能靠一个关键词直接排除大多数选项",
+    "semantic_operation_diversity": "整组题目的语义判断类型有变化",
+    "information_journey": "资料与设问形成连贯的信息推进",
+    "visual_materials_necessary": "图表 / 流程等资料确实参与解题",
+    "source_integrity_ok": "资料内部一致，数值和事实无冲突",
+    "surface_family_correct": "本试 / 追试 family 结构使用正确",
+    "cross_source_dependency_real": "跨资料题确实需要多份资料才能确定答案",
+    "cognitive_operation_diversity": "提取、比较、整合、应用等认知操作有变化",
+    "template_repetition_risk_checked": "没有机械重复同一套资料与设问模板",
+    "article_naturalness": "长文自然，像完整文章而不是为题目拼出的段落",
+    "paragraph_coherence": "段落衔接自然，信息推进清楚",
+    "anchor_accuracy": "下划线、空栏等 anchor 对应准确",
+    "whole_text_reasoning_quality": "全文题确实需要跨段理解",
+    "lexical_distractor_strength": "词汇题干扰项强度足够",
+    "local_options_compete": "局部语境中至少有两个选项真正竞争",
+    "late_question_operation_diversity": "后半题不是反复询问同一中心思想",
+    "copyright_originality_check": "文章与官方材料保持原创边界",
+    "long_text_pagination_readable": "长文分页不会打断阅读",
+}
+
+EXAM_QA_LABELS = {
+    "timing_feasible_80_minutes": "整卷在 80 分钟内可合理完成",
+    "score_structure_200_complete": "总分 200 分结构完整",
+    "answer_numbers_1_to_50_continuous": "解答编号 1–50 连续无缺漏",
+    "q1_to_q5_visual_hierarchy": "Q1–Q5 的视觉层级清楚一致",
+    "difficulty_rhythm_reasonable": "难度节奏合理，没有某一段异常过易或过难",
+    "q4_q5_topics_distinct": "Q4 / Q5 题材不过度重复",
+    "no_cross_section_solution_leak": "大题之间没有相互泄露答案",
+    "pinyin_style_consistent": "全卷拼音格式统一",
+    "simplified_chinese_consistent": "简体字使用统一",
+    "japanese_instruction_style_consistent": "日语设问语体统一",
+    "numbers_punctuation_options_consistent": "数字、标点、选项格式统一",
+    "pagination_readable": "分页自然，没有关键内容被不当拆开",
+    "charts_readable": "图表尺寸与文字清晰可读",
+    "long_text_pagination_readable": "长文分页适合连续阅读",
+    "booklet_readable": "整本试卷整体易读、可直接印发",
+}
+
+DISPOSITION_LABELS = {
+    "revise": "需要返修",
+    "approve": "通过",
+    "reject": "不采用",
 }
 
 
@@ -72,6 +158,7 @@ def _root() -> Path:
 
 def _discover_exams(root: Path) -> dict[str, Path]:
     result: dict[str, Path] = {}
+    state_label = {"draft": "制作中", "approved": "已定稿"}
     for state in ("draft", "approved"):
         directory = root / "exam_bank" / state
         if not directory.exists():
@@ -81,7 +168,10 @@ def _discover_exams(root: Path) -> dict[str, Path]:
                 manifest = load_manifest(path)
             except Exception:
                 continue
-            result[f"{state.upper()} · {manifest.title_ja} · {manifest.exam_id}"] = path
+            label = f"{state_label[state]} · {manifest.title_ja}"
+            if label in result:
+                label += f" · {manifest.exam_id[-6:]}"
+            result[label] = path
     return result
 
 
@@ -92,165 +182,72 @@ def _section_path(exam_path: Path, ref) -> Path | None:
 def _section_status(root: Path, manifest, exam_path: Path, ref) -> str:
     path = _section_path(exam_path, ref)
     if path is None or not path.exists():
-        return "未生成"
+        return "not_generated"
     if not validate_section_file(path).passed:
-        return "结构修正"
+        return "needs_fix"
     if "approved" in exam_path.parts:
-        return "Approved"
+        return "approved"
     try:
         readiness = section_release_readiness(root, manifest.exam_id, ref.section)
     except Exception:
-        return "Draft"
+        return "draft"
     if readiness.ready:
-        return "Ready"
+        return "ready"
     blind = next((gate for gate in readiness.gates if gate.name == "blind review"), None)
-    return "Human QA" if blind and blind.passed else "Blind Review"
+    return "teacher_qa" if blind and blind.passed else "blind_review"
 
 
-def _answer_badge(number: int) -> str:
-    return f'<span class="answer-badge">{number}</span>'
+def _status_html(status: str) -> str:
+    label, css_class = STATUS_COPY.get(status, (status, "muted"))
+    return f'<span class="status-label {css_class}">{html.escape(label)}</span>'
 
 
-def _html_options(options: list[str]) -> None:
-    rows = []
-    for index, option in enumerate(options, start=1):
-        mark = OPTION_MARKS[index - 1] if index <= len(OPTION_MARKS) else f"({index})"
-        rows.append(
-            f'<div class="option-row"><div class="option-mark">{mark}</div>'
-            f'<div>{html.escape(option)}</div></div>'
-        )
-    st.markdown(f'<div class="option-list">{"".join(rows)}</div>', unsafe_allow_html=True)
+def _gate_label(name: str) -> str:
+    direct = {
+        "deterministic validation": "格式与结构",
+        "blind review": "独立审题",
+        "human QA": "教师确认",
+        "exam validation": "整卷结构",
+        "artifact preflight": "PDF 检查",
+        "exam human QA": "整卷教师确认",
+    }
+    if name in direct:
+        return direct[name]
+    if name.endswith(" release"):
+        return name.removesuffix(" release")
+    return name
 
 
-def _q1_hanzi_html(word, *, underline_target: bool) -> str:
-    escaped = html.escape(word.hanzi)
-    if not underline_target:
-        return escaped
-    target_index = word.target_index
-    if target_index is None and len(word.hanzi) == 1:
-        target_index = 1
-    if target_index is None:
-        return escaped
-    index = target_index - 1
-    return (
-        html.escape(word.hanzi[:index])
-        + f"<u>{html.escape(word.hanzi[index])}</u>"
-        + html.escape(word.hanzi[index + 1 :])
+def _next_action_text(ref, status: str) -> str:
+    section = f"{ref.section} {SECTION_NAV_LABELS[ref.section]}"
+    if status == "not_generated":
+        return f"打开 {section}，先生成题目。"
+    if status == "needs_fix":
+        return f"打开 {section}，修正结构校验问题后再继续。"
+    if status in {"draft", "blind_review"}:
+        return f"打开 {section} 的「质量检查」，完成独立审题。"
+    if status == "teacher_qa":
+        return f"打开 {section} 的「质量检查」，完成教师确认。"
+    return f"{section} 已就绪。"
+
+
+def _render_header(manifest, family_label: str, ready_count: int, is_approved: bool) -> None:
+    title = html.escape(manifest.title_ja)
+    state_text = "已定稿" if is_approved else f"{ready_count}/5 大题已就绪"
+    st.markdown(
+        f'<div class="workspace-heading">{title}</div>'
+        f'<div class="workspace-meta">{html.escape(family_label)}'
+        f'<span>·</span>200 点<span>·</span>80 分钟<span>·</span>50 个解答栏'
+        f'<span>·</span>{html.escape(state_text)}</div>',
+        unsafe_allow_html=True,
     )
-
-
-def _preview_simple_section(section, teacher: bool = False) -> None:
-    """Fallback preview used when the dedicated preview module is not injected."""
-
-    st.markdown(f"### 第{section.section[1]}問　{section.title_ja}")
-    if isinstance(section, Q1Section):
-        current = None
-        for task in sorted(section.tasks, key=lambda value: value.answer_slot.answer_number):
-            if task.subsection != current:
-                st.markdown(f"**{task.subsection}**")
-                current = task.subsection
-            if hasattr(task, "headword"):
-                st.markdown(
-                    f"{task.prompt_ja} {_answer_badge(task.answer_slot.answer_number)}",
-                    unsafe_allow_html=True,
-                )
-                underline_target = task.target in {"initial", "final"}
-                st.markdown(
-                    "見出し　" + _q1_hanzi_html(task.headword, underline_target=underline_target),
-                    unsafe_allow_html=True,
-                )
-                words = "　".join(
-                    f"{word.label} {_q1_hanzi_html(word, underline_target=underline_target)}"
-                    for word in task.candidates
-                )
-                st.markdown(words, unsafe_allow_html=True)
-            else:
-                for line in task.lines:
-                    st.markdown(f"**{line.speaker}**：{line.pinyin}")
-                st.markdown(
-                    f"{task.prompt_ja} {_answer_badge(task.answer_slot.answer_number)}",
-                    unsafe_allow_html=True,
-                )
-            _html_options(task.options)
-            if teacher:
-                st.caption(
-                    f"正答 [{task.answer_slot.answer_number}] {task.answer_slot.correct_option} · "
-                    f"{task.rationale_ja}"
-                )
-        return
-
-    if isinstance(section, Q2Section):
-        for task in sorted(section.tasks, key=lambda value: value.order):
-            st.markdown(f"**{task.subsection}**")
-            if isinstance(task, Q2OrderingTask):
-                badges = "".join(_answer_badge(slot.answer_number) for slot in task.answer_slots)
-                st.markdown(f"{task.prompt_ja} {badges}", unsafe_allow_html=True)
-                st.markdown(task.source_ja)
-                st.markdown(task.sentence_frame_zh)
-                st.markdown(
-                    "　".join(
-                        f"{OPTION_MARKS[token.token_id - 1]} {token.text_zh}"
-                        for token in task.token_pool
-                    )
-                )
-                if teacher:
-                    answers = " / ".join(
-                        f"[{slot.answer_number}] {slot.correct_option}" for slot in task.answer_slots
-                    )
-                    st.caption(f"正答 {answers} · {task.rationale_ja}")
-            else:
-                st.markdown(
-                    f"{task.prompt_ja} {_answer_badge(task.answer_slot.answer_number)}",
-                    unsafe_allow_html=True,
-                )
-                st.markdown(task.sentence_zh)
-                _html_options(task.options)
-                if teacher:
-                    st.caption(
-                        f"正答 [{task.answer_slot.answer_number}] {task.answer_slot.correct_option} · "
-                        f"{task.rationale_ja}"
-                    )
-        return
-
-    if isinstance(section, Q3Section):
-        current = None
-        for task in sorted(section.tasks, key=lambda value: value.answer_slot.answer_number):
-            if task.subsection != current:
-                st.markdown(f"**{task.subsection}**")
-                current = task.subsection
-            st.markdown(
-                f"{task.prompt_ja} {_answer_badge(task.answer_slot.answer_number)}",
-                unsafe_allow_html=True,
-            )
-            st.markdown(task.source_text)
-            _html_options(task.options)
-            if teacher:
-                st.caption(
-                    f"正答 [{task.answer_slot.answer_number}] {task.answer_slot.correct_option} · "
-                    f"{task.rationale_ja}"
-                )
-        return
-
-    if isinstance(section, Q5Section):
-        for paragraph in section.paragraphs:
-            st.markdown(paragraph.text_zh)
-        st.divider()
-        for task in sorted(section.tasks, key=lambda value: value.question_no):
-            badges = "".join(_answer_badge(slot.answer_number) for slot in task.answer_slots)
-            st.markdown(f"**問 {task.question_no}**　{task.prompt_ja} {badges}", unsafe_allow_html=True)
-            _html_options(task.options)
-            if teacher:
-                answers = " / ".join(
-                    f"[{slot.answer_number}] {slot.correct_option}" for slot in task.answer_slots
-                )
-                st.caption(f"正答 {answers} · {task.rationale_ja}")
 
 
 def _render_section_preview(section, teacher: bool) -> None:
     if isinstance(section, Item):
         _render_teacher_view(section) if teacher else _render_booklet_preview(section)
     else:
-        _preview_simple_section(section, teacher=teacher)
+        render_simple_section_preview(section, teacher=teacher)
 
 
 def _existing_section_qa(root: Path, exam_id: str, section_name: str, fingerprint: str):
@@ -264,63 +261,98 @@ def _existing_section_qa(root: Path, exam_id: str, section_name: str, fingerprin
     return qa if qa.candidate_fingerprint == fingerprint else None
 
 
+def _render_common_qa_checks(ref, fingerprint: str, existing) -> dict[str, bool]:
+    values: dict[str, bool] = {}
+    columns = st.columns(2)
+    for index, field in enumerate(SectionQAChecks.model_fields):
+        with columns[index % 2]:
+            values[field] = st.checkbox(
+                COMMON_QA_LABELS[field],
+                value=bool(getattr(existing.checks, field)) if existing else False,
+                key=f"qa-{ref.section}-{field}-{fingerprint[:8]}",
+            )
+    return values
+
+
 def _section_human_qa_form(root: Path, manifest, ref, section) -> None:
     fingerprint = section_fingerprint(section)
     existing = _existing_section_qa(root, manifest.exam_id, ref.section, fingerprint)
 
-    st.markdown("#### Human QA")
-    common_values = {}
-    for field in SectionQAChecks.model_fields:
-        common_values[field] = st.checkbox(
-            field.replace("_", " "),
-            value=bool(getattr(existing.checks, field)) if existing else False,
-            key=f"qa-{ref.section}-{field}-{fingerprint[:8]}",
+    st.markdown("### 教师确认")
+    st.caption("独立审题已经通过。这里由老师确认语言、答案、难度和考试感受。")
+
+    st.markdown("#### 通用检查")
+    common_values = _render_common_qa_checks(ref, fingerprint, existing)
+
+    specific: dict[str, bool] = {}
+    with st.expander("本大题专项检查", expanded=True):
+        columns = st.columns(2)
+        for index, field in enumerate(SECTION_SPECIFIC_QA[ref.section]):
+            with columns[index % 2]:
+                specific[field] = st.checkbox(
+                    SPECIFIC_QA_LABELS.get(field, field.replace("_", " ")),
+                    value=bool(existing.section_specific_checks.get(field, False)) if existing else False,
+                    key=f"qas-{ref.section}-{field}-{fingerprint[:8]}",
+                )
+
+    col_reviewer, col_disposition = st.columns([1.2, 1])
+    with col_reviewer:
+        reviewer = st.text_input(
+            "确认人",
+            value=existing.reviewer if existing else "TABITO 教研",
+            key=f"reviewer-{ref.section}-{fingerprint[:8]}",
+        )
+    with col_disposition:
+        disposition_options = ["revise", "approve", "reject"]
+        disposition = st.selectbox(
+            "结论",
+            disposition_options,
+            index=(
+                disposition_options.index(existing.disposition)
+                if existing and existing.disposition in disposition_options
+                else 0
+            ),
+            format_func=lambda value: DISPOSITION_LABELS[value],
+            key=f"disp-{ref.section}-{fingerprint[:8]}",
         )
 
-    with st.expander("大题专项检查"):
-        specific = {}
-        for field in SECTION_SPECIFIC_QA[ref.section]:
-            specific[field] = st.checkbox(
-                field.replace("_", " "),
-                value=bool(existing.section_specific_checks.get(field, False)) if existing else False,
-                key=f"qas-{ref.section}-{field}-{fingerprint[:8]}",
-            )
-
-    reviewer = st.text_input(
-        "审题人",
-        value=existing.reviewer if existing else "TABITO 教研",
-        key=f"reviewer-{ref.section}-{fingerprint[:8]}",
-    )
-    disposition = st.selectbox(
-        "结论",
-        ["revise", "approve", "reject"],
-        index=["revise", "approve", "reject"].index(existing.disposition) if existing else 0,
-        key=f"disp-{ref.section}-{fingerprint[:8]}",
-    )
     note = st.text_area(
         "备注",
         value=existing.note if existing else "",
-        height=80,
+        placeholder="只记录需要返修或值得保留的要点即可。",
+        height=90,
         key=f"qanote-{ref.section}-{fingerprint[:8]}",
     )
 
     timing = existing.timing if existing else SectionQATiming()
-    with st.expander("返工记录"):
+    with st.expander("返工时间（可选）"):
         cols = st.columns(4)
         first_read = cols[0].number_input(
-            "初读", 0, 600, timing.first_read_minutes,
+            "初读 / 分钟",
+            0,
+            600,
+            timing.first_read_minutes,
             key=f"time-read-{ref.section}-{fingerprint[:8]}",
         )
         language_edit = cols[1].number_input(
-            "语言", 0, 600, timing.language_edit_minutes,
+            "语言修改 / 分钟",
+            0,
+            600,
+            timing.language_edit_minutes,
             key=f"time-lang-{ref.section}-{fingerprint[:8]}",
         )
         item_edit = cols[2].number_input(
-            "命题", 0, 600, timing.item_edit_minutes,
+            "命题修改 / 分钟",
+            0,
+            600,
+            timing.item_edit_minutes,
             key=f"time-item-{ref.section}-{fingerprint[:8]}",
         )
         layout_edit = cols[3].number_input(
-            "版面", 0, 600, timing.layout_edit_minutes,
+            "版面修改 / 分钟",
+            0,
+            600,
+            timing.layout_edit_minutes,
             key=f"time-layout-{ref.section}-{fingerprint[:8]}",
         )
         biggest = st.text_input(
@@ -329,7 +361,7 @@ def _section_human_qa_form(root: Path, manifest, ref, section) -> None:
             key=f"biggest-{ref.section}-{fingerprint[:8]}",
         )
 
-    if st.button("保存 Human QA", key=f"save-qa-{ref.section}-{fingerprint[:8]}"):
+    if st.button("保存教师确认", type="primary", key=f"save-qa-{ref.section}-{fingerprint[:8]}"):
         qa = SectionHumanQA(
             section=ref.section,
             section_id=ref.section_id,
@@ -355,18 +387,24 @@ def _section_human_qa_form(root: Path, manifest, ref, section) -> None:
 
 
 def _create_exam_panel(root: Path) -> None:
-    st.markdown("## 新建完整模試")
+    st.markdown('<div class="workspace-heading">新建模试</div>', unsafe_allow_html=True)
+    st.caption("选择本试或追试结构。Q4 / Q5 题材可以留空，让系统自动生成。")
+
     family = st.radio(
-        "2026 blueprint",
+        "试卷结构",
         ["main_2026", "makeup_2026"],
         format_func=lambda value: "2026 本試験型" if value == "main_2026" else "2026 追試験型",
         horizontal=True,
     )
-    title = st.text_input("模試名（可选）", placeholder="旅人教育 共通テスト中国語 模試 第1回")
-    q4_topic = st.text_input("Q4 希望主题（可选）")
-    q5_topic = st.text_input("Q5 希望主题（可选）")
-    notes = st.text_input("教研备注（可选）")
-    if st.button("＋ 新建完整模試", type="primary"):
+    title = st.text_input("模试名称", placeholder="旅人教育 共通テスト中国語 模試 第1回")
+    q4_col, q5_col = st.columns(2)
+    with q4_col:
+        q4_topic = st.text_input("Q4 希望题材（可选）", placeholder="例如：校园活动、公共服务")
+    with q5_col:
+        q5_topic = st.text_input("Q5 希望题材（可选）", placeholder="例如：人物经历、社会生活")
+    notes = st.text_input("教研备注（可选）", placeholder="只写这套卷需要特别注意的要求")
+
+    if st.button("创建模试", type="primary"):
         manifest, _ = create_exam_project(
             root,
             exam_family=family,
@@ -389,12 +427,12 @@ def _render_exam_qa(root: Path, manifest) -> None:
 
     section_gates = [gate for gate in readiness.gates if gate.name.endswith(" release")]
     if section_gates and not all(gate.passed for gate in section_gates):
-        st.caption("Q1–Q5 全部 Ready 后进入 Final Exam QA。")
+        st.caption("五个大题全部「已就绪」后，才进入整卷教师确认。")
         return
 
     artifact_gate = next((gate for gate in readiness.gates if gate.name == "artifact preflight"), None)
     if artifact_gate is None or not artifact_gate.passed:
-        st.caption("先生成并通过当前版本的 PDF preflight，再进行 Final Exam QA。")
+        st.caption("先生成当前版本 PDF 并通过版面检查，再进行整卷教师确认。")
         return
 
     existing = None
@@ -405,44 +443,72 @@ def _render_exam_qa(root: Path, manifest) -> None:
         except Exception:
             existing = None
 
-    st.markdown("#### Final Exam QA")
-    qa_values = {}
-    for name in ExamQAChecks.model_fields:
-        qa_values[name] = st.checkbox(
-            name.replace("_", " "),
-            value=bool(getattr(existing.checks, name)) if existing else False,
-            key=f"examqa-{manifest.exam_id}-{name}",
+    st.markdown("### 整卷教师确认")
+    st.caption("最后从整套试卷的时间、难度节奏、视觉和一致性进行一次检查。")
+
+    qa_values: dict[str, bool] = {}
+    columns = st.columns(2)
+    for index, name in enumerate(ExamQAChecks.model_fields):
+        with columns[index % 2]:
+            qa_values[name] = st.checkbox(
+                EXAM_QA_LABELS[name],
+                value=bool(getattr(existing.checks, name)) if existing else False,
+                key=f"examqa-{manifest.exam_id}-{name}",
+            )
+
+    col_reviewer, col_disposition = st.columns([1.2, 1])
+    with col_reviewer:
+        reviewer = st.text_input(
+            "整卷确认人",
+            value=existing.reviewer if existing else "TABITO 教研",
+            key=f"exam-reviewer-{manifest.exam_id}",
+        )
+    with col_disposition:
+        disposition_options = ["revise", "approve", "reject"]
+        disposition = st.selectbox(
+            "整卷结论",
+            disposition_options,
+            index=(
+                disposition_options.index(existing.disposition)
+                if existing and existing.disposition in disposition_options
+                else 0
+            ),
+            format_func=lambda value: DISPOSITION_LABELS[value],
+            key=f"exam-disposition-{manifest.exam_id}",
         )
 
-    reviewer = st.text_input("整卷审题人", value=existing.reviewer if existing else "TABITO 教研")
-    disposition_options = ["revise", "approve", "reject"]
-    disposition = st.selectbox(
-        "整卷结论",
-        disposition_options,
-        index=(
-            disposition_options.index(existing.disposition)
-            if existing and existing.disposition in disposition_options
-            else 0
-        ),
+    note = st.text_area(
+        "整卷备注",
+        value=existing.note if existing else "",
+        height=90,
+        key=f"exam-note-{manifest.exam_id}",
     )
-    note = st.text_area("整卷备注", value=existing.note if existing else "", height=80)
     timing = existing.timing if existing else ExamQATiming()
-    with st.expander("整卷返工记录"):
+    with st.expander("整卷返工时间（可选）"):
         cols = st.columns(3)
         first_read = cols[0].number_input(
-            "初读", 0, 600, timing.full_exam_first_read_minutes,
+            "整卷初读 / 分钟",
+            0,
+            600,
+            timing.full_exam_first_read_minutes,
             key=f"exam-time-read-{manifest.exam_id}",
         )
         layout_fix = cols[1].number_input(
-            "版面", 0, 600, timing.layout_fix_minutes,
+            "版面修改 / 分钟",
+            0,
+            600,
+            timing.layout_fix_minutes,
             key=f"exam-time-layout-{manifest.exam_id}",
         )
         cross_fix = cols[2].number_input(
-            "跨大题", 0, 600, timing.cross_section_fix_minutes,
+            "跨大题调整 / 分钟",
+            0,
+            600,
+            timing.cross_section_fix_minutes,
             key=f"exam-time-cross-{manifest.exam_id}",
         )
 
-    if st.button("保存 Final Exam QA"):
+    if st.button("保存整卷确认", type="primary", key=f"save-exam-qa-{manifest.exam_id}"):
         qa = ExamHumanQA(
             exam_id=manifest.exam_id,
             reviewer=reviewer,
@@ -462,58 +528,114 @@ def _render_exam_qa(root: Path, manifest) -> None:
             st.error(str(exc))
 
 
-def _render_export(root: Path, manifest) -> None:
-    if not all(ref.path for ref in manifest.sections):
+def _render_pdf_downloads(directory: Path) -> None:
+    files = (
+        ("student.pdf", "学生版 PDF"),
+        ("teacher.pdf", "教师版 PDF"),
+        ("answer_sheet.pdf", "答题卡 PDF"),
+        ("answer_key.json", "答案 JSON"),
+    )
+    existing = [(directory / filename, label) for filename, label in files if (directory / filename).exists()]
+    if not existing:
         return
-    if st.button("生成完整 TeX / PDF"):
+
+    st.markdown("#### 已生成文件")
+    columns = st.columns(min(4, len(existing)))
+    for index, (path, label) in enumerate(existing):
+        mime = "application/pdf" if path.suffix == ".pdf" else "application/json"
+        columns[index % len(columns)].download_button(
+            label,
+            path.read_bytes(),
+            file_name=path.name,
+            mime=mime,
+            use_container_width=True,
+            key=f"download-{directory.name}-{path.name}",
+        )
+
+
+def _render_export(root: Path, manifest, *, approved_dir: Path | None = None) -> None:
+    if approved_dir is not None:
+        _render_pdf_downloads(approved_dir / "artifacts")
+        return
+
+    if not all(ref.path for ref in manifest.sections):
+        st.caption("五个大题都生成后即可输出完整试卷。")
+        return
+
+    output_dir = root / "output" / manifest.exam_id
+    has_pdf = (output_dir / "student.pdf").exists()
+    if st.button(
+        "重新生成 PDF" if has_pdf else "生成完整 PDF",
+        type="secondary" if has_pdf else "primary",
+        key=f"render-pdf-{manifest.exam_id}",
+    ):
         try:
-            outputs = render_exam(root, manifest.exam_id, compile_pdf=True)
-            for key, output in outputs.items():
-                if output and output.exists():
-                    mime = "application/pdf" if output.suffix == ".pdf" else "text/plain"
-                    st.download_button(
-                        f"下载 {key}", output.read_bytes(), file_name=output.name, mime=mime
-                    )
+            render_exam(root, manifest.exam_id, compile_pdf=True)
+            st.success("PDF 已生成。")
         except Exception as exc:
             st.error(str(exc))
+
+    _render_pdf_downloads(output_dir)
+
+
+def _render_section_gate_summary(readiness) -> None:
+    rows = []
+    for gate in readiness.gates:
+        label = _gate_label(gate.name)
+        mark = "✓" if gate.passed else "—"
+        css_class = "ok" if gate.passed else "muted"
+        rows.append(
+            f'<div class="gate-row"><span class="gate-mark {css_class}">{mark}</span>'
+            f'<span>{html.escape(label)}</span></div>'
+        )
+    st.markdown(
+        f'<div class="workflow-list compact">{"".join(rows)}</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None:
     result = validate_section_file(path)
     if not result.passed:
-        st.error("结构校验未通过")
+        st.error("这道大题还有结构问题，先返修后再审题。")
         for error in result.errors:
             st.markdown(f"- {error}")
         return
-    for warning in result.warnings:
-        st.caption("warning · " + warning)
 
-    st.markdown("#### Blind Review")
+    if result.warnings:
+        with st.expander(f"结构提醒 · {len(result.warnings)}"):
+            for warning in result.warnings:
+                st.markdown(f"- {warning}")
+
+    st.markdown("### 独立审题")
     st.caption(
-        f"{PREFERRED_MODEL} · {MIN_REASONING_LEVEL.title()} · 非个性化 Temporary Chat"
-    )
-    st.caption(
-        "只把 Blind Review Prompt 放进非个性化 Temporary Chat；不要让 memory、个性化、生成/修订历史或教师标注进入 reviewer 上下文。"
+        "用一个不带记忆和出题历史的 Temporary Chat 独立作答。"
+        "审题模型只能看到学生题面，不能看到答案、解析和教师标注。"
     )
 
     review_request = create_section_review_request(root, manifest.exam_id, ref.section)
-    st.download_button(
-        "下载 Blind Review Prompt",
-        review_request.read_text(encoding="utf-8"),
-        file_name=review_request.name,
-    )
+    with st.expander("复制独立审题指令"):
+        st.code(review_request.read_text(encoding="utf-8"), language=None)
+        st.download_button(
+            "下载审题指令",
+            review_request.read_text(encoding="utf-8"),
+            file_name=review_request.name,
+            key=f"download-review-prompt-{ref.section}",
+        )
 
     isolated = st.checkbox(
-        "已在非个性化 Temporary Chat 中完成，且 reviewer 未看过本题的生成、修订、答案或教师标注",
+        "我已在非个性化 Temporary Chat 中完成独立审题，且该对话没有看过本题答案或出题历史",
         key=f"isolated-review-{ref.section}-{section_fingerprint(section)[:8]}",
     )
     review_json = st.text_area(
-        "Reviewer JSON",
+        "粘贴审题结果（JSON）",
         height=220,
+        placeholder="把独立审题返回的完整 JSON 粘贴到这里。",
         key=f"review-json-{ref.section}",
     )
     if st.button(
-        "导入 Blind Review",
+        "导入审题结果",
+        type="primary",
         key=f"review-import-{ref.section}",
         disabled=not isolated,
     ):
@@ -536,13 +658,13 @@ def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None
     blind_passed = False
     try:
         readiness = section_release_readiness(root, manifest.exam_id, ref.section)
-        for gate in readiness.gates:
-            mark = "✓" if gate.passed else "—"
-            st.markdown(f"{mark} {gate.name}")
-            if not gate.passed:
-                st.caption(gate.detail)
+        st.markdown("#### 当前检查状态")
+        _render_section_gate_summary(readiness)
         blind = next((gate for gate in readiness.gates if gate.name == "blind review"), None)
         blind_passed = bool(blind and blind.passed)
+        if blind and not blind.passed:
+            with st.expander("查看未通过原因"):
+                st.caption(blind.detail)
     except Exception as exc:
         st.warning(str(exc))
 
@@ -550,30 +672,254 @@ def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None
         st.divider()
         _section_human_qa_form(root, manifest, ref, section)
     else:
-        st.caption("Blind Review 通过后进入 Human QA。")
-
-    review_file = root / "workspace" / "exams" / manifest.exam_id / "reviews" / f"{ref.section.lower()}.review.json"
-    if review_file.exists():
-        revision_request = create_section_revision_request(root, manifest.exam_id, ref.section)
-        st.caption(f"修订 · {PREFERRED_MODEL} · {MIN_REASONING_LEVEL.title()} · 建议新对话")
-        st.download_button(
-            "下载 Revision Prompt",
-            revision_request.read_text(encoding="utf-8"),
-            file_name=revision_request.name,
-        )
+        st.caption("独立审题通过后，这里会自动出现「教师确认」。")
 
 
 def _render_revision_import(root: Path, manifest, ref) -> None:
-    revised_json = st.text_area("修订版 JSON", height=340, key=f"revision-json-{ref.section}")
-    if st.button("替换当前 Draft 并重新校验", type="primary", key=f"revision-import-{ref.section}"):
+    review_file = (
+        root
+        / "workspace"
+        / "exams"
+        / manifest.exam_id
+        / "reviews"
+        / f"{ref.section.lower()}.review.json"
+    )
+    st.markdown("### 返修")
+    if not review_file.exists():
+        st.caption("先完成独立审题。需要修改时，系统会根据审题结果生成返修指令。")
+        return
+
+    try:
+        revision_request = create_section_revision_request(root, manifest.exam_id, ref.section)
+    except Exception as exc:
+        st.warning(str(exc))
+        return
+
+    with st.expander("复制返修指令"):
+        st.code(revision_request.read_text(encoding="utf-8"), language=None)
+        st.download_button(
+            "下载返修指令",
+            revision_request.read_text(encoding="utf-8"),
+            file_name=revision_request.name,
+            key=f"download-revision-prompt-{ref.section}",
+        )
+
+    revised_json = st.text_area(
+        "粘贴返修后的 JSON",
+        height=340,
+        placeholder="把返修后的完整 JSON 粘贴到这里。",
+        key=f"revision-json-{ref.section}",
+    )
+    if st.button(
+        "导入返修版",
+        type="primary",
+        key=f"revision-import-{ref.section}",
+    ):
         try:
             _, result = import_section_response(root, manifest.exam_id, ref.section, revised_json)
             if result.errors:
-                st.error("修订版已保存，但结构校验未通过：" + " | ".join(result.errors))
+                st.error("返修版已保存，但结构校验仍未通过：" + " | ".join(result.errors))
             else:
                 st.rerun()
         except Exception as exc:
             st.error(str(exc))
+
+
+def _render_generation_panel(root: Path, manifest, ref) -> None:
+    st.markdown("### 出题")
+    st.caption(
+        f"使用 {PREFERRED_MODEL} · {MIN_REASONING_LEVEL.title()} 生成这一大题。"
+        "先复制出题指令，再把模型返回的完整 JSON 粘贴回来。"
+    )
+    request_path, _ = create_exam_section_request(root, manifest.exam_id, ref.section)
+    with st.expander("复制出题指令"):
+        st.code(request_path.read_text(encoding="utf-8"), language=None)
+        st.download_button(
+            "下载出题指令",
+            request_path.read_text(encoding="utf-8"),
+            file_name=request_path.name,
+            key=f"download-generation-prompt-{ref.section}",
+        )
+
+    response = st.text_area(
+        "粘贴生成结果（JSON）",
+        height=340,
+        placeholder="把 ChatGPT 返回的完整 JSON 粘贴到这里。",
+        key=f"response-{ref.section}",
+    )
+    if st.button("导入题目", type="primary", key=f"import-{ref.section}"):
+        try:
+            _, result = import_section_response(root, manifest.exam_id, ref.section, response)
+            if result.errors:
+                st.error("题目已保存，但结构校验未通过：" + " | ".join(result.errors))
+            else:
+                st.rerun()
+        except Exception as exc:
+            st.error(str(exc))
+
+
+def _render_overview(root: Path, manifest, exam_path: Path, statuses: dict[str, str]) -> None:
+    st.markdown("### 制作进度")
+    rows = []
+    for ref in manifest.sections:
+        rows.append(
+            '<div class="workflow-row">'
+            f'<div class="workflow-code">{ref.section}</div>'
+            f'<div class="workflow-name">{html.escape(SECTION_LABELS[ref.section])}</div>'
+            f'<div class="workflow-score">{ref.expected_score} 点 · {ref.answer_start}–{ref.answer_end}</div>'
+            f'<div class="workflow-status">{_status_html(statuses[ref.section])}</div>'
+            "</div>"
+        )
+    st.markdown(f'<div class="workflow-list">{"".join(rows)}</div>', unsafe_allow_html=True)
+
+    next_ref = next(
+        (ref for ref in manifest.sections if statuses[ref.section] not in {"ready", "approved"}),
+        None,
+    )
+    if next_ref is None:
+        next_text = "五个大题都已就绪。可以进入「定稿发布」生成 PDF 并做整卷确认。"
+    else:
+        next_text = _next_action_text(next_ref, statuses[next_ref.section])
+    st.markdown(
+        f'<div class="next-action"><b>下一步</b><span>{html.escape(next_text)}</span></div>',
+        unsafe_allow_html=True,
+    )
+
+    validation = validate_exam(exam_path)
+    if validation.errors:
+        st.error("整卷结构尚未通过。")
+        for error in validation.errors:
+            st.markdown(f"- {error}")
+    if validation.warnings:
+        with st.expander(f"整卷提醒 · {len(validation.warnings)}"):
+            for warning in validation.warnings:
+                st.markdown(f"- {warning}")
+
+    if all(ref.path and (exam_path.parent / ref.path).exists() for ref in manifest.sections):
+        with st.expander("查看整卷学生版预览"):
+            for index, ref in enumerate(manifest.sections):
+                if index:
+                    st.divider()
+                _render_section_preview(load_section(exam_path.parent / ref.path), teacher=False)
+
+
+def _render_section_workspace(
+    root: Path,
+    manifest,
+    exam_path: Path,
+    ref,
+    status: str,
+    *,
+    is_approved: bool,
+) -> None:
+    st.markdown(
+        f'<div class="section-workspace-heading">{ref.section}　'
+        f'{html.escape(SECTION_LABELS[ref.section])}</div>'
+        f'<div class="section-workspace-meta">{ref.expected_score} 点 · '
+        f'解答 {ref.answer_start}–{ref.answer_end}　{_status_html(status)}</div>',
+        unsafe_allow_html=True,
+    )
+
+    path = _section_path(exam_path, ref)
+    if path is None or not path.exists():
+        if is_approved:
+            st.error(f"正式模试缺少 {ref.section}。")
+            return
+        st.markdown(
+            f'<div class="next-action"><b>当前</b><span>{html.escape(_next_action_text(ref, status))}</span></div>',
+            unsafe_allow_html=True,
+        )
+        _render_generation_panel(root, manifest, ref)
+        return
+
+    section = load_section(path)
+    if not is_approved and status not in {"ready"}:
+        st.markdown(
+            f'<div class="next-action"><b>当前</b><span>{html.escape(_next_action_text(ref, status))}</span></div>',
+            unsafe_allow_html=True,
+        )
+
+    if is_approved:
+        student, teacher = st.tabs(["学生题面", "答案与解析"])
+        with student:
+            _render_section_preview(section, teacher=False)
+        with teacher:
+            _render_section_preview(section, teacher=True)
+        return
+
+    student, teacher, review, revision = st.tabs(
+        ["学生题面", "答案与解析", "质量检查", "返修"]
+    )
+    with student:
+        _render_section_preview(section, teacher=False)
+    with teacher:
+        _render_section_preview(section, teacher=True)
+    with review:
+        _render_review_panel(root, manifest, ref, section, path)
+    with revision:
+        _render_revision_import(root, manifest, ref)
+
+
+def _render_release_workspace(
+    root: Path,
+    manifest,
+    *,
+    is_approved: bool,
+    approved_dir: Path | None = None,
+) -> None:
+    st.markdown("### 定稿发布")
+    if is_approved:
+        st.markdown(
+            '<div class="next-action"><b>状态</b><span>这套模试已定稿，当前为只读版本。</span></div>',
+            unsafe_allow_html=True,
+        )
+        _render_export(root, manifest, approved_dir=approved_dir)
+        return
+
+    try:
+        readiness = exam_release_readiness(root, manifest.exam_id)
+    except Exception as exc:
+        readiness = None
+        st.warning(str(exc))
+
+    if readiness is not None:
+        rows = []
+        for gate in readiness.gates:
+            label = _gate_label(gate.name)
+            mark = "✓" if gate.passed else "—"
+            css_class = "ok" if gate.passed else "muted"
+            rows.append(
+                '<div class="release-row">'
+                f'<div class="release-mark {css_class}">{mark}</div>'
+                f'<div class="release-name">{html.escape(label)}</div>'
+                f'<div class="release-state">{"通过" if gate.passed else "未完成"}</div>'
+                "</div>"
+            )
+        st.markdown(f'<div class="release-list">{"".join(rows)}</div>', unsafe_allow_html=True)
+
+        failed = [gate for gate in readiness.gates if not gate.passed]
+        if failed:
+            with st.expander("查看未完成项目"):
+                for gate in failed:
+                    st.markdown(f"**{_gate_label(gate.name)}**")
+                    st.caption(gate.detail)
+
+    st.divider()
+    st.markdown("### PDF")
+    _render_export(root, manifest)
+
+    st.divider()
+    _render_exam_qa(root, manifest)
+
+    if readiness is not None and readiness.ready:
+        st.divider()
+        if st.button(
+            "定稿并存入正式题库",
+            type="primary",
+            key=f"approve-exam-{manifest.exam_id}",
+        ):
+            approve_exam(root, manifest.exam_id)
+            st.rerun()
 
 
 def main() -> None:
@@ -582,15 +928,28 @@ def main() -> None:
     root = _root()
 
     exams = _discover_exams(root)
-    choices = ["＋ 新建完整模試", *exams]
+    choices = ["＋ 新建模试", *exams]
     default = 0
     selected_id = st.session_state.get("selected_exam_id")
     if selected_id:
-        default = next((i for i, label in enumerate(choices) if selected_id in label), 0)
+        for index, label in enumerate(choices):
+            path = exams.get(label)
+            if path is not None and path.parent.name == selected_id:
+                default = index
+                break
 
-    st.sidebar.markdown("**中国語模試**")
-    selection = st.sidebar.selectbox("模試", choices, index=default, label_visibility="collapsed")
-    if selection == "＋ 新建完整模試":
+    st.sidebar.markdown(
+        '<div class="sidebar-brand">TABITO</div>'
+        '<div class="sidebar-title">中国語模試制作</div>',
+        unsafe_allow_html=True,
+    )
+    selection = st.sidebar.selectbox(
+        "模试",
+        choices,
+        index=default,
+        label_visibility="collapsed",
+    )
+    if selection == "＋ 新建模试":
         _create_exam_panel(root)
         return
 
@@ -600,111 +959,53 @@ def main() -> None:
     st.session_state["selected_exam_id"] = manifest.exam_id
     family_label = "2026 本試験型" if manifest.exam_family == "main_2026" else "2026 追試験型"
 
-    st.markdown(f"## {manifest.title_ja}")
-    st.caption(f"{family_label} · 200点 · 80分 · 50解答欄 · {manifest.workflow.state}")
+    statuses = {
+        ref.section: _section_status(root, manifest, exam_path, ref)
+        for ref in manifest.sections
+    }
+    ready_count = sum(status in {"ready", "approved"} for status in statuses.values())
+    _render_header(manifest, family_label, ready_count, is_approved)
 
-    overview, section_tab, release_tab = st.tabs(["整卷", "大题", "Release"])
+    st.sidebar.markdown('<div class="sidebar-rule"></div>', unsafe_allow_html=True)
+    st.sidebar.caption(f"大题就绪　{ready_count} / 5")
 
-    with overview:
-        for ref in manifest.sections:
-            cols = st.columns([0.6, 2.4, 1.2, 1.2])
-            cols[0].markdown(f"**{ref.section}**")
-            cols[1].markdown(SECTION_LABELS[ref.section])
-            cols[2].markdown(f"{ref.expected_score}点 · {ref.answer_start}–{ref.answer_end}")
-            cols[3].markdown(_section_status(root, manifest, exam_path, ref))
+    nav_options = ["overview", *[ref.section for ref in manifest.sections], "release"]
+    nav = st.sidebar.radio(
+        "制作流程",
+        nav_options,
+        format_func=lambda value: (
+            "总览"
+            if value == "overview"
+            else "定稿发布"
+            if value == "release"
+            else f"{value}　{SECTION_NAV_LABELS[value]}"
+        ),
+        label_visibility="collapsed",
+        key=f"workspace-nav-{manifest.exam_id}",
+    )
 
-        validation = validate_exam(exam_path)
-        if validation.errors:
-            st.error("整卷结构尚未通过")
-            for error in validation.errors:
-                st.markdown(f"- {error}")
-        if validation.warnings:
-            with st.expander(f"Warnings · {len(validation.warnings)}"):
-                for warning in validation.warnings:
-                    st.markdown(f"- {warning}")
+    if nav == "overview":
+        _render_overview(root, manifest, exam_path, statuses)
+        return
 
-        if all(ref.path and (exam_path.parent / ref.path).exists() for ref in manifest.sections):
-            st.divider()
-            for ref in manifest.sections:
-                _render_section_preview(load_section(exam_path.parent / ref.path), teacher=False)
-                st.divider()
-
-    with section_tab:
-        section_name = st.selectbox(
-            "大题",
-            [ref.section for ref in manifest.sections],
-            format_func=lambda value: f"{value} · {SECTION_LABELS[value]}",
+    if nav == "release":
+        _render_release_workspace(
+            root,
+            manifest,
+            is_approved=is_approved,
+            approved_dir=exam_path.parent if is_approved else None,
         )
-        ref = next(ref for ref in manifest.sections if ref.section == section_name)
-        path = _section_path(exam_path, ref)
+        return
 
-        if path is None or not path.exists():
-            if is_approved:
-                st.error(f"正式模試缺少 {section_name}")
-            else:
-                st.caption(f"生成 · {PREFERRED_MODEL} · {MIN_REASONING_LEVEL.title()}")
-                request_path, _ = create_exam_section_request(root, manifest.exam_id, section_name)
-                st.download_button(
-                    "下载生成 Prompt",
-                    request_path.read_text(encoding="utf-8"),
-                    file_name=request_path.name,
-                )
-                response = st.text_area("生成结果 JSON", height=320, key=f"response-{section_name}")
-                if st.button("导入并校验", type="primary", key=f"import-{section_name}"):
-                    try:
-                        _, result = import_section_response(root, manifest.exam_id, section_name, response)
-                        if result.errors:
-                            st.error(" | ".join(result.errors))
-                        else:
-                            st.rerun()
-                    except Exception as exc:
-                        st.error(str(exc))
-        else:
-            section = load_section(path)
-            if is_approved:
-                student, teacher = st.tabs(["学生预览", "教师标注"])
-                with student:
-                    _render_section_preview(section, teacher=False)
-                with teacher:
-                    _render_section_preview(section, teacher=True)
-            else:
-                student, teacher, review, revision = st.tabs(
-                    ["学生预览", "教师标注", "Review", "修订"]
-                )
-                with student:
-                    _render_section_preview(section, teacher=False)
-                with teacher:
-                    _render_section_preview(section, teacher=True)
-                with review:
-                    _render_review_panel(root, manifest, ref, section, path)
-                with revision:
-                    _render_revision_import(root, manifest, ref)
-
-    with release_tab:
-        if is_approved:
-            st.caption("Approved · 只读。修改时创建新版本。")
-            _render_export(root, manifest)
-        else:
-            try:
-                readiness = exam_release_readiness(root, manifest.exam_id)
-                for gate in readiness.gates:
-                    mark = "✓" if gate.passed else "—"
-                    st.markdown(f"{mark} {gate.name}")
-                    if not gate.passed:
-                        st.caption(gate.detail)
-            except Exception as exc:
-                readiness = None
-                st.warning(str(exc))
-
-            st.divider()
-            _render_export(root, manifest)
-            st.divider()
-            _render_exam_qa(root, manifest)
-
-            if readiness is not None and readiness.ready:
-                if st.button("Approve → 正式模試库", type="primary"):
-                    approve_exam(root, manifest.exam_id)
-                    st.rerun()
+    ref = next(ref for ref in manifest.sections if ref.section == nav)
+    _render_section_workspace(
+        root,
+        manifest,
+        exam_path,
+        ref,
+        statuses[ref.section],
+        is_approved=is_approved,
+    )
 
 
 if __name__ == "__main__":
