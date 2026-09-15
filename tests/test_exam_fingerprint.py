@@ -21,7 +21,7 @@ from tabito_itemgen.io import dump_json
 from tabito_itemgen.section_io import load_section, section_fingerprint
 
 from tests.artifact_factory import write_clean_artifacts
-from tests.full_exam_factory import build_exam
+from tests.full_exam_factory import ROOT, build_exam
 
 
 def _approve_section_evidence(root, exam_id, section_name):
@@ -118,6 +118,20 @@ def test_structure_fix_request_exists_before_blind_review_for_invalid_candidate(
     q1 = load_section(q1_path)
     q1.tasks[0].headword.pinyin = "kai"
     dump_json(q1_path, q1.model_dump())
+
+    # The temporary exam root intentionally contains only generated exam data.
+    # Copy the two authoring assets this request generator needs, just as the
+    # real repository root provides them at runtime.
+    (tmp_path / "prompts").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "blueprints").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prompts" / "fix_section_structure.md").write_text(
+        (ROOT / "prompts" / "fix_section_structure.md").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    (tmp_path / "blueprints" / "q1_2026.yaml").write_text(
+        (ROOT / "blueprints" / "q1_2026.yaml").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
 
     request = create_section_structure_fix_request(tmp_path, manifest.exam_id, "Q1")
     text = request.read_text(encoding="utf-8")
