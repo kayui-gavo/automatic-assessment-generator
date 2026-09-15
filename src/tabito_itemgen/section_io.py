@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 from pathlib import Path
 
 from pydantic import TypeAdapter
@@ -77,8 +78,34 @@ def section_fingerprint(section: SectionData) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _archive_previous_candidate(exam_dir: Path, path: Path) -> None:
+    """Preserve the previous candidate before a successful schema-level overwrite.
+
+    Revision and structure-fix imports intentionally become the current draft even
+    when deterministic validation still reports issues.  Without this archive a
+    single bad import permanently destroyed the last usable candidate.  History is
+    content-addressed, so repeated imports of the same version do not create noise.
+    """
+
+    if not path.exists():
+        return
+    try:
+        current = load_section(path)
+        fingerprint = section_fingerprint(current)
+    except Exception:
+        # A corrupt existing file is still worth preserving for forensic recovery.
+        fingerprint = hashlib.sha256(path.read_bytes()).hexdigest()
+
+    history_dir = exam_dir / "history" / path.stem
+    history_dir.mkdir(parents=True, exist_ok=True)
+    target = history_dir / f"{fingerprint}.json"
+    if not target.exists():
+        shutil.copy2(path, target)
+
+
 def save_section_draft(exam_dir: Path, section: SectionData) -> Path:
     draft = section.model_copy(deep=True)
     draft.workflow.state = "draft"
     path = exam_dir / "sections" / f"{draft.section.lower()}.json"
+    _archive_previous_candidate(exam_dir, path)
     return save_section(path, draft)
