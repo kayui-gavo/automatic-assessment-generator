@@ -483,8 +483,7 @@ def section_release_readiness(root: Path, exam_id: str, section_name: str) -> Re
     return Readiness(section_id(section), fingerprint, tuple(gates))
 
 
-def exam_fingerprint(root: Path, exam_id: str) -> str:
-    path = manifest_path(root, exam_id)
+def _exam_fingerprint_from_manifest(path: Path) -> str:
     manifest = load_manifest(path)
     payload = manifest.model_dump()
     payload["workflow"].pop("state", None)
@@ -504,6 +503,10 @@ def exam_fingerprint(root: Path, exam_id: str) -> str:
         separators=(",", ":"),
     ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def exam_fingerprint(root: Path, exam_id: str) -> str:
+    return _exam_fingerprint_from_manifest(manifest_path(root, exam_id))
 
 
 def _artifact_gate(root: Path, exam_id: str) -> Gate:
@@ -753,7 +756,78 @@ def _review_execution_snapshot(
     return snapshot
 
 
+def _approved_release_readiness(target: Path, exam_id: str) -> Readiness:
+    manifest_file = target / "exam.json"
+    record_file = target / "release.json"
+    artifact_file = target / "artifacts" / "artifact_manifest.json"
+    if not manifest_file.exists() or not record_file.exists() or not artifact_file.exists():
+        raise ValueError("approved exam is missing canonical release evidence")
+
+    manifest = load_manifest(manifest_file)
+    if manifest.exam_id != exam_id:
+        raise ValueError("approved exam manifest identity mismatch")
+    if manifest.workflow.state != "approved" or any(
+        ref.state != "approved" for ref in manifest.sections
+    ):
+        raise ValueError("approved exam manifest is not in a fully approved state")
+
+    fingerprint = _exam_fingerprint_from_manifest(manifest_file)
+    record = load_json(record_file)
+    if record.get("exam_id") != exam_id:
+        raise ValueError("approved release record exam_id mismatch")
+    if record.get("exam_fingerprint") != fingerprint:
+        raise ValueError("approved exam content does not match its release fingerprint")
+
+    raw_gates = record.get("gates")
+    if not isinstance(raw_gates, list) or not raw_gates:
+        raise ValueError("approved release record has no gate evidence")
+    gates: list[Gate] = []
+    for row in raw_gates:
+        if not isinstance(row, dict) or not {"name", "passed", "detail"} <= set(row):
+            raise ValueError("approved release record contains malformed gate evidence")
+        gates.append(
+            Gate(
+                name=str(row["name"]),
+                passed=bool(row["passed"]),
+                detail=str(row["detail"]),
+            )
+        )
+    readiness = Readiness(exam_id, fingerprint, tuple(gates))
+    if not readiness.ready:
+        raise ValueError("approved release record contains a failed gate")
+
+    expected_manifest_sha = record.get("artifact_manifest_sha256")
+    if not isinstance(expected_manifest_sha, str) or sha256_file(artifact_file) != expected_manifest_sha:
+        raise ValueError("approved artifact manifest does not match its release record")
+    artifact = ArtifactManifest.model_validate(load_json(artifact_file))
+    if artifact.exam_id != exam_id or artifact.exam_fingerprint != fingerprint or not artifact.passed:
+        raise ValueError("approved artifact manifest does not match approved exam content")
+
+    artifact_dir = artifact_file.parent
+    for check in artifact.checks:
+        pdf = artifact_dir / f"{check.name}.pdf"
+        if not pdf.exists() or not check.pdf_sha256 or sha256_file(pdf) != check.pdf_sha256:
+            raise ValueError(f"approved artifact {check.name}.pdf failed integrity verification")
+    for filename, expected_sha in artifact.extra_files.items():
+        file_name = Path(filename)
+        if file_name.is_absolute() or file_name.name != filename:
+            raise ValueError(f"approved artifact filename {filename!r} is invalid")
+        path = artifact_dir / filename
+        if not path.exists() or sha256_file(path) != expected_sha:
+            raise ValueError(f"approved artifact {filename} failed integrity verification")
+
+    return readiness
+
+
 def approve_exam(root: Path, exam_id: str) -> tuple[Path, Readiness]:
+    source = exam_draft_dir(root, exam_id)
+    target = exam_approved_dir(root, exam_id)
+
+    if not source.exists():
+        if target.exists():
+            return target, _approved_release_readiness(target, exam_id)
+        raise FileNotFoundError(f"exam project not found: {exam_id}")
+
     readiness = exam_release_readiness(root, exam_id)
     if not readiness.ready:
         failed = [
@@ -763,24 +837,9 @@ def approve_exam(root: Path, exam_id: str) -> tuple[Path, Readiness]:
         ]
         raise ValueError("exam release gates failed: " + " | ".join(failed))
 
-    source = exam_draft_dir(root, exam_id)
-    target = exam_approved_dir(root, exam_id)
     if target.exists():
-        approved_manifest = target / "exam.json"
-        if approved_manifest.exists():
-            record_candidates = [
-                target / "release.json",
-                exam_release_record_path(root, exam_id),
-            ]
-            for record_path in record_candidates:
-                if (
-                    record_path.exists()
-                    and load_json(record_path).get("exam_fingerprint")
-                    == readiness.fingerprint
-                ):
-                    return target, readiness
         raise ValueError(
-            "approved exam_id already exists with different or unverifiable content"
+            "approved exam_id already exists while a draft with the same id is still present"
         )
 
     artifact_path = exam_artifact_manifest_path(root, exam_id)
