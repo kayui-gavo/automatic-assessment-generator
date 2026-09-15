@@ -44,13 +44,86 @@ def _canonicalize_presentation(section: SectionData) -> SectionData:
     return normalized
 
 
+def _validate_surface_contract(section: SectionData) -> None:
+    """Reject metadata combinations that cannot render the intended booklet.
+
+    Pydantic validates types and broad section architecture, but a few relations
+    exist specifically between stored metadata and the printed surface.  These
+    must fail before the candidate replaces the current draft; otherwise browser
+    and PDF renderers can silently display a different question than the author
+    intended.
+    """
+
+    if isinstance(section, Q2Section):
+        for task in section.tasks:
+            if not isinstance(task, Q2OrderingTask):
+                continue
+            if task.answer_positions != sorted(task.answer_positions):
+                raise ValueError(
+                    f"{task.task_id}: answer_positions must be left-to-right ascending"
+                )
+            answer_numbers = [slot.answer_number for slot in task.answer_slots]
+            if answer_numbers != sorted(answer_numbers):
+                raise ValueError(
+                    f"{task.task_id}: answer slot numbers must be left-to-right ascending"
+                )
+
+    if isinstance(section, Q5Section):
+        paragraph_map = {
+            paragraph.paragraph_id: paragraph.text_zh
+            for paragraph in section.paragraphs
+        }
+        seen_markers: set[tuple[str, str]] = set()
+        for anchor in section.anchors:
+            source = paragraph_map[anchor.paragraph_id]
+            marker_label = anchor.marker_label
+            if marker_label:
+                marker_key = (anchor.paragraph_id, marker_label)
+                if marker_key in seen_markers:
+                    raise ValueError(
+                        f"Q5 anchor marker {marker_label!r} is duplicated in "
+                        f"paragraph {anchor.paragraph_id}"
+                    )
+                seen_markers.add(marker_key)
+                token = f"〔{marker_label}〕"
+                count = source.count(token)
+                if count != 1:
+                    raise ValueError(
+                        f"Q5 anchor {anchor.anchor_id}: visible marker {token!r} must occur "
+                        f"exactly once in paragraph {anchor.paragraph_id}, got {count}"
+                    )
+            elif anchor.source_excerpt:
+                raise ValueError(
+                    f"Q5 anchor {anchor.anchor_id}: source_excerpt requires marker_label "
+                    "because the booklet renderer cannot place an underline without its marker"
+                )
+
+            if anchor.kind == "blank" and anchor.source_excerpt:
+                raise ValueError(
+                    f"Q5 anchor {anchor.anchor_id}: blank anchors must not carry source_excerpt"
+                )
+
+            if anchor.source_excerpt and marker_label:
+                token = f"〔{marker_label}〕"
+                marker_end = source.index(token) + len(token)
+                if not source.startswith(anchor.source_excerpt, marker_end):
+                    raise ValueError(
+                        f"Q5 anchor {anchor.anchor_id}: source_excerpt must begin immediately "
+                        f"after visible marker {token!r}"
+                    )
+
+
 def load_section(path: Path) -> SectionData:
-    return _canonicalize_presentation(_SECTION_ADAPTER.validate_python(load_json(path)))
+    section = _canonicalize_presentation(_SECTION_ADAPTER.validate_python(load_json(path)))
+    _validate_surface_contract(section)
+    return section
 
 
 def save_section(path: Path, section: SectionData) -> Path:
+    normalized = _canonicalize_presentation(section)
+    _validate_surface_contract(normalized)
     path.parent.mkdir(parents=True, exist_ok=True)
-    dump_json(path, _canonicalize_presentation(section).model_dump())
+    dump_json(path, normalized.model_dump())
     return path
 
 
@@ -87,7 +160,9 @@ def section_answer_numbers(section: SectionData) -> list[int]:
 
 
 def section_fingerprint(section: SectionData) -> str:
-    payload = _canonicalize_presentation(section).model_dump()
+    normalized = _canonicalize_presentation(section)
+    _validate_surface_contract(normalized)
+    payload = normalized.model_dump()
     workflow = payload.get("workflow")
     if isinstance(workflow, dict):
         workflow.pop("state", None)
@@ -134,6 +209,8 @@ def _archive_previous_candidate(
 def save_section_draft(exam_dir: Path, section: SectionData) -> Path:
     draft = _canonicalize_presentation(section).model_copy(deep=True)
     draft.workflow.state = "draft"
+    _validate_surface_contract(draft)
     path = exam_dir / "sections" / f"{draft.section.lower()}.json"
-    _archive_previous_candidate(exam_dir, path, section_fingerprint(draft))
+    incoming_fingerprint = section_fingerprint(draft)
+    _archive_previous_candidate(exam_dir, path, incoming_fingerprint)
     return save_section(path, draft)
