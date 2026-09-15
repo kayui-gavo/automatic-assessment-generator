@@ -2,6 +2,8 @@ import json
 
 import pytest
 
+import tabito_itemgen.cli as cli
+import tabito_itemgen.response_audit as response_audit
 from tabito_itemgen.exam_production import (
     exam_workspace_dir,
     load_manifest,
@@ -18,6 +20,10 @@ def _section_context(root, exam_id, section_name):
     ref = next(ref for ref in manifest.sections if ref.section == section_name)
     path = manifest_path(root, exam_id).parent / ref.path
     return ref, path, load_section(path)
+
+
+def test_cli_uses_same_audited_section_import_as_teacher_ui():
+    assert cli.import_section_response is response_audit.import_section_response
 
 
 def test_valid_ui_import_keeps_latest_and_content_addressed_raw_history(tmp_path):
