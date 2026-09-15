@@ -1,4 +1,5 @@
 import csv
+import hashlib
 import json
 
 import pytest
@@ -12,8 +13,6 @@ ANSWER_FIELDS = [
     "answer_number",
     "section",
     "selected_option",
-    "correct_option",
-    "is_correct",
     "omitted",
     "ambiguity_flag",
     "note",
@@ -47,17 +46,14 @@ def _answer_rows():
     for participant in ("P001", "P002"):
         for answer_number in range(1, 51):
             selected = "1"
-            is_correct = "1"
             omitted = "0"
             ambiguity = "0"
             if participant == "P002" and answer_number == 1:
                 selected = "2"
-                is_correct = "0"
             if participant == "P002" and answer_number == 2:
                 ambiguity = "1"
             if participant == "P002" and answer_number == 50:
                 selected = ""
-                is_correct = "0"
                 omitted = "1"
             rows.append(
                 {
@@ -67,8 +63,6 @@ def _answer_rows():
                     "answer_number": str(answer_number),
                     "section": _section_for(answer_number),
                     "selected_option": selected,
-                    "correct_option": "1",
-                    "is_correct": is_correct,
                     "omitted": omitted,
                     "ambiguity_flag": ambiguity,
                     "note": "",
@@ -107,14 +101,40 @@ def _write_csv(path, fields, rows):
         writer.writerows(rows)
 
 
+def _write_bound_artifacts(tmp_path):
+    artifact_dir = tmp_path / "artifacts"
+    artifact_dir.mkdir()
+    answer_key = artifact_dir / "answer_key.json"
+    answer_key.write_text(
+        json.dumps({str(number): 1 for number in range(1, 51)}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    digest = hashlib.sha256(answer_key.read_bytes()).hexdigest()
+    manifest = artifact_dir / "artifact_manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "exam_id": "EXAM-001",
+                "exam_fingerprint": "fingerprint-001",
+                "extra_files": {"answer_key.json": digest},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return manifest, answer_key
+
+
 def test_pilot_analysis_emits_item_participant_section_and_exam_summaries(tmp_path):
     answers = tmp_path / "answers.csv"
     sections = tmp_path / "sections.csv"
     out_dir = tmp_path / "analysis"
+    artifact_manifest, _ = _write_bound_artifacts(tmp_path)
     _write_csv(answers, ANSWER_FIELDS, _answer_rows())
     _write_csv(sections, SECTION_FIELDS, _section_rows())
 
-    summary = analyze_pilot(answers, sections, out_dir)
+    summary = analyze_pilot(answers, sections, artifact_manifest, out_dir)
 
     assert summary == {
         "exam_id": "EXAM-001",
@@ -129,6 +149,7 @@ def test_pilot_analysis_emits_item_participant_section_and_exam_summaries(tmp_pa
         items = list(csv.DictReader(handle))
     assert len(items) == 50
     assert items[0]["answer_number"] == "1"
+    assert items[0]["correct_option"] == "1"
     assert items[0]["correct_rate"] == "0.5"
     assert items[0]["option_1_count"] == "1"
     assert items[0]["option_2_count"] == "1"
@@ -149,3 +170,15 @@ def test_answer_validation_rejects_missing_answer_rows():
     rows.pop()
     with pytest.raises(ValueError, match="expected answer rows 1..50"):
         validate_answer_rows(rows)
+
+
+def test_pilot_analysis_rejects_tampered_answer_key(tmp_path):
+    answers = tmp_path / "answers.csv"
+    sections = tmp_path / "sections.csv"
+    artifact_manifest, answer_key = _write_bound_artifacts(tmp_path)
+    _write_csv(answers, ANSWER_FIELDS, _answer_rows())
+    _write_csv(sections, SECTION_FIELDS, _section_rows())
+    answer_key.write_text('{"1": 2}\n', encoding="utf-8")
+
+    with pytest.raises(ValueError, match="hash does not match artifact manifest"):
+        analyze_pilot(answers, sections, artifact_manifest, tmp_path / "analysis")
