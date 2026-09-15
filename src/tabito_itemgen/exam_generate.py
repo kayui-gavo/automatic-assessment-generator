@@ -7,8 +7,13 @@ from jinja2 import Template
 
 from .blind_surface import blind_section_dict
 from .exam_models import ExamManifest, Q1Section, Q2Section, Q3Section, Q5Section
-from .exam_production import exam_workspace_dir, load_manifest, manifest_path
-from .exam_review_models import SectionReview
+from .exam_production import (
+    exam_workspace_dir,
+    load_manifest,
+    manifest_path,
+    section_qa_path,
+)
+from .exam_review_models import SectionHumanQA, SectionReview
 from .exam_validation import validate_section_file
 from .io import load_json
 from .model_policy import execution_protocol
@@ -220,6 +225,29 @@ def create_section_structure_fix_request(root: Path, exam_id: str, section: str)
     return out
 
 
+def _current_human_qa_json(
+    root: Path,
+    exam_id: str,
+    section: str,
+    section_id: str,
+    fingerprint: str,
+) -> str | None:
+    qa_path = section_qa_path(root, exam_id, section)
+    if not qa_path.exists():
+        return None
+    try:
+        qa = SectionHumanQA.model_validate(load_json(qa_path))
+    except Exception:
+        return None
+    if (
+        qa.section != section
+        or qa.section_id != section_id
+        or qa.candidate_fingerprint != fingerprint
+    ):
+        return None
+    return qa_path.read_text(encoding="utf-8")
+
+
 def create_section_revision_request(root: Path, exam_id: str, section: str) -> Path:
     manifest = load_manifest(manifest_path(root, exam_id))
     ref = next(ref for ref in manifest.sections if ref.section == section)
@@ -239,12 +267,21 @@ def create_section_revision_request(root: Path, exam_id: str, section: str) -> P
             "review JSON belongs to an earlier candidate version; run a new independent review "
             "before creating another revision request"
         )
+
+    human_qa_json = _current_human_qa_json(
+        root,
+        exam_id,
+        section,
+        ref.section_id,
+        current_fingerprint,
+    )
     blueprint = _authoring_blueprint(root, manifest, section)
     template = Template((root / "prompts" / "revise_section.md").read_text(encoding="utf-8"))
     prompt = template.render(
         section_blueprint=blueprint,
         item_json=section_path.read_text(encoding="utf-8"),
         review_json=review_path.read_text(encoding="utf-8"),
+        human_qa_json=human_qa_json,
         json_schema=json.dumps(
             SECTION_MODELS[section].model_json_schema(), ensure_ascii=False, indent=2
         ),
