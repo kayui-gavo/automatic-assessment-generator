@@ -181,6 +181,8 @@ def create_section_review_request(root: Path, exam_id: str, section: str) -> Pat
         blueprint = _blueprint_path(root, manifest, section).read_text(encoding="utf-8")
     template = Template((root / "prompts" / "review_section.md").read_text(encoding="utf-8"))
     prompt = template.render(
+        section_name=section,
+        section_id=ref.section_id,
         candidate_fingerprint=section_fingerprint(section_data),
         section_blueprint=blueprint,
         blind_json=json.dumps(blind_section_dict(section_data), ensure_ascii=False, indent=2),
