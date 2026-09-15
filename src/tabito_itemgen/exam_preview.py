@@ -105,7 +105,7 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
         for task in sorted(section.tasks, key=lambda value: value.answer_slot.answer_number):
             if task.subsection != current:
                 st.markdown(
-                    f'<div class="exam-section">{task.subsection}</div>',
+                    f'<div class="exam-section">{html.escape(task.subsection)}</div>',
                     unsafe_allow_html=True,
                 )
                 current = task.subsection
@@ -117,8 +117,10 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
                 )
                 underline_target = task.target in {"initial", "final"}
                 headword = _q1_hanzi_html(task.headword, underline_target=underline_target)
+                # `headword` is an internal schema role, not student-facing copy.
+                # Show the actual word only; never leak labels such as 「見出し」.
                 st.markdown(
-                    f'<div class="q1-word"><b>見出し</b>　{headword}</div>',
+                    f'<div class="q1-word">{headword}</div>',
                     unsafe_allow_html=True,
                 )
                 candidates = "".join(
@@ -135,7 +137,12 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
             else:
                 # Q1-D is intentionally pinyin-only on the student surface.
                 for line in task.lines:
-                    st.markdown(f"**{line.speaker}**：{line.pinyin}")
+                    st.markdown(
+                        '<div class="source-text">'
+                        f'<b>{html.escape(line.speaker)}</b>：{html.escape(line.pinyin)}'
+                        '</div>',
+                        unsafe_allow_html=True,
+                    )
                 st.markdown(
                     f'<div class="exam-prompt">{html.escape(task.prompt_ja)} '
                     f'{_answer_badge(task.answer_slot.answer_number)}</div>',
@@ -154,7 +161,7 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
         for task in sorted(section.tasks, key=lambda value: value.order):
             if task.subsection != current:
                 st.markdown(
-                    f'<div class="exam-section">{task.subsection}</div>',
+                    f'<div class="exam-section">{html.escape(task.subsection)}</div>',
                     unsafe_allow_html=True,
                 )
                 current = task.subsection
@@ -163,7 +170,10 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
                     f'<div class="exam-prompt">{html.escape(task.prompt_ja)}</div>',
                     unsafe_allow_html=True,
                 )
-                st.markdown(html.escape(task.source_ja))
+                st.markdown(
+                    f'<div class="source-text">{html.escape(task.source_ja)}</div>',
+                    unsafe_allow_html=True,
+                )
                 st.markdown(
                     f'<div class="source-text">{_ordering_html(task)}</div>',
                     unsafe_allow_html=True,
@@ -184,7 +194,10 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
                     f'{_answer_badge(task.answer_slot.answer_number)}</div>',
                     unsafe_allow_html=True,
                 )
-                st.markdown(task.sentence_zh)
+                st.markdown(
+                    f'<div class="source-text">{html.escape(task.sentence_zh)}</div>',
+                    unsafe_allow_html=True,
+                )
                 _options(task.options)
                 if teacher:
                     st.caption(
@@ -198,7 +211,7 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
         for task in sorted(section.tasks, key=lambda value: value.answer_slot.answer_number):
             if task.subsection != current:
                 st.markdown(
-                    f'<div class="exam-section">{task.subsection}</div>',
+                    f'<div class="exam-section">{html.escape(task.subsection)}</div>',
                     unsafe_allow_html=True,
                 )
                 current = task.subsection
@@ -207,7 +220,10 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
                 f'{_answer_badge(task.answer_slot.answer_number)}</div>',
                 unsafe_allow_html=True,
             )
-            st.markdown(task.source_text)
+            st.markdown(
+                f'<div class="source-text">{html.escape(task.source_text)}</div>',
+                unsafe_allow_html=True,
+            )
             _options(task.options)
             if teacher:
                 st.caption(
