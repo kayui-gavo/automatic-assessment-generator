@@ -21,6 +21,7 @@ _RENDERER_SOURCE_FILES = (
     "presentation.py",
     "render.py",
 )
+_REQUIRED_EXTRA_FILES = ("answer_key.json",)
 
 
 class ArtifactCheck(BaseModel):
@@ -42,12 +43,10 @@ class ArtifactCheck(BaseModel):
 class ArtifactManifest(BaseModel):
     """Immutable description of one rendered artifact set.
 
-    Historical manifests must remain parseable after renderer upgrades. When an
-    older renderer fingerprint is loaded under newer code, preserve its original
-    value in ``source_renderer_revision`` and expose ``renderer_revision`` as
-    ``unknown``. The existing release gate already rejects unknown renderers,
-    while audit code can still inspect the renderer that originally produced the
-    artifact.
+    Historical manifests must remain parseable after renderer upgrades. Runtime
+    integrity problems are annotated onto the first artifact check rather than
+    raising during parsing, so old evidence stays auditable while release gates
+    still reject stale or tampered files.
     """
 
     exam_id: str
@@ -58,15 +57,40 @@ class ArtifactManifest(BaseModel):
     extra_files: dict[str, str] = Field(default_factory=dict)
 
     @model_validator(mode="after")
-    def annotate_stale_renderer(self) -> ArtifactManifest:
+    def annotate_runtime_integrity(self) -> ArtifactManifest:
         current = renderer_revision()
-        if (
-            current != "unknown"
-            and self.renderer_revision not in {"unknown", current}
-        ):
+        if current != "unknown" and self.renderer_revision not in {"unknown", current}:
             if self.source_renderer_revision is None:
                 self.source_renderer_revision = self.renderer_revision
             self.renderer_revision = "unknown"
+
+        integrity_errors: list[str] = []
+        for filename in _REQUIRED_EXTRA_FILES:
+            if filename not in self.extra_files:
+                integrity_errors.append(
+                    f"required artifact {filename} is missing from artifact manifest"
+                )
+
+        if self.checks:
+            out_dir = Path(self.checks[0].pdf_path).parent
+            for filename, expected_sha in self.extra_files.items():
+                file_name = Path(filename)
+                if file_name.is_absolute() or file_name.name != filename:
+                    integrity_errors.append(f"invalid artifact filename {filename!r}")
+                    continue
+                path = out_dir / filename
+                if not path.exists() or not path.is_file():
+                    integrity_errors.append(f"{filename} missing after preflight")
+                    continue
+                if sha256_file(path) != expected_sha:
+                    integrity_errors.append(f"{filename} changed after preflight")
+
+        if integrity_errors and self.checks:
+            first = self.checks[0]
+            updated = first.model_copy(
+                update={"errors": first.errors + tuple(integrity_errors)}
+            )
+            self.checks = (updated, *self.checks[1:])
         return self
 
     @property
