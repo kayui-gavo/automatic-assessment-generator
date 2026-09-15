@@ -18,14 +18,20 @@ def test_blind_packet_removes_answer_key_rationales_and_authoring_metadata():
     item = Item.model_validate(json.loads(EXAMPLE.read_text(encoding="utf-8")))
     blind = _blind_item_dict(item)
 
-    assert "quality_notes" not in blind
-    assert "workflow" not in blind
-    assert "scenario_summary_ja" not in blind
-    assert "difficulty" not in blind
-    assert "topic" not in blind
-    assert "surface_family" not in blind
-    assert "schema_version" not in blind
-    assert "item_id" not in blind
+    for key in (
+        "quality_notes",
+        "workflow",
+        "scenario_summary_ja",
+        "difficulty",
+        "topic",
+        "surface_family",
+        "schema_version",
+        "item_id",
+        "title_ja",
+        "scope",
+        "domain",
+    ):
+        assert key not in blind
 
     for material in blind["materials"]:
         assert "bundle_id" not in material
@@ -69,6 +75,7 @@ def test_q1_blind_surface_hides_internal_pinyin_and_schema_but_keeps_dialogue_pi
 
     assert "schema_version" not in blind
     assert "section_id" not in blind
+    assert "title_ja" not in blind
 
     phonetic_tasks = [task for task in blind["tasks"] if "headword" in task]
     dialogue_tasks = [task for task in blind["tasks"] if "lines" in task]
@@ -83,7 +90,7 @@ def test_q1_blind_surface_hides_internal_pinyin_and_schema_but_keeps_dialogue_pi
         assert "label" not in task["headword"]
         assert set(task["headword"]) == {"hanzi", "target_index"}
         assert all("pinyin" not in candidate for candidate in task["candidates"])
-        assert all("slot_id" not in task["answer_slot"] for _ in [0])
+        assert "slot_id" not in task["answer_slot"]
 
     for task in dialogue_tasks:
         assert "task_type" not in task
@@ -97,9 +104,8 @@ def test_q4_blind_surface_hides_evidence_and_operation_taxonomy(tmp_path):
     q4 = _section(tmp_path, manifest.exam_id, "Q4")
     blind = blind_section_dict(q4)
 
-    assert "difficulty" not in blind
-    assert "schema_version" not in blind
-    assert "item_id" not in blind
+    for key in ("difficulty", "schema_version", "item_id", "title_ja", "scope", "domain"):
+        assert key not in blind
     for task in blind["tasks"]:
         assert "evidence" not in task
         assert "dependency_mode" not in task
@@ -119,6 +125,7 @@ def test_q5_blind_surface_removes_prelinks_but_preserves_visible_underline(tmp_p
 
     assert "schema_version" not in blind
     assert "section_id" not in blind
+    assert "title_ja" not in blind
     for task in blind["tasks"]:
         assert "anchor_refs" not in task
         assert "operation" not in task
