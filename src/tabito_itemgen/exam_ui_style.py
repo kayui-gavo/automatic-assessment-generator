@@ -177,6 +177,11 @@ h4 {
   color: var(--ok);
 }
 
+.release-mark.bad,
+.gate-mark.bad {
+  color: var(--bad);
+}
+
 .release-name {
   color: #282b2e;
 }
