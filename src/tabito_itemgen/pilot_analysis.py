@@ -32,6 +32,7 @@ SECTION_COLUMNS = {
     "note",
 }
 SECTIONS = {"Q1", "Q2", "Q3", "Q4", "Q5"}
+EXPECTED_ANSWERS = set(range(1, 51))
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -79,9 +80,22 @@ def _identity(rows: Iterable[dict[str, str]]) -> tuple[str, str]:
     return exam_id, fingerprint
 
 
+def _section_for_answer(answer_number: int) -> str:
+    if answer_number <= 6:
+        return "Q1"
+    if answer_number <= 12:
+        return "Q2"
+    if answer_number <= 20:
+        return "Q3"
+    if answer_number <= 36:
+        return "Q4"
+    return "Q5"
+
+
 def validate_answer_rows(rows: list[dict[str, str]]) -> tuple[str, str]:
     exam_id, fingerprint = _identity(rows)
     seen: set[tuple[str, int]] = set()
+    participant_answers: dict[str, set[int]] = defaultdict(set)
     for row_no, row in enumerate(rows, start=2):
         participant = row["participant_id"].strip()
         if not participant:
@@ -90,12 +104,16 @@ def validate_answer_rows(rows: list[dict[str, str]]) -> tuple[str, str]:
         if not 1 <= answer_number <= 50:
             raise ValueError(f"row {row_no}: answer_number must be in 1..50")
         section = row["section"].strip()
-        if section not in SECTIONS:
-            raise ValueError(f"row {row_no}: section must be Q1..Q5")
+        expected_section = _section_for_answer(answer_number)
+        if section != expected_section:
+            raise ValueError(
+                f"row {row_no}: answer {answer_number} must belong to {expected_section}"
+            )
         key = (participant, answer_number)
         if key in seen:
             raise ValueError(f"row {row_no}: duplicate participant/answer_number {key}")
         seen.add(key)
+        participant_answers[participant].add(answer_number)
 
         correct_option = _int(row["correct_option"], "correct_option", row_no)
         if not 1 <= correct_option <= 10:
@@ -119,12 +137,20 @@ def validate_answer_rows(rows: list[dict[str, str]]) -> tuple[str, str]:
                 raise ValueError(
                     f"row {row_no}: is_correct disagrees with selected_option/correct_option"
                 )
+
+    for participant, answers in participant_answers.items():
+        if answers != EXPECTED_ANSWERS:
+            missing = sorted(EXPECTED_ANSWERS - answers)
+            raise ValueError(
+                f"participant {participant}: expected answer rows 1..50; missing {missing}"
+            )
     return exam_id, fingerprint
 
 
 def validate_section_rows(rows: list[dict[str, str]]) -> tuple[str, str]:
     exam_id, fingerprint = _identity(rows)
     seen: set[tuple[str, str]] = set()
+    participant_sections: dict[str, set[str]] = defaultdict(set)
     for row_no, row in enumerate(rows, start=2):
         participant = row["participant_id"].strip()
         if not participant:
@@ -136,6 +162,7 @@ def validate_section_rows(rows: list[dict[str, str]]) -> tuple[str, str]:
         if key in seen:
             raise ValueError(f"row {row_no}: duplicate participant/section {key}")
         seen.add(key)
+        participant_sections[participant].add(section)
         elapsed = _int(row["elapsed_seconds"], "elapsed_seconds", row_no)
         if elapsed < 0:
             raise ValueError(f"row {row_no}: elapsed_seconds must be non-negative")
@@ -147,6 +174,13 @@ def validate_section_rows(rows: list[dict[str, str]]) -> tuple[str, str]:
                 raise ValueError(
                     f"row {row_no}: perceived_difficulty_1_5 must be blank or 1..5"
                 )
+
+    for participant, sections in participant_sections.items():
+        missing = sorted(SECTIONS - sections)
+        if missing:
+            raise ValueError(
+                f"participant {participant}: section timing rows missing {missing}"
+            )
     return exam_id, fingerprint
 
 
