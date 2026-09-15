@@ -16,14 +16,15 @@ def _exam_qa(exam_id: str, disposition: str) -> ExamHumanQA:
     )
 
 
-def test_final_exam_qa_model_rejects_approve_with_incomplete_checks():
-    with pytest.raises(ValueError, match="required checks are incomplete"):
-        ExamHumanQA(
-            exam_id="EXAM-1",
-            reviewer="Final QA",
-            disposition="approve",
-            checks=ExamQAChecks(),
-        )
+def test_final_exam_qa_save_rejects_approve_with_incomplete_checks(tmp_path):
+    qa = ExamHumanQA(
+        exam_id="EXAM-1",
+        reviewer="Final QA",
+        disposition="approve",
+        checks=ExamQAChecks(),
+    )
+    with pytest.raises(ValueError, match="every required check"):
+        save_exam_human_qa(tmp_path, qa.exam_id, qa)
 
 
 def test_final_exam_qa_model_allows_revise_with_incomplete_checks():
