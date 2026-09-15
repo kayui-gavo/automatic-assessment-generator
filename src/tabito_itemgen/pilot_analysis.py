@@ -99,39 +99,81 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _load_bound_answer_key(
-    artifact_manifest_path: Path,
+def _read_json(path: Path, label: str) -> object:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot read {label}: {path}") from exc
+
+
+def _load_released_answer_key(
+    release_record_path: Path,
     *,
     exam_id: str,
     exam_fingerprint: str,
 ) -> dict[int, int]:
-    try:
-        manifest = json.loads(artifact_manifest_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError(f"cannot read artifact manifest: {artifact_manifest_path}") from exc
+    release = _read_json(release_record_path, "release record")
+    if not isinstance(release, dict):
+        raise ValueError("release.json must be an object")
+    if release.get("exam_id") != exam_id:
+        raise ValueError("release record exam_id does not match student pilot data")
+    if release.get("exam_fingerprint") != exam_fingerprint:
+        raise ValueError("release record fingerprint does not match student pilot data")
 
+    gates = release.get("gates")
+    if not isinstance(gates, list) or not gates:
+        raise ValueError("release record has no gate evidence")
+    if any(not isinstance(row, dict) or row.get("passed") is not True for row in gates):
+        raise ValueError("release record contains an incomplete or failed release gate")
+
+    artifact_dir = release_record_path.parent / "artifacts"
+    artifact_manifest_path = artifact_dir / "artifact_manifest.json"
+    expected_manifest_sha = release.get("artifact_manifest_sha256")
+    if not isinstance(expected_manifest_sha, str) or not expected_manifest_sha:
+        raise ValueError("release record does not bind artifact_manifest.json")
+    if not artifact_manifest_path.exists():
+        raise ValueError("approved artifact_manifest.json is missing")
+    if _sha256_file(artifact_manifest_path) != expected_manifest_sha:
+        raise ValueError("artifact_manifest.json hash does not match release record")
+
+    manifest = _read_json(artifact_manifest_path, "artifact manifest")
+    if not isinstance(manifest, dict):
+        raise ValueError("artifact_manifest.json must be an object")
     if manifest.get("exam_id") != exam_id:
         raise ValueError("artifact manifest exam_id does not match student pilot data")
     if manifest.get("exam_fingerprint") != exam_fingerprint:
         raise ValueError("artifact manifest fingerprint does not match student pilot data")
 
+    checks = manifest.get("checks")
+    if not isinstance(checks, list) or not checks:
+        raise ValueError("artifact manifest has no PDF checks")
+    for check in checks:
+        if not isinstance(check, dict):
+            raise ValueError("artifact manifest contains a malformed PDF check")
+        name = check.get("name")
+        expected_pdf_sha = check.get("pdf_sha256")
+        if not isinstance(name, str) or not name:
+            raise ValueError("artifact manifest PDF check has no name")
+        if not isinstance(expected_pdf_sha, str) or not expected_pdf_sha:
+            raise ValueError(f"artifact manifest does not bind {name}.pdf")
+        pdf_path = artifact_dir / f"{name}.pdf"
+        if not pdf_path.exists() or _sha256_file(pdf_path) != expected_pdf_sha:
+            raise ValueError(f"approved artifact {name}.pdf failed integrity verification")
+
     extra_files = manifest.get("extra_files")
     if not isinstance(extra_files, dict):
         raise ValueError("artifact manifest has no valid extra_files map")
-    expected_sha = extra_files.get("answer_key.json")
-    if not isinstance(expected_sha, str) or not expected_sha:
+    expected_answer_sha = extra_files.get("answer_key.json")
+    if not isinstance(expected_answer_sha, str) or not expected_answer_sha:
         raise ValueError("artifact manifest does not bind answer_key.json")
 
-    answer_key_path = artifact_manifest_path.parent / "answer_key.json"
+    answer_key_path = artifact_dir / "answer_key.json"
     if not answer_key_path.exists():
-        raise ValueError("answer_key.json is missing beside artifact manifest")
-    if _sha256_file(answer_key_path) != expected_sha:
+        raise ValueError("approved answer_key.json is missing")
+    if _sha256_file(answer_key_path) != expected_answer_sha:
         raise ValueError("answer_key.json hash does not match artifact manifest")
 
-    try:
-        raw_key = json.loads(answer_key_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError("answer_key.json cannot be parsed") from exc
+    raw_key = _read_json(answer_key_path, "answer key")
     if not isinstance(raw_key, dict):
         raise ValueError("answer_key.json must be an object")
 
@@ -341,7 +383,7 @@ def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
 def analyze_pilot(
     answer_csv: Path,
     section_csv: Path,
-    artifact_manifest_path: Path,
+    release_record_path: Path,
     out_dir: Path,
 ) -> dict[str, object]:
     answer_rows = _read_csv(answer_csv)
@@ -354,8 +396,8 @@ def analyze_pilot(
         raise ValueError("answer and section files refer to different exam versions")
 
     exam_id, fingerprint = answer_identity
-    answer_key = _load_bound_answer_key(
-        artifact_manifest_path,
+    answer_key = _load_released_answer_key(
+        release_record_path,
         exam_id=exam_id,
         exam_fingerprint=fingerprint,
     )
@@ -393,10 +435,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("answers", type=Path, help="student_trial_answers.csv")
     parser.add_argument("sections", type=Path, help="student_trial_sections.csv")
     parser.add_argument(
-        "--artifact-manifest",
+        "--release-record",
         type=Path,
         required=True,
-        help="approved artifacts/artifact_manifest.json used to bind and verify answer_key.json",
+        help="approved exam release.json used to verify artifacts and answer_key.json",
     )
     parser.add_argument(
         "--out-dir",
@@ -412,7 +454,7 @@ def main() -> None:
     summary = analyze_pilot(
         args.answers,
         args.sections,
-        args.artifact_manifest,
+        args.release_record,
         args.out_dir,
     )
     print(json.dumps(summary, ensure_ascii=False))
