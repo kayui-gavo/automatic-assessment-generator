@@ -6,9 +6,10 @@
 
 ## Candidate binding
 
-`{{ candidate_fingerprint }}`
+以下は問題内容ではなく保存先と内容バージョンを識別する opaque binding である。解答の手掛かりとして使わず、出力 JSON に一字も変えず返すこと。
 
-出力JSONの `candidate_fingerprint` に一字も変えず返す。これは内容の手掛かりではない。
+- `item_id`: `{{ item_id }}`
+- `candidate_fingerprint`: `{{ candidate_fingerprint }}`
 
 ## 審査原則
 
@@ -51,8 +52,8 @@ JSONのみ。Markdown fenceは禁止。
 
 必須フィールド：
 - schema_version: `"0.2"`
-- item_id
-- candidate_fingerprint
+- item_id: 上の opaque binding をそのまま返す
+- candidate_fingerprint: 上の opaque binding をそのまま返す
 - verdict: `pass` / `revise` / `reject`
 - independent_answers: `{task_id: [correct_option, ...]}`
 - issues: severity, task_id(optional), category, description, suggested_fix
