@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tabito_itemgen.exam_ui as exam_ui
 from tabito_itemgen.exam_ui_style import APP_CSS
+from tabito_itemgen.response_audit import import_section_response as audited_import_section_response
 from tabito_itemgen.teacher_workflow_state import (
     next_action_text,
     revision_block_message,
@@ -14,6 +15,9 @@ from tabito_itemgen.teacher_workflow_state import (
 exam_ui.APP_CSS = APP_CSS
 exam_ui._section_status = section_status
 exam_ui._next_action_text = next_action_text
+# All teacher-facing section imports first pass identity/renderability checks and
+# then preserve an immutable raw-response audit copy.
+exam_ui.import_section_response = audited_import_section_response
 # Teacher-facing states describe the next action, not internal pipeline jargon.
 exam_ui.STATUS_COPY["review_failed"] = ("需要返修", "bad")
 exam_ui.STATUS_COPY["rejected"] = ("不采用", "bad")
