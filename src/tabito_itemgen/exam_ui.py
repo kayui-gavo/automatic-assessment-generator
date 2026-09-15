@@ -25,6 +25,7 @@ from tabito_itemgen.exam_production import (
     save_section_human_qa,
     section_qa_path,
     section_release_readiness,
+    section_review_path,
 )
 from tabito_itemgen.exam_render import render_exam
 from tabito_itemgen.exam_review_models import (
@@ -32,6 +33,7 @@ from tabito_itemgen.exam_review_models import (
     SectionHumanQA,
     SectionQAChecks,
     SectionQATiming,
+    SectionReview,
 )
 from tabito_itemgen.exam_validation import validate_exam, validate_section_file
 from tabito_itemgen.io import load_json
@@ -62,6 +64,7 @@ STATUS_COPY = {
     "needs_fix": ("需修正", "bad"),
     "draft": ("草稿", "muted"),
     "blind_review": ("待独立审题", "warn"),
+    "review_failed": ("审题未通过", "bad"),
     "teacher_qa": ("待教师确认", "warn"),
     "ready": ("已就绪", "ok"),
     "approved": ("已定稿", "ok"),
@@ -179,6 +182,17 @@ def _section_path(exam_path: Path, ref) -> Path | None:
     return exam_path.parent / ref.path if ref.path else None
 
 
+def _current_review(root: Path, exam_id: str, section_name: str, fingerprint: str) -> SectionReview | None:
+    path = section_review_path(root, exam_id, section_name)
+    if not path.exists():
+        return None
+    try:
+        review = SectionReview.model_validate(load_json(path))
+    except Exception:
+        return None
+    return review if review.candidate_fingerprint == fingerprint else None
+
+
 def _section_status(root: Path, manifest, exam_path: Path, ref) -> str:
     path = _section_path(exam_path, ref)
     if path is None or not path.exists():
@@ -188,13 +202,22 @@ def _section_status(root: Path, manifest, exam_path: Path, ref) -> str:
     if "approved" in exam_path.parts:
         return "approved"
     try:
+        section = load_section(path)
         readiness = section_release_readiness(root, manifest.exam_id, ref.section)
     except Exception:
         return "draft"
     if readiness.ready:
         return "ready"
     blind = next((gate for gate in readiness.gates if gate.name == "blind review"), None)
-    return "teacher_qa" if blind and blind.passed else "blind_review"
+    if blind and blind.passed:
+        return "teacher_qa"
+    current_review = _current_review(
+        root,
+        manifest.exam_id,
+        ref.section,
+        section_fingerprint(section),
+    )
+    return "review_failed" if current_review is not None else "blind_review"
 
 
 def _status_html(status: str) -> str:
@@ -218,6 +241,44 @@ def _gate_label(name: str) -> str:
     return name
 
 
+def _humanize_review_detail(detail: str) -> str:
+    if detail == "review JSON not saved":
+        return "尚未导入独立审题结果。"
+    parts: list[str] = []
+    for raw in detail.split("; "):
+        if raw == "review verdict is revise, not pass":
+            parts.append("独立审题结论为「需要返修」。")
+        elif raw == "review verdict is reject, not pass":
+            parts.append("独立审题结论为「不采用」。")
+        elif raw == "review contains high-severity issue":
+            parts.append("审题报告包含严重问题，需要返修。")
+        elif raw == "review task ids do not match candidate tasks":
+            parts.append("审题结果的题目编号与当前版本不一致。")
+        elif raw == "review section identity does not match candidate":
+            parts.append("审题结果不是针对当前大题。")
+        elif raw == "review fingerprint does not match current candidate":
+            parts.append("这份审题结果属于上一版本，请对当前版本重新审题。")
+        elif raw == "review execution record is stale":
+            parts.append("审题执行记录属于上一版本，请重新审题。")
+        elif raw == "blind review execution record not saved":
+            parts.append("审题执行记录没有保存，请重新导入审题结果。")
+        elif raw.startswith("blind review was not confirmed"):
+            parts.append("没有确认使用独立上下文完成审题。")
+        elif raw.startswith("blind review context mode"):
+            parts.append("审题上下文没有被确认为记忆隔离模式。")
+        elif raw.startswith("blind reviewer had access"):
+            parts.append("审题上下文接触过出题或返修信息，不能作为独立审题证据。")
+        elif ": reviewer answer " in raw and " != author key " in raw:
+            task_id, rest = raw.split(": reviewer answer ", 1)
+            reviewer_answer, author_answer = rest.split(" != author key ", 1)
+            parts.append(
+                f"{task_id}：独立作答 {reviewer_answer} 与命题答案 {author_answer} 不一致。"
+            )
+        else:
+            parts.append(raw)
+    return " ".join(parts)
+
+
 def _next_action_text(ref, status: str) -> str:
     section = f"{ref.section} {SECTION_NAV_LABELS[ref.section]}"
     if status == "not_generated":
@@ -226,9 +287,33 @@ def _next_action_text(ref, status: str) -> str:
         return f"打开 {section}，修正结构校验问题后再继续。"
     if status in {"draft", "blind_review"}:
         return f"打开 {section} 的「质量检查」，完成独立审题。"
+    if status == "review_failed":
+        return f"打开 {section} 的「返修」，按审题意见修改后重新独立审题。"
     if status == "teacher_qa":
         return f"打开 {section} 的「质量检查」，完成教师确认。"
     return f"{section} 已就绪。"
+
+
+def _section_view_key(exam_id: str, section_name: str, fingerprint: str, *, approved: bool = False) -> str:
+    prefix = "approved-section-view" if approved else "section-view"
+    return f"{prefix}-{exam_id}-{section_name}-{fingerprint[:8]}"
+
+
+def _flash_key(exam_id: str, section_name: str) -> str:
+    return f"section-flash-{exam_id}-{section_name}"
+
+
+def _set_flash(exam_id: str, section_name: str, level: str, message: str) -> None:
+    st.session_state[_flash_key(exam_id, section_name)] = (level, message)
+
+
+def _show_flash(exam_id: str, section_name: str) -> None:
+    payload = st.session_state.pop(_flash_key(exam_id, section_name), None)
+    if not payload:
+        return
+    level, message = payload
+    renderer = getattr(st, level, st.info)
+    renderer(message)
 
 
 def _render_header(manifest, family_label: str, ready_count: int, is_approved: bool) -> None:
@@ -381,6 +466,7 @@ def _section_human_qa_form(root: Path, manifest, ref, section) -> None:
         )
         try:
             save_section_human_qa(root, manifest.exam_id, ref.section, qa)
+            _set_flash(manifest.exam_id, ref.section, "success", "教师确认已保存。")
             st.rerun()
         except Exception as exc:
             st.error(str(exc))
@@ -579,14 +665,25 @@ def _render_export(root: Path, manifest, *, approved_dir: Path | None = None) ->
 
 
 def _render_section_gate_summary(readiness) -> None:
+    blind = next((gate for gate in readiness.gates if gate.name == "blind review"), None)
     rows = []
     for gate in readiness.gates:
         label = _gate_label(gate.name)
-        mark = "✓" if gate.passed else "—"
-        css_class = "ok" if gate.passed else "muted"
+        if gate.passed:
+            mark, css_class, state = "✓", "ok", "已通过"
+        elif gate.name == "blind review" and gate.detail != "review JSON not saved":
+            mark, css_class, state = "!", "bad", "未通过"
+        elif gate.name == "blind review":
+            mark, css_class, state = "→", "muted", "待审题"
+        elif gate.name == "human QA" and not (blind and blind.passed):
+            mark, css_class, state = "○", "muted", "审题通过后开放"
+        elif gate.name == "human QA":
+            mark, css_class, state = "→", "muted", "待确认"
+        else:
+            mark, css_class, state = "—", "muted", "未完成"
         rows.append(
             f'<div class="gate-row"><span class="gate-mark {css_class}">{mark}</span>'
-            f'<span>{html.escape(label)}</span></div>'
+            f'<span>{html.escape(label)}　<small>{html.escape(state)}</small></span></div>'
         )
     st.markdown(
         f'<div class="workflow-list compact">{"".join(rows)}</div>',
@@ -623,20 +720,21 @@ def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None
             key=f"download-review-prompt-{ref.section}",
         )
 
+    fingerprint = section_fingerprint(section)
     isolated = st.checkbox(
         "我已在非个性化 Temporary Chat 中完成独立审题，且该对话没有看过本题答案或出题历史",
-        key=f"isolated-review-{ref.section}-{section_fingerprint(section)[:8]}",
+        key=f"isolated-review-{ref.section}-{fingerprint[:8]}",
     )
     review_json = st.text_area(
         "粘贴审题结果（JSON）",
         height=220,
         placeholder="把独立审题返回的完整 JSON 粘贴到这里。",
-        key=f"review-json-{ref.section}",
+        key=f"review-json-{ref.section}-{fingerprint[:8]}",
     )
     if st.button(
         "导入审题结果",
         type="primary",
-        key=f"review-import-{ref.section}",
+        key=f"review-import-{ref.section}-{fingerprint[:8]}",
         disabled=not isolated,
     ):
         try:
@@ -651,6 +749,26 @@ def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None
                 context_mode="non_personalized_temporary_chat",
                 authoring_context_seen=False,
             )
+            updated = section_release_readiness(root, manifest.exam_id, ref.section)
+            blind_after = next(
+                (gate for gate in updated.gates if gate.name == "blind review"),
+                None,
+            )
+            if blind_after and blind_after.passed:
+                _set_flash(
+                    manifest.exam_id,
+                    ref.section,
+                    "success",
+                    "独立审题已通过，教师确认已开放。",
+                )
+            else:
+                detail = blind_after.detail if blind_after else "独立审题未通过。"
+                _set_flash(
+                    manifest.exam_id,
+                    ref.section,
+                    "warning",
+                    "审题结果已导入，但当前版本未通过：" + _humanize_review_detail(detail),
+                )
             st.rerun()
         except Exception as exc:
             st.error(str(exc))
@@ -662,9 +780,10 @@ def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None
         _render_section_gate_summary(readiness)
         blind = next((gate for gate in readiness.gates if gate.name == "blind review"), None)
         blind_passed = bool(blind and blind.passed)
-        if blind and not blind.passed:
-            with st.expander("查看未通过原因"):
-                st.caption(blind.detail)
+        if blind and not blind.passed and blind.detail != "review JSON not saved":
+            st.warning(_humanize_review_detail(blind.detail))
+            with st.expander("查看技术详情"):
+                st.code(blind.detail, language=None)
     except Exception as exc:
         st.warning(str(exc))
 
@@ -675,18 +794,22 @@ def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None
         st.caption("独立审题通过后，这里会自动出现「教师确认」。")
 
 
-def _render_revision_import(root: Path, manifest, ref) -> None:
-    review_file = (
-        root
-        / "workspace"
-        / "exams"
-        / manifest.exam_id
-        / "reviews"
-        / f"{ref.section.lower()}.review.json"
-    )
+def _render_revision_import(root: Path, manifest, ref, section) -> None:
+    review_file = section_review_path(root, manifest.exam_id, ref.section)
     st.markdown("### 返修")
     if not review_file.exists():
         st.caption("先完成独立审题。需要修改时，系统会根据审题结果生成返修指令。")
+        return
+
+    fingerprint = section_fingerprint(section)
+    try:
+        review = SectionReview.model_validate(load_json(review_file))
+    except Exception as exc:
+        st.error("已保存的审题结果无法读取：" + str(exc))
+        return
+
+    if review.candidate_fingerprint != fingerprint:
+        st.success("当前题目已经是返修后的新版本。旧审题意见已失效，请回到「质量检查」重新独立审题。")
         return
 
     try:
@@ -701,26 +824,50 @@ def _render_revision_import(root: Path, manifest, ref) -> None:
             "下载返修指令",
             revision_request.read_text(encoding="utf-8"),
             file_name=revision_request.name,
-            key=f"download-revision-prompt-{ref.section}",
+            key=f"download-revision-prompt-{ref.section}-{fingerprint[:8]}",
         )
 
     revised_json = st.text_area(
         "粘贴返修后的 JSON",
         height=340,
         placeholder="把返修后的完整 JSON 粘贴到这里。",
-        key=f"revision-json-{ref.section}",
+        key=f"revision-json-{ref.section}-{fingerprint[:8]}",
     )
     if st.button(
         "导入返修版",
         type="primary",
-        key=f"revision-import-{ref.section}",
+        key=f"revision-import-{ref.section}-{fingerprint[:8]}",
     ):
         try:
-            _, result = import_section_response(root, manifest.exam_id, ref.section, revised_json)
+            revised_path, result = import_section_response(
+                root,
+                manifest.exam_id,
+                ref.section,
+                revised_json,
+            )
             if result.errors:
                 st.error("返修版已保存，但结构校验仍未通过：" + " | ".join(result.errors))
-            else:
-                st.rerun()
+                return
+
+            revised = load_section(revised_path)
+            revised_fingerprint = section_fingerprint(revised)
+            if revised_fingerprint == fingerprint:
+                st.warning("返修版与当前版本完全相同，没有产生实际修改。请检查返修结果后再导入。")
+                return
+
+            next_view_key = _section_view_key(
+                manifest.exam_id,
+                ref.section,
+                revised_fingerprint,
+            )
+            st.session_state[next_view_key] = "质量检查"
+            _set_flash(
+                manifest.exam_id,
+                ref.section,
+                "success",
+                "返修版已导入。上一版审题证据已失效，请对新版本重新进行独立审题。",
+            )
+            st.rerun()
         except Exception as exc:
             st.error(str(exc))
 
@@ -749,10 +896,20 @@ def _render_generation_panel(root: Path, manifest, ref) -> None:
     )
     if st.button("导入题目", type="primary", key=f"import-{ref.section}"):
         try:
-            _, result = import_section_response(root, manifest.exam_id, ref.section, response)
+            path, result = import_section_response(root, manifest.exam_id, ref.section, response)
             if result.errors:
                 st.error("题目已保存，但结构校验未通过：" + " | ".join(result.errors))
             else:
+                fingerprint = section_fingerprint(load_section(path))
+                st.session_state[
+                    _section_view_key(manifest.exam_id, ref.section, fingerprint)
+                ] = "质量检查"
+                _set_flash(
+                    manifest.exam_id,
+                    ref.section,
+                    "success",
+                    "题目已导入并通过格式与结构检查。下一步进行独立审题。",
+                )
                 st.rerun()
         except Exception as exc:
             st.error(str(exc))
@@ -819,6 +976,7 @@ def _render_section_workspace(
         f'解答 {ref.answer_start}–{ref.answer_end}　{_status_html(status)}</div>',
         unsafe_allow_html=True,
     )
+    _show_flash(manifest.exam_id, ref.section)
 
     path = _section_path(exam_path, ref)
     if path is None or not path.exists():
@@ -833,6 +991,7 @@ def _render_section_workspace(
         return
 
     section = load_section(path)
+    fingerprint = section_fingerprint(section)
     if not is_approved and status not in {"ready"}:
         st.markdown(
             f'<div class="next-action"><b>当前</b><span>{html.escape(_next_action_text(ref, status))}</span></div>',
@@ -840,24 +999,54 @@ def _render_section_workspace(
         )
 
     if is_approved:
-        student, teacher = st.tabs(["学生题面", "答案与解析"])
-        with student:
-            _render_section_preview(section, teacher=False)
-        with teacher:
-            _render_section_preview(section, teacher=True)
+        options = ["学生题面", "答案与解析"]
+        view_key = _section_view_key(
+            manifest.exam_id,
+            ref.section,
+            fingerprint,
+            approved=True,
+        )
+        if view_key not in st.session_state:
+            st.session_state[view_key] = "学生题面"
+        view = st.radio(
+            "查看内容",
+            options,
+            horizontal=True,
+            label_visibility="collapsed",
+            key=view_key,
+        )
+        _render_section_preview(section, teacher=view == "答案与解析")
         return
 
-    student, teacher, review, revision = st.tabs(
-        ["学生题面", "答案与解析", "质量检查", "返修"]
+    options = ["学生题面", "答案与解析", "质量检查", "返修"]
+    view_key = _section_view_key(manifest.exam_id, ref.section, fingerprint)
+    if view_key not in st.session_state:
+        st.session_state[view_key] = (
+            "返修"
+            if status == "review_failed"
+            else "质量检查"
+            if status in {"blind_review", "teacher_qa", "draft"}
+            else "学生题面"
+        )
+    view = st.radio(
+        "当前页面",
+        options,
+        horizontal=True,
+        label_visibility="collapsed",
+        key=view_key,
     )
-    with student:
+
+    # Render exactly one surface. Streamlit tabs execute every tab body on each
+    # rerun, which made revision imports appear to hang as all previews/prompts
+    # were rebuilt at once.
+    if view == "学生题面":
         _render_section_preview(section, teacher=False)
-    with teacher:
+    elif view == "答案与解析":
         _render_section_preview(section, teacher=True)
-    with review:
+    elif view == "质量检查":
         _render_review_panel(root, manifest, ref, section, path)
-    with revision:
-        _render_revision_import(root, manifest, ref)
+    else:
+        _render_revision_import(root, manifest, ref, section)
 
 
 def _render_release_workspace(
@@ -902,7 +1091,12 @@ def _render_release_workspace(
             with st.expander("查看未完成项目"):
                 for gate in failed:
                     st.markdown(f"**{_gate_label(gate.name)}**")
-                    st.caption(gate.detail)
+                    detail = (
+                        _humanize_review_detail(gate.detail)
+                        if gate.name == "blind review"
+                        else gate.detail
+                    )
+                    st.caption(detail)
 
     st.divider()
     st.markdown("### PDF")
@@ -978,7 +1172,7 @@ def main() -> None:
             if value == "overview"
             else "定稿发布"
             if value == "release"
-            else f"{value}　{SECTION_NAV_LABELS[value]}"
+            else f"{value}　{SECTION_NAV_LABELS[value]} · {STATUS_COPY[statuses[value]][0]}"
         ),
         label_visibility="collapsed",
         key=f"workspace-nav-{manifest.exam_id}",
