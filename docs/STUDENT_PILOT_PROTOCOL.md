@@ -6,7 +6,7 @@ It is intentionally simple. Pilot 001 does not need IRT, a student account syste
 
 ## 1. Freeze the tested version
 
-Before any student attempt, record the exact `exam_id` and `exam_fingerprint` from the release/readiness output.
+Before any student attempt, record the exact `exam_id` and `exam_fingerprint` from the released exam evidence.
 
 Never merge responses from different fingerprints into one item analysis. If any section is revised, the revised exam is a new empirical version even when the public title is unchanged.
 
@@ -45,13 +45,13 @@ Required columns:
 - `answer_number` — 1 through 50
 - `section` — Q1 through Q5
 - `selected_option` — blank when omitted
-- `correct_option`
-- `is_correct` — `1` or `0`
 - `omitted` — `1` or `0`
 - `ambiguity_flag` — `1` only when the student reports that the item itself was ambiguous
 - `note` — short free text only when needed
 
-Do not convert a wrong answer into a category by hand. Preserve the actual selected option so distractor frequencies can be calculated later.
+Do **not** type the correct option or an `is_correct` flag into the student CSV. The analyzer derives correctness from the released, hash-bound answer artifact. This avoids turning answer-key transcription into a new source of empirical-data error.
+
+Preserve the actual selected option so distractor frequencies can be calculated later.
 
 ### `student_trial_sections.csv`
 
@@ -70,19 +70,31 @@ Required columns:
 
 For paper trials, section time may be recorded from section-transition timestamps. Do not fabricate item-level timing when it was not measured.
 
-## 5. Run the analyzer
+## 5. Bind the trial to released answer evidence
+
+Run student trials only against a frozen released exam version. Use that approved exam's:
+
+```text
+exam_bank/approved/<exam_id>/artifacts/artifact_manifest.json
+```
+
+The analyzer reads `exam_id` and `exam_fingerprint` from this manifest, verifies that they match the CSV data, then verifies the SHA-256 of the adjacent `answer_key.json` before scoring any response.
+
+If the wrong artifact manifest is supplied, the answer key was changed, or the CSV fingerprint belongs to another candidate version, analysis stops with an error.
+
+## 6. Run the analyzer
 
 Copy the templates in `pilots/exam_001/`, remove `_template` from the filenames, and enter the trial data. Then run:
 
 ```bash
-python -m tabito_itemgen.pilot_analysis pilots/exam_001/student_trial_answers.csv pilots/exam_001/student_trial_sections.csv --out-dir pilots/exam_001/analysis
+python -m tabito_itemgen.pilot_analysis pilots/exam_001/student_trial_answers.csv pilots/exam_001/student_trial_sections.csv --artifact-manifest exam_bank/approved/<EXAM_ID>/artifacts/artifact_manifest.json --out-dir pilots/exam_001/analysis
 ```
 
-The analyzer rejects mixed fingerprints, incomplete 1–50 answer records, wrong answer-number/section mappings, inconsistent correctness flags, missing Q1–Q5 timing rows, and mismatched participant sets.
+The analyzer rejects mixed fingerprints, incomplete 1–50 answer records, wrong answer-number/section mappings, malformed omission records, missing Q1–Q5 timing rows, mismatched participant sets, artifact identity mismatches, and answer-key hash mismatches.
 
 It writes:
 
-- `item_summary.csv` — correct rate, omission rate, ambiguity reports, and option-selection counts for each answer number
+- `item_summary.csv` — bound correct option, correct rate, omission rate, ambiguity reports, and option-selection counts for each answer number
 - `participant_summary.csv` — correct-answer count, omissions, and ambiguity reports per participant
 - `section_summary.csv` — median elapsed time, completion rate, and median perceived difficulty
 - `pilot_summary.json` — tested exam identity, participant count, and correct-answer-count range/median
@@ -91,9 +103,9 @@ It writes:
 
 The current exam schema stores the correct option for each of the 50 answer slots but does not yet store a point value for each slot. Therefore the analyzer reports **correct-answer count out of 50**, not an invented 200-point score.
 
-Do not label this count as the official exam score. A true 200-point student score should only be calculated after answer-slot scoring weights become part of the canonical exam schema / answer artifact.
+Do not label this count as the official exam score. A true 200-point student score should only be calculated after answer-slot scoring weights become part of the canonical exam schema / answer artifact. The artifact layer already permits a future `scoring_scheme.json`, but no production scoring scheme is generated yet.
 
-## 6. Minimum analysis after the trial
+## 7. Minimum analysis after the trial
 
 For each answer number inspect:
 
@@ -119,7 +131,7 @@ For the whole exam inspect:
 - distractors selected heavily by stronger students
 - items with repeated ambiguity reports
 
-## 7. What triggers revision
+## 8. What triggers revision
 
 Student data is a diagnostic signal, not an automatic rewrite rule. Prioritize review when an item shows one or more of:
 
@@ -132,7 +144,7 @@ Student data is a diagnostic signal, not an automatic rewrite rule. Prioritize r
 
 Any substantive revision creates a new candidate fingerprint and requires the normal independent-review and teacher-QA chain again.
 
-## 8. Pilot 001 output
+## 9. Pilot 001 output
 
 Pilot 001 should end with a short evidence summary containing:
 
