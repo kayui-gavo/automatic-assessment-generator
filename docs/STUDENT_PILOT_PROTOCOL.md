@@ -70,27 +70,36 @@ Required columns:
 
 For paper trials, section time may be recorded from section-transition timestamps. Do not fabricate item-level timing when it was not measured.
 
-## 5. Bind the trial to released answer evidence
+## 5. Bind the trial to released evidence
 
 Run student trials only against a frozen released exam version. Use that approved exam's:
 
 ```text
-exam_bank/approved/<exam_id>/artifacts/artifact_manifest.json
+exam_bank/approved/<exam_id>/release.json
 ```
 
-The analyzer reads `exam_id` and `exam_fingerprint` from this manifest, verifies that they match the CSV data, then verifies the SHA-256 of the adjacent `answer_key.json` before scoring any response.
+The analyzer verifies the complete release chain before scoring any response:
 
-If the wrong artifact manifest is supplied, the answer key was changed, or the CSV fingerprint belongs to another candidate version, analysis stops with an error.
+```text
+release.json
+  → release gates all passed
+  → artifact_manifest.json SHA-256
+  → student / teacher / answer-sheet PDF SHA-256
+  → answer_key.json SHA-256
+  → answer numbers 1–50
+```
+
+The `exam_id` and `exam_fingerprint` in the release evidence must exactly match both student CSV files. If the wrong release record is supplied, a released artifact was modified, or the CSV fingerprint belongs to another candidate version, analysis stops with an error.
 
 ## 6. Run the analyzer
 
 Copy the templates in `pilots/exam_001/`, remove `_template` from the filenames, and enter the trial data. Then run:
 
 ```bash
-python -m tabito_itemgen.pilot_analysis pilots/exam_001/student_trial_answers.csv pilots/exam_001/student_trial_sections.csv --artifact-manifest exam_bank/approved/<EXAM_ID>/artifacts/artifact_manifest.json --out-dir pilots/exam_001/analysis
+python -m tabito_itemgen.pilot_analysis pilots/exam_001/student_trial_answers.csv pilots/exam_001/student_trial_sections.csv --release-record exam_bank/approved/<EXAM_ID>/release.json --out-dir pilots/exam_001/analysis
 ```
 
-The analyzer rejects mixed fingerprints, incomplete 1–50 answer records, wrong answer-number/section mappings, malformed omission records, missing Q1–Q5 timing rows, mismatched participant sets, artifact identity mismatches, and answer-key hash mismatches.
+The analyzer rejects mixed fingerprints, incomplete 1–50 answer records, wrong answer-number/section mappings, malformed omission records, missing Q1–Q5 timing rows, mismatched participant sets, failed release evidence, artifact identity mismatches, PDF hash mismatches, and answer-key hash mismatches.
 
 It writes:
 
