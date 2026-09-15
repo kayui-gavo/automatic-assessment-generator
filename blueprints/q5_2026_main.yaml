@@ -1,0 +1,95 @@
+section: Q5
+label_ja: 長文読解
+score: 60
+answer_numbers: [37, 50]
+answer_slot_count: 14
+surface_family: main_2026
+question_count: 11
+primary_reference: 2026_main
+
+article:
+  target_length: slightly_over_one_page
+  mode: long_reading
+  official_2026_genre_note: expository/narrative prose
+  originality: fully_synthetic
+  prohibition:
+    - no official wording
+    - no official characters or institutional setting
+    - no official event sequence
+    - no official paragraph-semantic template
+
+verified_question_functions_from_official_self_evaluation:
+  content_understanding_questions: [1, 7, 8, 9, 11]
+  chinese_word_or_sentence_choice_questions: [2, 3, 5, 6, 10]
+  inappropriate_choice_questions: [4]
+
+verified_slot_groups:
+  note: Public problem disclosure omits copyright-protected article material at the beginning. Do not invent hidden surface details. The following later groups are visible/verified; Q1-Q2 jointly occupy 37-39.
+  Q1_Q2_combined: [37, 38, 39]
+  Q3: [40]
+  Q4: [41]
+  Q5: [42]
+  Q6: [43]
+  Q7: [44]
+  Q8: [45]
+  Q9: [46]
+  Q10: [47, 48]
+  Q11: [49, 50]
+
+surface_features:
+  - vocabulary/phrase choice fitting discourse flow
+  - sentence choice fitting a blank/context
+  - inappropriate lexical choice
+  - underlined phrase/sentence interpretation
+  - content and reason comprehension
+  - shared-option multi-slot lexical fill
+  - whole-text consistency multi-select
+
+quality_calibration:
+  lexical_questions:
+    - options should compete within the same part of speech and nearby semantic field
+    - do not make the key recoverable by spotting one obvious antonym among three near-synonyms
+    - prefer cases where at least two options are locally possible and broader context resolves the choice
+  interpretation_questions:
+    - distractors should reuse real textual information with a scope, causal, temporal, or perspective error
+    - avoid one-line paraphrase questions whose wrong options are unrelated to the passage
+  distractor_design:
+    - every serious reading distractor should preserve at least one true proposition or real passage detail whenever possible
+    - make the decisive error local: one wrong scope, causal link, temporal relation, actor, generalization, or responsibility assignment
+    - do not use absurd reversals such as cancelling an activity that the passage explicitly says continued unless the option also contains enough true detail to compete
+    - a student should need to locate the exact logical mismatch, not merely choose the only reasonable-sounding option
+    - for multi-select whole-text items, wrong options should be partially supported by the passage and fail on one added or overgeneralized clause
+  late_questions:
+    - the final three questions must not ask the same thesis three times in different wording
+    - distribute inference, organization/summary, and whole-text consistency across the late set
+    - at least one task should require integrating separated paragraphs
+    - Q9-Q11 should test different cognitive operations even when they draw on overlapping paragraphs
+
+schema_requirements:
+  article:
+    - paragraphs with stable paragraph_id
+    - anchors with stable anchor_id
+  anchor_kinds:
+    - blank
+    - underline
+    - phrase
+    - sentence
+    - time_marker
+  tasks:
+    - refer to anchors by id, never by substring search
+    - preserve question_no separately from answer numbers
+
+human_qa:
+  - article_naturalness
+  - paragraph_coherence
+  - anchor_accuracy
+  - answer_uniqueness
+  - distractor_plausibility
+  - lexical_distractor_strength
+  - local_options_compete
+  - whole_text_reasoning_quality
+  - late_question_operation_diversity
+  - shortcut_resistance
+  - official_difficulty_calibrated
+  - copyright/originality check
+  - booklet pagination

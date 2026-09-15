@@ -1,108 +1,60 @@
-# TABITO 共通テスト中国語 Q4 ブラインド独立審査 v0.4.2
+# TABITO 共通テスト中国語 Q4 ブラインド独立審査 v0.5
 
-以下は旅人教育の候補問題である。標準解答・根拠・解説・生成者の自己評価は意図的に削除されている。
+以下の候補を、**受験者として独立に解いた後、命題レビュアーとして審査する。**
 
-まず受験者として独立に解き、その後に命題者として品質を審査する。
+標準解答、rationale、evidence locator、dependency label、生成者のquality note等は意図的に削除されている。見えていない作者側metadataを推測して補わず、学生に見える題面だけで判断すること。
 
 ## Candidate binding
 
-この審査は次の候補版にだけ有効である。
+以下は問題内容ではなく保存先と内容バージョンを識別する opaque binding である。解答の手掛かりとして使わず、出力 JSON に一字も変えず返すこと。
 
-```text
-{{ candidate_fingerprint }}
-```
+- `item_id`: `{{ item_id }}`
+- `candidate_fingerprint`: `{{ candidate_fingerprint }}`
 
-出力 JSON の `candidate_fingerprint` に、この文字列を**一字も変更せず**そのまま返すこと。
-これは内容のヒントではなく、審査対象版を取り違えないための opaque identifier である。
+## 審査原則
 
-## 最重要
+1. まず全資料・設問・選択肢だけを使い、各taskを独立に解く。
+2. 正答または正答集合が一意か確認する。
+3. Production Profileをauthoritative contractとして、指定2026 familyのsurface、情報密度、task progressionが成立しているか確認する。
+4. Reference Patternsは観察例として使い、例示された資料型を新しい必須条件へ膨張させない。
+5. 最短shortcutを探す。一語、常識、選択肢の長さ、露骨な反義語、単一資料だけで解ける場合はissueにする。
+6. 二つ以上の資料を使う必要があるように見えるtaskはsource ablationする。各資料を一つずつ隠したと仮定し、残りだけで正答が一意なら実質的統合ではない。
+7. distractorが正答から離れすぎず、条件・範囲・主体・時点・因果等の局所差で競合しているか確認する。
+8. visual / table / chart / flow が装飾ではなく答えに必要か確認する。
+9. 中国語が自然な現代簡体字、日本語設問が簡潔な試験文体か確認する。
+10. 公式題の本文・数値・case・判断ロジックのreskinになっていないか確認する。
 
-2026本試験・追試験を、抽象的能力だけでなく**Q4のsurface grammar と冊子上の読書体験**として審査基準にする。
+## Verdict
 
-full Q4 では、候補が `main_2026` / `makeup_2026` のどちらのfamilyを狙っているかを確認し、次を審査する。
+- `pass`: 独立解答が一意で、family surface、難度、誤答競合、情報依存に重大な問題がない
+- `revise`: 正答は成立するが、易しすぎる、shortcut、名目だけの複数資料統合、弱い誤答、worksheet化等がある
+- `reject`: 複数解、正答不成立、重大な言語/資料矛盾、実質的な公式題コピー等
 
-### 冊子導入
-- `subsection_intros_ja.A/B` が自然な日本語で、誰が何のために資料を読むか分かるか。
-- 導入文が正答に必要な結論を先に言っていないか。
-- BがAの単純な言換えではなく、後半で情報の用途や場面が変わることを自然に示しているか。
-- genericな「次の資料を読んで答えよ」だけで済ませていないか。
+## Production Profile — authoritative contract
 
-### 共通A 21〜28
-- 21・22：中国語会話文 + 二つ選べ
-- 23〜26：調査・表・グラフ・説明文＋図等による4枠の資料読解
-- 27・28：講演まとめ / memo / まとまりある説明資料 + 二つ選べ
+{{ generation_profile_yaml }}
 
-### main_2026 B
-- 29・30：checklist / 条件資料 + 二つ選べ
-- 31〜33：profile/candidate照合2枠 + 必要な追加情報の推論1枠
-- 34〜36：rule/flow/process の一般原則1枠 + 二つのcase適用2枠
-
-### makeup_2026 B
-- 29・30：時系列運用情報を使った計画・日時等の二つ選択
-- 31〜34：compound operational source 2枠 + 別のpractical document 2枠
-- 35・36：reflection / summary / opinion text + 二つ選べ
-
-この型から大きく外れ、ただの「多資料読解」になっている場合は、内容が良くても `revise` 以上とする。
-
-## 審査順序
-
-1. A/B導入文、全資料、設問だけを受験者として読む。
-2. 各taskを独立に解く。
-3. 正答集合が一意か確認する。
-4. 21〜36の配置が選択した2026 familyのsurface grammarに沿うか確認する。
-5. 中国語、日本語設問、誤答肢、資料密度、題面の読みやすさを評価する。
-6. 公式本文・case・数値の軽い言換えになっていないか確認する。
-
-## 重点項目
-
-- A/B導入文が自然で、資料の役割を説明しすぎていないか
-- Aが「会話2 → 調査資料4 → 講演/memo2」になっているか
-- Bがmain型またはmakeup型として明確に成立しているか
-- 本試型と追試型を無秩序に混ぜていないか
-- 資料が細切れカード化されず、共通テスト冊子らしい情報密度があるか
-- 日本語が課題を設定し、中国語資料が実際の情報を担っているか
-- 二つ選べが自然に多く、単選ばかりのworksheetになっていないか
-- 図・地図・フローが装飾ではなく本当に関係を表しているか
-- 正答肢・誤答肢に自然な読解差があるか
-- 数値問題が重い計算ではなく情報読解になっているか
-- 中国語が自然な現代簡体字か
-- 日本語設問・導入文がDNC冊子に置いて違和感のない文体か
-- ペット→別商品、自動運転→別交通のような名詞置換reskinになっていないか
-- 逆に、原创性を意識しすぎて2026の題型から離れていないか
-
-## 2026 Blueprint
-
-{{ blueprint_yaml }}
-
-## 2026 Q4 Reference Patterns
+## 2026 Reference Patterns
 
 {{ reference_patterns_yaml }}
 
-## 2026 Q4 Surface Grammar
-
-{{ surface_grammar }}
-
-## Q4 Template
+## Output Template reference
 
 {{ template_yaml }}
-
-## Detailed Item-Writing Direction
-
-{{ item_writing_direction }}
-
-## 出力
-
-JSON のみ。
-
-必須フィールド：
-- schema_version: `"0.2"`
-- item_id
-- candidate_fingerprint: 上記 Candidate binding の fingerprint をそのまま返す
-- verdict: `pass` / `revise` / `reject`
-- independent_answers: `{task_id: [correct_option, ...]}`
-- issues: severity(`high`/`medium`/`low`), task_id(optional), category, description, suggested_fix
-- overall_comment_ja
 
 ## Blind Candidate
 
 {{ item_json }}
+
+## 出力
+
+JSONのみ。Markdown fenceは禁止。
+
+必須フィールド：
+- schema_version: `"0.2"`
+- item_id: 上の opaque binding をそのまま返す
+- candidate_fingerprint: 上の opaque binding をそのまま返す
+- verdict: `pass` / `revise` / `reject`
+- independent_answers: `{task_id: [correct_option, ...]}`
+- issues: severity, task_id(optional), category, description, suggested_fix
+- overall_comment_ja

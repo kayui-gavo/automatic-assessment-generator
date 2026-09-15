@@ -1,0 +1,230 @@
+{
+  "schema_version": "0.5",
+  "section": "Q3",
+  "section_id": "TABITO-CN-PILOT-EXAM-001-Q3",
+  "title_ja": "表現力",
+  "score": 40,
+  "tasks": [
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-A1",
+      "subsection": "A",
+      "order": 1,
+      "direction": "ja_to_zh",
+      "source_text": "私はもうこの本を二回読んだが、まだ全部は理解できていない。",
+      "prompt_ja": "日本語の意味に最も近い中国語を選べ。",
+      "options": [
+        "Wǒ hái méi kàn zhè běn shū liǎng biàn, suǒyǐ bù míngbai.",
+        "Wǒ yǐjīng kàn le zhè běn shū liǎng biàn, kěshì hái méiyǒu wánquán kàn dǒng.",
+        "Wǒ yǐjīng wánquán kàn dǒng zhè běn shū le, érqiě kàn le liǎng biàn.",
+        "Wǒ kàn le liǎng běn shū, dànshì zhè běn hái méi kàn wán."
+      ],
+      "answer_slot": {"slot_id": "Q3-13", "answer_number": 13, "correct_option": 2},
+      "rationale_ja": "既に二回読んだという完了経験と、まだ完全には理解できていないという未達成状態の両方を表している。",
+      "distractor_error_types": {
+        "1": ["aspect", "causal_relation"],
+        "3": ["scope", "aspect"],
+        "4": ["lexical_meaning", "undertranslation"]
+      },
+      "distractor_rationales_ja": {
+        "1": "「まだ二回読んでいない」となり、既読二回の意味が逆転するうえ、原文にない因果関係を加えている。",
+        "3": "「完全に理解した」としており、原文の「まだ全部は理解できない」と逆。",
+        "4": "「二冊読んだ」「まだ読み終えていない」となり、冊数と理解の意味がずれる。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-A2",
+      "subsection": "A",
+      "order": 2,
+      "direction": "ja_to_zh",
+      "source_text": "雨が降っても、予約した博物館には行くつもりです。",
+      "prompt_ja": "日本語の意味に最も近い中国語を選べ。",
+      "options": [
+        "Yīnwèi xià yǔ, wǒ bù dǎsuàn qù yùyuē de bówùguǎn le.",
+        "Zhǐyào bù xià yǔ, wǒ jiù qù yùyuē de bówùguǎn.",
+        "Chúfēi xià yǔ, wǒ cái dǎsuàn qù yùyuē de bówùguǎn.",
+        "Jiùsuàn xià yǔ, wǒ yě dǎsuàn qù yǐjīng yùyuē hǎo de bówùguǎn."
+      ],
+      "answer_slot": {"slot_id": "Q3-14", "answer_number": 14, "correct_option": 4},
+      "rationale_ja": "「就算……也……」が「たとえ雨でも」の譲歩を表し、「打算去」が行くつもりであることを表す。",
+      "distractor_error_types": {
+        "1": ["causal_relation", "modality"],
+        "2": ["scope", "modality"],
+        "3": ["scope", "causal_relation"]
+      },
+      "distractor_rationales_ja": {
+        "1": "雨を行かない理由にしており、原文の譲歩と逆。",
+        "2": "「雨が降らなければ」という条件に変わっている。",
+        "3": "「雨が降る場合に限って行く」という意味になり、条件関係が逆転する。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-A3",
+      "subsection": "A",
+      "order": 3,
+      "direction": "ja_to_zh",
+      "source_text": "先生は私に、答えをすぐに書くのではなく、まず問題文をもう一度読むように言った。",
+      "prompt_ja": "日本語の意味に最も近い中国語を選べ。",
+      "options": [
+        "Lǎoshī ràng wǒ bú yào mǎshàng xiě dá'àn, ér shì xiān bǎ tígān zài dú yí biàn.",
+        "Lǎoshī ràng wǒ xiān xiě dá'àn, ránhòu bú yào zài kàn tígān.",
+        "Lǎoshī shuō tā yào mǎshàng xiě dá'àn, ràng wǒ děng yíxià.",
+        "Lǎoshī ràng wǒ bú yào dú tígān, zhǐ yào bǎ dá'àn zài xiě yí biàn."
+      ],
+      "answer_slot": {"slot_id": "Q3-15", "answer_number": 15, "correct_option": 1},
+      "rationale_ja": "「不要……而是先……」で「すぐ答えを書くのではなく、まず…」という対比と順序を表している。",
+      "distractor_error_types": {
+        "2": ["scope", "aspect"],
+        "3": ["subject_object", "pragmatic_force"],
+        "4": ["scope", "lexical_meaning"]
+      },
+      "distractor_rationales_ja": {
+        "2": "行動順序を逆にし、さらに問題文を読まない意味を加えている。",
+        "3": "答えを書く主体を先生に変えており、指示内容も異なる。",
+        "4": "問題文を読まないようにという逆の指示になっている。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-A4",
+      "subsection": "A",
+      "order": 4,
+      "direction": "ja_to_zh",
+      "source_text": "駅に着いてから、財布を家に忘れたことに気づいた。",
+      "prompt_ja": "日本語の意味に最も近い中国語を選べ。",
+      "options": [
+        "Wǒ wàng le dài qiánbāo, suǒyǐ méiyǒu qù chēzhàn.",
+        "Wǒ zài jiā lǐ jiù fāxiàn qiánbāo bù jiàn le, ránhòu qù le chēzhàn.",
+        "Dào le chēzhàn yǐhòu, wǒ cái fāxiàn bǎ qiánbāo wàng zài jiā lǐ le.",
+        "Dào le chēzhàn yǐhòu, wǒ cái xiǎngqǐ yào bǎ qiánbāo sòng huí jiā."
+      ],
+      "answer_slot": {"slot_id": "Q3-16", "answer_number": 16, "correct_option": 3},
+      "rationale_ja": "「到了……以后……才发现……」で、駅到着後に初めて忘れ物に気づいたという時間関係を表す。",
+      "distractor_error_types": {
+        "1": ["causal_relation", "undertranslation"],
+        "2": ["scope", "aspect"],
+        "4": ["lexical_meaning", "pragmatic_force"]
+      },
+      "distractor_rationales_ja": {
+        "1": "駅へ行かなかったという結果を加えており、原文と異なる。",
+        "2": "気づいた時点を家にいる時へ変えている。",
+        "4": "財布を家に忘れたのではなく、家へ送り返そうと思い出した意味になっている。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-B1",
+      "subsection": "B",
+      "order": 5,
+      "direction": "zh_to_ja",
+      "source_text": "Tā bú shì bù xiǎng bāngmáng, zhǐshì jīntiān shíjiān shízài tài jǐn le.",
+      "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
+      "options": [
+        "彼は手伝いたくないので、今日は時間を空けないことにした。",
+        "彼は手伝いたくないわけではなく、ただ今日は本当に時間に余裕がないだけだ。",
+        "彼は今日だけは手伝いたいが、時間は十分にある。",
+        "彼は手伝う必要がないと思っているので、今日は急いでいる。"
+      ],
+      "answer_slot": {"slot_id": "Q3-17", "answer_number": 17, "correct_option": 2},
+      "rationale_ja": "「不是不想……，只是……」は、意欲を否定せず、実際の制約だけを理由として述べる表現。",
+      "distractor_error_types": {
+        "1": ["scope", "causal_relation"],
+        "3": ["scope", "lexical_meaning"],
+        "4": ["modality", "causal_relation"]
+      },
+      "distractor_rationales_ja": {
+        "1": "「不是不想」の二重否定を単純な否定にしている。",
+        "3": "時間に余裕がないという核心を逆にしている。",
+        "4": "「手伝う必要がない」という義務判断は原文にない。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-B2",
+      "subsection": "B",
+      "order": 6,
+      "direction": "zh_to_ja",
+      "source_text": "Zhè jiàn shì rúguǒ bù xiān wèn qīngchu, hěn róngyì yīnwèi lǐjiě cuò le ér fǎn'ér gěi duìfāng tiān máfan.",
+      "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
+      "options": [
+        "この件は、先に聞いて確認すれば、相手に迷惑をかけることは絶対にない。",
+        "この件は、相手が誤解した場合にだけ、こちらが質問すればよい。",
+        "この件は、よく分からなくても先に進めたほうが、かえって相手の助けになる。",
+        "この件は、先にきちんと確認しないと、誤解したためにかえって相手へ迷惑を増やしやすい。"
+      ],
+      "answer_slot": {"slot_id": "Q3-18", "answer_number": 18, "correct_option": 4},
+      "rationale_ja": "条件「先に確認しない場合」と、誤解によって結果的に相手の負担を増やすという因果関係を保っている。",
+      "distractor_error_types": {
+        "1": ["scope", "overtranslation"],
+        "2": ["subject_object", "scope"],
+        "3": ["causal_relation", "pragmatic_force"]
+      },
+      "distractor_rationales_ja": {
+        "1": "「很容易」を「絶対にない」に変え、条件の向きも違う。",
+        "2": "誰が誤解するかと質問の条件を作り替えている。",
+        "3": "確認不要としており、さらに迷惑が助けになるという逆の意味。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-B3",
+      "subsection": "B",
+      "order": 7,
+      "direction": "zh_to_ja",
+      "source_text": "Wǒ yuánlái yǐwéi tā huì jùjué, méi xiǎngdào tā bùdàn tóngyì le, hái zhǔdòng tí chū yào bāngmáng.",
+      "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
+      "options": [
+        "私は彼が断ると思っていたが、意外にも承諾しただけでなく、自分から手伝おうと申し出た。",
+        "私は彼が承諾すると思っていたので、こちらから手伝いを断った。",
+        "私は彼が断ったあとで、自分から手伝うことにした。",
+        "私は彼が手伝いを申し出るとは思っていたが、結局は承諾しなかった。"
+      ],
+      "answer_slot": {"slot_id": "Q3-19", "answer_number": 19, "correct_option": 1},
+      "rationale_ja": "予想「拒絶」→意外な結果「同意」→さらに「自発的に手伝いを申し出る」という三段階をすべて保っている。",
+      "distractor_error_types": {
+        "2": ["scope", "subject_object"],
+        "3": ["subject_object", "aspect"],
+        "4": ["scope", "aspect"]
+      },
+      "distractor_rationales_ja": {
+        "2": "当初の予想を「承諾する」に変え、手伝いを断る主体も違う。",
+        "3": "彼の承諾と自発的な申し出を失い、主体を自分に変えている。",
+        "4": "予想と結果を逆転させている。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-B4",
+      "subsection": "B",
+      "order": 8,
+      "direction": "zh_to_ja",
+      "source_text": "Yǔqí yìzhí děng zuì piányi de piào, bùrú xiān xuǎn yí ge shíjiān héshì de chēcì.",
+      "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
+      "options": [
+        "一番安い切符が出るまで待ってから、時間の合う列車を探したほうがよい。",
+        "時間の合う列車より、いつまでも一番安い切符を待つほうがよい。",
+        "一番安い切符をいつまでも待つより、まず時間の合う列車を選んだほうがよい。",
+        "一番安い切符と時間の合う列車の両方が見つかるまで、何も決めないほうがよい。"
+      ],
+      "answer_slot": {"slot_id": "Q3-20", "answer_number": 20, "correct_option": 3},
+      "rationale_ja": "「与其……不如……」は前者より後者を選ぶことを勧める比較構文である。",
+      "distractor_error_types": {
+        "1": ["scope", "pragmatic_force"],
+        "2": ["scope", "pragmatic_force"],
+        "4": ["overtranslation", "pragmatic_force"]
+      },
+      "distractor_rationales_ja": {
+        "1": "「先に列車を選ぶ」ではなく、安い切符を待つことを優先している。",
+        "2": "比較の推奨方向を逆にしている。",
+        "4": "両条件がそろうまで決めないという原文にない方針を加えている。"
+      }
+    }
+  ],
+  "workflow": {
+    "state": "draft",
+    "generation_mode": "manual_chat",
+    "blueprint_version": "R8-2026-full-v1"
+  }
+}

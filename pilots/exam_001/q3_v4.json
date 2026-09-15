@@ -1,0 +1,194 @@
+{
+  "schema_version": "0.5",
+  "section": "Q3",
+  "section_id": "TABITO-CN-PILOT-EXAM-001-Q3",
+  "title_ja": "表現力",
+  "score": 40,
+  "tasks": [
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-A1",
+      "subsection": "A",
+      "order": 1,
+      "direction": "ja_to_zh",
+      "source_text": "会議は3時に始まることになっているが、私は10分前には着いていたい。",
+      "prompt_ja": "日本語の意味に最も近い中国語を選べ。",
+      "options": [
+        "Huìyì dìng yú sān diǎn kāishǐ, dàn wǒ xiǎng sān diǎn zài dào.",
+        "Huìyì dìng yú sān diǎn kāishǐ, dàn wǒ xiǎng tíqián shí fēnzhōng dào.",
+        "Huìyì dìng yú sān diǎn kāishǐ, dàn wǒ xiǎng tíqián shí fēnzhōng líkāi.",
+        "Huìyì dìng yú sān diǎn kāishǐ, dàn wǒ xiǎng tíqián shí fēnzhōng kāishǐ."
+      ],
+      "answer_slot": {"slot_id": "Q3-13", "answer_number": 13, "correct_option": 2},
+      "rationale_ja": "会議は3時開始の予定であり、話者自身は10分前に到着したいという二つの情報をそのまま保っている。",
+      "distractor_error_types": {"1": ["aspect", "pragmatic_force"], "3": ["lexical_meaning"], "4": ["subject_object", "lexical_meaning"]},
+      "distractor_rationales_ja": {
+        "1": "会議開始時刻は同じだが、話者の希望を『3時になってから到着する』に変えている。",
+        "3": "時間関係は保つが、『着く』を『出発する』に変えている。",
+        "4": "10分前という時間は保つが、話者が到着したいのではなく『開始したい』という意味になる。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-A2",
+      "subsection": "A",
+      "order": 2,
+      "direction": "ja_to_zh",
+      "source_text": "この薬は、症状がなくなっても、医者に言われた日までは飲み続けてください。",
+      "prompt_ja": "日本語の意味に最も近い中国語を選べ。",
+      "options": [
+        "Zhè ge yào zhèngzhuàng yí xiāoshī jiù kěyǐ tíng, bú yòng děng dào yīshēng shuō de nà tiān.",
+        "Zhè ge yào yào yìzhí chī dào zhèngzhuàng xiāoshī, zhīhòu jiù bú yòng zài chī le.",
+        "Zhǐyǒu zhèngzhuàng hái zài de shíhou, cái yào chī dào yīshēng shuō de nà tiān.",
+        "Zhè ge yào jíshǐ zhèngzhuàng xiāoshī le, yě qǐng yìzhí chī dào yīshēng shuō de nà tiān."
+      ],
+      "answer_slot": {"slot_id": "Q3-14", "answer_number": 14, "correct_option": 4},
+      "rationale_ja": "『即使……也……』で症状消失後も服用を続け、医師に指定された日までという終点も保持している。",
+      "distractor_error_types": {"1": ["scope", "modality"], "2": ["scope"], "3": ["scope", "causal_relation"]},
+      "distractor_rationales_ja": {
+        "1": "症状が消えたら服用をやめてよいとしており、継続条件を逆転させる。",
+        "2": "服用の終点を『症状が消えるまで』に変え、医師指定の日を落としている。",
+        "3": "医師指定日まで飲むという終点は残すが、症状が残っている場合だけという条件を加えている。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-A3",
+      "subsection": "A",
+      "order": 3,
+      "direction": "ja_to_zh",
+      "source_text": "資料は全部読んだわけではないが、結論を理解するには十分だった。",
+      "prompt_ja": "日本語の意味に最も近い中国語を選べ。",
+      "options": [
+        "Zīliào wǒ bìng méiyǒu quánbù kàn wán, dàn yǐjīng zúyǐ ràng wǒ lǐjiě jiélùn le.",
+        "Zīliào wǒ yǐjīng quánbù kàn wán le, dàn háishi bù zúyǐ lǐjiě jiélùn.",
+        "Zīliào wǒ bìng méiyǒu quánbù kàn wán, suǒyǐ hái bùnéng lǐjiě jiélùn.",
+        "Zīliào wǒ yǐjīng quánbù kàn wán le, érqiě yě zúyǐ lǐjiě jiélùn le."
+      ],
+      "answer_slot": {"slot_id": "Q3-15", "answer_number": 15, "correct_option": 1},
+      "rationale_ja": "未読部分が残るという限定と、それでも結論理解には十分だったという逆接の両方を表す。",
+      "distractor_error_types": {"2": ["scope", "pragmatic_force"], "3": ["causal_relation", "modality"], "4": ["scope"]},
+      "distractor_rationales_ja": {
+        "2": "資料を全部読んだことに変え、結論理解には不十分だったとして結果も反転させる。",
+        "3": "未読部分は保つが、それを結論を理解できない理由に変えている。",
+        "4": "結論理解には十分という点は保つが、『全部読んだわけではない』という限定を失う。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-A4",
+      "subsection": "A",
+      "order": 4,
+      "direction": "ja_to_zh",
+      "source_text": "彼に直接頼んだのではなく、田中さんを通して伝えてもらった。",
+      "prompt_ja": "日本語の意味に最も近い中国語を選べ。",
+      "options": [
+        "Wǒ zhíjiē qǐng tā bāngmáng, zhǐshì yě gàosu le Tiánzhōng xiānsheng.",
+        "Wǒ méi zhíjiē qǐng tā, ér shì qǐng Tiánzhōng xiānsheng zìjǐ bāng wǒ zuò le.",
+        "Wǒ méi zhíjiē qǐng tā, ér shì qǐng Tiánzhōng xiānsheng tì wǒ zhuǎngào tā.",
+        "Tā méi zhíjiē qǐng wǒ, ér shì qǐng Tiánzhōng xiānsheng tì tā zhuǎngào wǒ."
+      ],
+      "answer_slot": {"slot_id": "Q3-16", "answer_number": 16, "correct_option": 3},
+      "rationale_ja": "話者が本人には直接頼まず、田中さんを仲介にして本人へ伝えてもらったという主体・経路を保つ。",
+      "distractor_error_types": {"1": ["scope"], "2": ["subject_object", "lexical_meaning"], "4": ["subject_object"]},
+      "distractor_rationales_ja": {
+        "1": "田中さんへの連絡は残るが、本人に直接頼んだとして否定範囲を反転させる。",
+        "2": "本人に直接頼まない点は同じだが、田中さんに『伝言』ではなく仕事そのものを依頼している。",
+        "4": "伝言という構造は似るが、依頼する側と受ける側を逆転させる。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-B1",
+      "subsection": "B",
+      "order": 5,
+      "direction": "zh_to_ja",
+      "source_text": "Wǒ bú shì fǎnduì zhège fāng'àn, zhǐshì juéde xiànzài jiù juédìng hái tài zǎo.",
+      "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
+      "options": [
+        "私はこの案に反対で、今決めるのはまだ早すぎると思っている。",
+        "私はこの案に反対しているのではなく、ただ今の時点でもう決めてしまうのはまだ早いと思っている。",
+        "私はこの案には賛成なので、今すぐ決めても早すぎることはないと思っている。",
+        "私はこの案に反対しているわけではないが、すでに決まったのが早すぎたと思っている。"
+      ],
+      "answer_slot": {"slot_id": "Q3-17", "answer_number": 17, "correct_option": 2},
+      "rationale_ja": "『不是反对』で案への反対を否定し、『现在就决定还太早』で決定そのものではなく決定時期への慎重さを述べる。",
+      "distractor_error_types": {"1": ["scope"], "3": ["modality", "pragmatic_force"], "4": ["aspect"]},
+      "distractor_rationales_ja": {
+        "1": "時期が早いという判断は同じだが、『反対ではない』を『反対だ』に変えている。",
+        "3": "案への肯定を強め、今決めてもよいという逆の情態判断に変える。",
+        "4": "反対ではない点は保つが、『これから決める』を『すでに決まった』に変えている。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-B2",
+      "subsection": "B",
+      "order": 6,
+      "direction": "zh_to_ja",
+      "source_text": "Tā běnlái shuō zhōuwǔ yǒu kòng, kě hòulái yòu shuō yěxǔ yào jiābān.",
+      "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
+      "options": [
+        "彼はもともと金曜日は暇がないと言っていたが、あとで残業しないかもしれないと言った。",
+        "彼は金曜日は暇だと言ったあと、必ず残業すると言い直した。",
+        "彼は金曜日は暇だと言っていたが、あとになって土曜日に残業するかもしれないと言った。",
+        "彼はもともと金曜日は暇だと言っていたが、あとになって残業になるかもしれないと言った。"
+      ],
+      "answer_slot": {"slot_id": "Q3-18", "answer_number": 18, "correct_option": 4},
+      "rationale_ja": "当初は金曜日に時間があると述べ、後から残業の可能性を示したという情報更新を正確に保つ。",
+      "distractor_error_types": {"1": ["scope", "modality"], "2": ["modality"], "3": ["scope"]},
+      "distractor_rationales_ja": {
+        "1": "金曜日に時間があるという最初の情報と、残業の可能性の向きをそれぞれ反転させる。",
+        "2": "金曜日に暇という点は保つが、『也许』を『必ず』に強めている。",
+        "3": "可能性の程度は保つが、残業する日を金曜日から土曜日に変えている。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-B3",
+      "subsection": "B",
+      "order": 7,
+      "direction": "zh_to_ja",
+      "source_text": "Yǔqí gǎnjíān bǎ suǒyǒu shì dōu zuò wán, bùrú xiān bǎ zuì zhòngyào de liǎng jiàn zuò hǎo.",
+      "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
+      "options": [
+        "急いですべてを終わらせるより、まず最も重要な二つをきちんと仕上げたほうがよい。",
+        "最も重要な二つを終えてから、急いですべてを片づけなければならない。",
+        "すべてを終わらせることより、重要な二つを後回しにしたほうがよい。",
+        "時間があるなら、最も重要な二つだけでなくすべてを終えたほうがよい。"
+      ],
+      "answer_slot": {"slot_id": "Q3-19", "answer_number": 19, "correct_option": 1},
+      "rationale_ja": "『与其A，不如B』の比較選好を保ち、A=急いで全部終えること、B=まず重要な二つをきちんと行うこととしている。",
+      "distractor_error_types": {"2": ["pragmatic_force", "overtranslation"], "3": ["scope", "lexical_meaning"], "4": ["scope", "modality"]},
+      "distractor_rationales_ja": {
+        "2": "二つを先にする点は似るが、その後すべてを急いで終える義務まで加える。",
+        "3": "二つと全体の対比は残るが、『先にやる』を『後回しにする』へ変える。",
+        "4": "全体と二つという対象は残るが、『与其……不如……』の選好を条件文へ変えている。"
+      }
+    },
+    {
+      "task_type": "translation_choice",
+      "task_id": "Q3-B4",
+      "subsection": "B",
+      "order": 8,
+      "direction": "zh_to_ja",
+      "source_text": "Zhè běn shū wǒ hái méi kàn wán, búguò zhìshǎo xiànzài yǐjīng néng lǐjiě tā wèishénme zhème shòu huānyíng le.",
+      "prompt_ja": "中国語の意味に最も近い日本語を選べ。",
+      "options": [
+        "この本はまだ読み終えておらず、なぜ人気があるのかもまだ理解できていない。",
+        "この本はもう読み終えたので、少なくとも今はなぜ人気があるのか理解できる。",
+        "この本はまだ読み終えていないが、少なくとも今ではなぜこれほど人気があるのかは理解できるようになった。",
+        "この本はまだ読み始めていないが、少なくとも人気の理由だけは前から知っていた。"
+      ],
+      "answer_slot": {"slot_id": "Q3-20", "answer_number": 20, "correct_option": 3},
+      "rationale_ja": "未完読という状態と、それにもかかわらず現在は人気の理由を理解できるようになったという到達点を両立している。",
+      "distractor_error_types": {"1": ["scope", "aspect"], "2": ["aspect", "causal_relation"], "4": ["aspect", "pragmatic_force"]},
+      "distractor_rationales_ja": {
+        "1": "未完読は保つが、人気の理由も理解できていないとして後半を反転させる。",
+        "2": "人気の理由を理解している点は同じだが、完読済みにし、さらに因果関係を加えている。",
+        "4": "人気の理由を知る点は似るが、まだ読み始めてもいないことと以前から知っていたことを加える。"
+      }
+    }
+  ],
+  "workflow": {"state": "draft", "generation_mode": "manual_chat", "blueprint_version": "R8-2026-full-v1"}
+}

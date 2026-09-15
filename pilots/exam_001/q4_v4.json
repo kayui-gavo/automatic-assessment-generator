@@ -1,0 +1,384 @@
+{
+  "schema_version": "0.2",
+  "item_id": "TABITO-CN-PILOT-EXAM-001-Q4",
+  "section": "Q4",
+  "scope": "full",
+  "surface_family": "main_2026",
+  "title_ja": "地域防災体験イベント",
+  "topic": "地域防災イベントの調査と当日運営",
+  "scenario_summary_ja": "高校生の李娜と田中が地域の防災体験イベントについて住民調査を行い、結果と担当者の説明を整理する。その後、実際の参加条件、スタッフ配置、当日の体験ルールを使って運営判断を行う。",
+  "subsection_intros_ja": {
+    "A": "李娜と田中は、地域の防災体験イベントをより参加しやすくするため、住民が知りたいことや参加しない理由を調べることにした。",
+    "B": "調査後、二人はイベント準備にも参加し、参加者への案内、スタッフ配置、当日の体験方法を確認することになった。"
+  },
+  "difficulty": "official_like",
+  "materials": [
+    {
+      "type": "dialogue",
+      "material_id": "A-M1",
+      "subsection": "A",
+      "order": 1,
+      "title": "李娜和田中的对话",
+      "body": "田中：社区下个月要办防灾体验日，可是去年高中生参加得不多。\n李娜：也许不只是宣传不够。大家可能不知道去了能学到什么。\n田中：那我们问问居民最想了解哪些防灾问题，也看看他们为什么不愿意参加。\n李娜：对。只问‘来不来’没有用，还要知道他们做决定时在意什么。\n田中：调查完以后，我们再把结果拿给活动负责人看，听听今年准备怎么改。\n李娜：这样比较容易判断哪些改变真的和调查结果有关。",
+      "glosses": {"防灾": "防災", "社区": "地域コミュニティ"}
+    },
+    {
+      "type": "table",
+      "material_id": "A-M2",
+      "subsection": "A",
+      "order": 3,
+      "bundle_id": "A-SURVEY",
+      "title": "参加防灾活动时最想了解的内容",
+      "columns": ["项目", "选择人数"],
+      "rows": [["甲", "58"], ["乙", "46"], ["避难所里可以带什么", "31"], ["家中怎样准备饮用水", "27"]],
+      "footnotes": ["调查对象为90名居民，每人最多选择两项。"]
+    },
+    {
+      "type": "memo",
+      "material_id": "A-M3",
+      "subsection": "A",
+      "order": 4,
+      "bundle_id": "A-SURVEY",
+      "title": "调查记录",
+      "body": "问卷中还包括“什么时候应该离开家”和“附近哪里有AED”。这两项排在前两位，而且选择前者的人数比选择后者多12人。",
+      "glosses": {"AED": "自動体外式除細動器"}
+    },
+    {
+      "type": "chart",
+      "material_id": "A-M4",
+      "subsection": "A",
+      "order": 6,
+      "title": "过去没有参加防灾活动的主要原因",
+      "chart_kind": "horizontal_bar",
+      "categories": ["不知道活动内容", "觉得只是听讲", "时间不合适", "地点太远"],
+      "series": [{"name": "人数", "values": [42, 35, 24, 11]}],
+      "y_label": "人",
+      "footnotes": ["可多选。"]
+    },
+    {
+      "type": "chart",
+      "material_id": "A-M5",
+      "subsection": "A",
+      "order": 8,
+      "title": "介绍方式改变前后的体验项目报名人数",
+      "chart_kind": "bar",
+      "categories": ["灭火器体验", "避难路线判断", "应急包整理", "急救练习"],
+      "series": [
+        {"name": "只写项目名称", "values": [26, 21, 34, 29]},
+        {"name": "写清能练习什么以后", "values": [47, 38, 42, 44]}
+      ],
+      "y_label": "人",
+      "footnotes": ["两次报名开放时间相同。"]
+    },
+    {
+      "type": "memo",
+      "material_id": "A-M6",
+      "subsection": "A",
+      "order": 10,
+      "title": "活动负责人的说明",
+      "body": "负责人说：调查以后，我们发现很多人不是觉得防灾不重要，而是不清楚活动里到底能练习什么。居民最关心的两个问题也都和‘遇到情况时怎么判断’有关。所以今年每个项目先用很短的时间说明，再马上让参加者自己做判断或操作。宣传页也不只写项目名称，而会写清楚‘参加以后能练习什么’。我们的目标不是让大家背更多知识，而是遇到情况时知道下一步该做什么。",
+      "glosses": {}
+    },
+    {
+      "type": "checklist",
+      "material_id": "B-M1",
+      "subsection": "B",
+      "order": 1,
+      "title": "参加体验项目前的确认事项",
+      "body": "・所有项目都不需要提前预约，到场后登记即可。\n・避难路线体验每小时00分从入口出发，必须穿运动鞋；12岁以下参加者要有保护者同行。\n・当天路线是否改变，会在8:00公布在入口信息板上。\n・应急包演示每组最多10人，满员时可以等下一组。\n・AED练习面向初中生以上；年龄较小的儿童可以旁观。",
+      "glosses": {"保护者": "保護者", "旁观": "見学する"}
+    },
+    {
+      "type": "profile",
+      "material_id": "B-M2",
+      "subsection": "B",
+      "order": 3,
+      "title": "三名高中生志愿者",
+      "body": "林浩：8:40—12:30可以参加。平时常用平板电脑，希望做坐着也能完成的工作。\n王菲：9:15—12:30可以参加。以前参加过小学生课外活动，希望和孩子交流。\n陈晨：8:20—11:30可以参加。不太会用平板电脑，可以在室外工作，希望做需要走动的工作。",
+      "glosses": {"平板电脑": "タブレット端末"}
+    },
+    {
+      "type": "table",
+      "material_id": "B-M3",
+      "subsection": "B",
+      "order": 4,
+      "title": "志愿者岗位",
+      "columns": ["岗位", "时间", "主要条件"],
+      "rows": [
+        ["I 信息登记", "9:00—12:00", "坐着工作／熟悉平板电脑"],
+        ["II 儿童防灾角", "9:30—12:00", "有和小学生接触的经验"],
+        ["III 物资补给", "9:00—11:00", "能搬10公斤左右的箱子"],
+        ["IV 路线体验辅助", "9:00—11:00", "在室外工作／8:30参加路线说明"]
+      ],
+      "footnotes": ["岗位时间内原则上不能中途离开。"]
+    },
+    {
+      "type": "flowchart",
+      "material_id": "B-M4",
+      "subsection": "B",
+      "order": 7,
+      "title": "避难路线体验的当日判断",
+      "nodes": [
+        {"node_id": "START", "label": "准备参加避难路线体验"},
+        {"node_id": "WARN", "label": "开始时有雷雨警报？"},
+        {"node_id": "D", "label": "D：改参加室内判断课"},
+        {"node_id": "SHOE", "label": "穿运动鞋？"},
+        {"node_id": "C", "label": "C：只做入口地图判断"},
+        {"node_id": "HOT", "label": "气温达到32℃？"},
+        {"node_id": "B", "label": "B：走短路线，并带水"},
+        {"node_id": "A", "label": "A：走普通路线"}
+      ],
+      "edges": [
+        {"source": "START", "target": "WARN"},
+        {"source": "WARN", "target": "D", "label": "是"},
+        {"source": "WARN", "target": "SHOE", "label": "否"},
+        {"source": "SHOE", "target": "C", "label": "否"},
+        {"source": "SHOE", "target": "HOT", "label": "是"},
+        {"source": "HOT", "target": "B", "label": "是"},
+        {"source": "HOT", "target": "A", "label": "否"}
+      ],
+      "footnotes": ["雷雨警报以各组开始时的信息为准。气温达到32℃时，短路线参加者必须带水。"]
+    },
+    {
+      "type": "profile",
+      "material_id": "B-M5",
+      "subsection": "B",
+      "order": 9,
+      "title": "两个参加情况",
+      "body": "甲：10:00开始时没有雷雨警报，气温33℃。穿运动鞋，也带了水。\n乙：11:00开始时没有雷雨警报，气温29℃。穿凉鞋。",
+      "glosses": {"凉鞋": "サンダル"}
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "A1",
+      "subsection": "A",
+      "order": 2,
+      "prompt_ja": "会話の内容と一致するものを二つ選べ。",
+      "options": [
+        "二人は、住民が防災活動で知りたいことと、参加しない理由の両方を調べる予定である。",
+        "田中は、昨年は高校生の参加者が最も多かったと述べている。",
+        "李娜は、参加者数だけを質問すれば十分だと考えている。",
+        "二人は、調査前に今年の活動内容を決定することになっている。",
+        "李娜は、防災活動には講義だけあればよいと考えている。",
+        "二人は、調査結果を見たあと活動責任者の説明を聞く予定である。",
+        "田中は、住民が最も気にするのは会場までの距離だと既に知っている。",
+        "今回の調査は高校生だけを対象にすることが決まっている。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [{"slot_id": "S21", "answer_number": 21, "correct_option": 1}, {"slot_id": "S22", "answer_number": 22, "correct_option": 6}],
+      "option_reuse": "forbidden",
+      "operations": ["extract", "organize"],
+      "dependency_mode": "single_source",
+      "evidence": [{"material_id": "A-M1", "locator": "田中第2・第3発話、李娜第3発話", "explanation_ja": "調査対象と、その後に責任者の説明を聞く予定が示されている。"}],
+      "rationale_ja": "会話から調査目的と次の行動を確認する。",
+      "distractor_rationales_ja": {"2": "高校生の参加は少なかった。", "3": "李娜は参加意思だけでは不十分だと述べる。", "4": "活動内容はまだ決定していない。", "5": "講義だけでよいとは述べていない。", "7": "距離が最大要因だとはまだ分からない。", "8": "高校生限定とはしていない。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "A2a",
+      "subsection": "A",
+      "order": 5,
+      "prompt_ja": "表の甲・乙に入る項目を、それぞれ選べ。選択肢は繰り返し使用しない。",
+      "options": ["什么时候应该离开家", "附近AED在哪里", "避难所可以带什么", "怎样准备饮用水", "怎么使用灭火器", "紧急电话是多少"],
+      "response_mode": "multi_slot_choice",
+      "answer_slots": [{"slot_id": "S23", "answer_number": 23, "correct_option": 1}, {"slot_id": "S24", "answer_number": 24, "correct_option": 2}],
+      "option_reuse": "forbidden",
+      "operations": ["compare", "integrate"],
+      "dependency_mode": "within_compound",
+      "evidence": [
+        {"material_id": "A-M2", "locator": "甲58人・乙46人", "explanation_ja": "甲と乙の差は12人。"},
+        {"material_id": "A-M3", "locator": "前者比後者多12人", "explanation_ja": "前者が58人の甲、後者が46人の乙。"}
+      ],
+      "rationale_ja": "人数差と調査記録を組み合わせる。",
+      "distractor_rationales_ja": {},
+      "slot_distractor_rationales_ja": {
+        "S23": {"2": "乙に対応する。", "3": "31人と既出。", "4": "27人と既出。", "5": "前二位とはされていない。", "6": "前二位とはされていない。"},
+        "S24": {"1": "甲に対応する。", "3": "31人と既出。", "4": "27人と既出。", "5": "前二位とはされていない。", "6": "前二位とはされていない。"}
+      }
+    },
+    {
+      "task_id": "A2b",
+      "subsection": "A",
+      "order": 7,
+      "prompt_ja": "グラフの内容と一致するものを一つ選べ。",
+      "options": ["不知道活动内容的人最多", "觉得地点太远的人比时间不合适的人多", "觉得只是听讲的人比不知道活动内容的人多", "时间不合适和地点太远的人合计不到30人"],
+      "response_mode": "single_choice",
+      "answer_slots": [{"slot_id": "S25", "answer_number": 25, "correct_option": 1}],
+      "option_reuse": "forbidden",
+      "operations": ["extract", "compare"],
+      "dependency_mode": "single_source",
+      "evidence": [{"material_id": "A-M4", "locator": "42、35、24、11", "explanation_ja": "42人の『不知道活动内容』が最多。"}],
+      "rationale_ja": "棒グラフの大小関係を読む。",
+      "distractor_rationales_ja": {"2": "11人は24人より少ない。", "3": "35人は42人より少ない。", "4": "24+11=35人。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "A2c",
+      "subsection": "A",
+      "order": 9,
+      "prompt_ja": "二つのグラフから読み取れることとして、最も適当なものを一つ選べ。",
+      "options": [
+        "不知道活动内容是最常见的不参加原因，而且写清能练习什么以后，四个项目的报名人数都增加了",
+        "不知道活动内容是最常见的不参加原因，而且增加人数最多的是应急包整理",
+        "觉得只是听讲是最常见的不参加原因，而且写清能练习什么以后，四个项目的报名人数都增加了",
+        "时间不合适和地点太远的人合计不到30人，而且改变介绍方式以后只有两个项目的报名人数增加了"
+      ],
+      "response_mode": "single_choice",
+      "answer_slots": [{"slot_id": "S26", "answer_number": 26, "correct_option": 1}],
+      "option_reuse": "forbidden",
+      "operations": ["compare", "integrate", "infer"],
+      "dependency_mode": "cross_source",
+      "evidence": [
+        {"material_id": "A-M4", "locator": "不知道活动内容42人、觉得只是听讲35人、时间不合适24人、地点太远11人", "explanation_ja": "『不知道活动内容』が最多である。"},
+        {"material_id": "A-M5", "locator": "26→47、21→38、34→42、29→44", "explanation_ja": "説明を具体化した後、四つの項目すべてで申込者数が増えている。"}
+      ],
+      "rationale_ja": "M4だけなら①②、M5だけなら①③が残り、両方を照合して初めて①に決まる。第一のグラフでは『不知道活动内容』が最多で、第二のグラフでは四項目すべてが増えている。",
+      "distractor_rationales_ja": {
+        "2": "第一のグラフに関する前半は正しいが、増加人数は灭火器体验が21人で最大、应急包整理は8人。",
+        "3": "第二のグラフに関する後半は正しいが、最も多い不参加理由は『不知道活动内容』である。",
+        "4": "24+11=35人で30人未満ではなく、四項目すべてで申込者数が増えている。"
+      },
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "A3",
+      "subsection": "A",
+      "order": 11,
+      "prompt_ja": "調査結果・申込データと活動責任者の方針を対応させた説明として、適当なものを二つ選べ。",
+      "options": [
+        "『不知道活动内容』は『时间不合适』より多かったので、今年は説明時間を長くし、知識を多く覚えてもらう方針にした。",
+        "『不知道活动内容』は『时间不合适』より多く、責任者が参加後に何を練習できるか明示する方針は、その問題への対応になっている。",
+        "四つの体験項目は説明を具体化した後すべて申込者が増えたので、今年は短い説明もなくして、最初から最後まで操作だけを行う。",
+        "責任者は知識暗記を目標にしないと述べており、調査でも『地点太远』が最も多い不参加理由だった。",
+        "住民が関心を持つ上位二項目は判断に関係していたが、説明を具体化した後に申込者が増えたのは四項目中二項目だけだった。",
+        "説明を具体化した後は四つの体験項目すべてで申込者が増え、責任者は短い説明のあと参加者自身に判断や操作をさせる方針を示している。",
+        "四つの体験項目すべてで申込者が増えたため、今年は高校生だけに対象を絞り、判断を必要とする活動を中心にする。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [{"slot_id": "S27", "answer_number": 27, "correct_option": 2}, {"slot_id": "S28", "answer_number": 28, "correct_option": 6}],
+      "option_reuse": "forbidden",
+      "operations": ["integrate", "evaluate", "synthesize"],
+      "dependency_mode": "cross_source",
+      "evidence": [
+        {"material_id": "A-M4", "locator": "不知道活动内容42人・时间不合适24人", "explanation_ja": "活動内容が分からないという理由が時間不一致より多い。"},
+        {"material_id": "A-M5", "locator": "26→47、21→38、34→42、29→44", "explanation_ja": "具体的説明後、四項目すべてで申込者が増えた。"},
+        {"material_id": "A-M6", "locator": "写清参加以后能练习什么／短说明后马上判断或操作", "explanation_ja": "今年の説明・体験方針。"}
+      ],
+      "rationale_ja": "②はM4とM6、⑥はM5とM6を対応させないと判断できない。データ上の課題・変化と、責任者が示した具体的方針を結びつけて読む。",
+      "distractor_rationales_ja": {"1": "前半の人数関係は正しいが、責任者は長い説明や知識暗記ではなく短い説明＋判断・操作を目標にしている。", "3": "四項目すべて増えた点は正しいが、説明をなくすのではなく短い説明を残す。", "4": "暗記を目標にしない点は正しいが、地点が遠いは11人で最少。", "5": "上位二項目が判断に関係する点は責任者説明と合うが、申込者は四項目すべて増えている。", "7": "四項目すべての増加は正しいが、高校生限定への変更は示されていない。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B1",
+      "subsection": "B",
+      "order": 2,
+      "prompt_ja": "参加条件について正しいものを二つ選べ。",
+      "options": [
+        "すべての体験項目は事前予約が必要である。",
+        "避難ルート体験に参加するには運動靴が必要である。",
+        "12歳未満でも、保護者なしで避難ルート体験に参加できる。",
+        "応急バッグ実演が満員になった場合、その日はもう参加できない。",
+        "当日のルート変更は8時に入口の情報板で確認できる。",
+        "AED練習では年齢に関係なく全員が実際に操作する。",
+        "避難ルート体験は参加者が集まり次第いつでも出発する。"
+      ],
+      "response_mode": "multi_select",
+      "answer_slots": [{"slot_id": "S29", "answer_number": 29, "correct_option": 2}, {"slot_id": "S30", "answer_number": 30, "correct_option": 5}],
+      "option_reuse": "forbidden",
+      "operations": ["extract", "condition_match"],
+      "dependency_mode": "single_source",
+      "evidence": [{"material_id": "B-M1", "locator": "避难路线体验・8:00公布", "explanation_ja": "運動靴条件とルート変更情報。"}],
+      "rationale_ja": "チェックリストから参加条件を読む。",
+      "distractor_rationales_ja": {"1": "予約不要。", "3": "12歳未満は保護者同行。", "4": "次の組を待てる。", "6": "低年齢児は見学。", "7": "毎時00分出発。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B2a",
+      "subsection": "B",
+      "order": 5,
+      "prompt_ja": "林浩と王菲に最も合う担当を、それぞれ選べ。",
+      "options": ["I", "II", "III", "IV"],
+      "response_mode": "multi_slot_choice",
+      "answer_slots": [{"slot_id": "S31", "answer_number": 31, "correct_option": 1}, {"slot_id": "S32", "answer_number": 32, "correct_option": 2}],
+      "option_reuse": "forbidden",
+      "operations": ["condition_match", "integrate"],
+      "dependency_mode": "cross_source",
+      "evidence": [
+        {"material_id": "B-M2", "locator": "林浩・王菲の時間、経験、希望", "explanation_ja": "各人の条件。"},
+        {"material_id": "B-M3", "locator": "I・IIの時間と条件", "explanation_ja": "林浩はI、王菲はII。"}
+      ],
+      "rationale_ja": "希望・経験・勤務時間を担当条件と照合する。",
+      "distractor_rationales_ja": {},
+      "slot_distractor_rationales_ja": {
+        "S31": {"2": "小学生対応経験がない。", "3": "運搬能力が不明。", "4": "8:30説明に間に合わない。"},
+        "S32": {"1": "タブレット端末の使用経験が不明。", "3": "運搬能力が不明。", "4": "8:30説明に間に合わない。"}
+      }
+    },
+    {
+      "task_id": "B2b",
+      "subsection": "B",
+      "order": 6,
+      "prompt_ja": "陈晨をIIIの担当候補にもできるか判断するために、追加で最も確認する必要があることは何か。",
+      "options": ["タブレット端末を毎日使っているか", "小学生向け活動に参加した経験があるか", "10キログラム程度の箱を運べるか", "自宅から会場まで何分かかるか"],
+      "response_mode": "single_choice",
+      "answer_slots": [{"slot_id": "S33", "answer_number": 33, "correct_option": 3}],
+      "option_reuse": "forbidden",
+      "operations": ["infer", "condition_match"],
+      "dependency_mode": "cross_source",
+      "evidence": [
+        {"material_id": "B-M2", "locator": "陈晨の時間・希望", "explanation_ja": "時間はIIIに合うが運搬能力は不明。"},
+        {"material_id": "B-M3", "locator": "III：能搬10公斤左右的箱子", "explanation_ja": "III固有の未確認条件。"}
+      ],
+      "rationale_ja": "IIIへの適合に不足する情報は、10kg程度の箱を運べるかどうかである。",
+      "distractor_rationales_ja": {"1": "Iの条件。", "2": "IIの条件。", "4": "通所時間そのものは役割条件でない。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B3a",
+      "subsection": "B",
+      "order": 8,
+      "prompt_ja": "フローチャートが示す判断の原則として、最も適当なものを一つ選べ。",
+      "options": ["只要没有雷雨警报，所有人都走普通路线", "没有雷雨警报，也还要看鞋和气温才能决定体验方式", "气温达到32℃时，路线体验一定全部取消", "只要穿运动鞋，就不用再确认天气"],
+      "response_mode": "single_choice",
+      "answer_slots": [{"slot_id": "S34", "answer_number": 34, "correct_option": 2}],
+      "option_reuse": "forbidden",
+      "operations": ["sequence", "infer"],
+      "dependency_mode": "within_compound",
+      "evidence": [{"material_id": "B-M4", "locator": "WARN→SHOE→HOTの分岐", "explanation_ja": "警報なしでも靴と気温で分岐。"}],
+      "rationale_ja": "フローチャートの分岐条件を一般化する。",
+      "distractor_rationales_ja": {"1": "靴・気温で分岐する。", "3": "32℃以上は短路线B。", "4": "最初に警報確認が必要。"},
+      "slot_distractor_rationales_ja": {}
+    },
+    {
+      "task_id": "B3b",
+      "subsection": "B",
+      "order": 10,
+      "prompt_ja": "甲・乙がフローチャートに従うと、それぞれどの結果になるか。",
+      "options": ["A", "B", "C", "D"],
+      "response_mode": "multi_slot_choice",
+      "answer_slots": [{"slot_id": "S35", "answer_number": 35, "correct_option": 2}, {"slot_id": "S36", "answer_number": 36, "correct_option": 3}],
+      "option_reuse": "forbidden",
+      "operations": ["condition_match", "sequence", "evaluate"],
+      "dependency_mode": "cross_source",
+      "evidence": [
+        {"material_id": "B-M4", "locator": "警報・運動靴・32℃の分岐", "explanation_ja": "A〜Dの判断規則。"},
+        {"material_id": "B-M5", "locator": "甲33℃運動靴・乙29℃凉鞋", "explanation_ja": "甲はB、乙はC。"}
+      ],
+      "rationale_ja": "甲は警報なし・運動靴・33℃なのでB、乙は警報なしだが運動靴でないのでC。",
+      "distractor_rationales_ja": {},
+      "slot_distractor_rationales_ja": {
+        "S35": {"1": "33℃なのでAではない。", "3": "運動靴を履いている。", "4": "警報なし。"},
+        "S36": {"1": "運動靴でない。", "2": "靴条件で先にCへ分岐。", "4": "警報なし。"}
+      }
+    }
+  ],
+  "quality_notes": {
+    "ambiguity_risk": "low",
+    "originality_note": "2026本試験型のslot scaffoldのみを保持し、題材・数値・資料・判断ロジックは地域防災イベントとして新規設計した。",
+    "language_note": "中国語資料は現代簡体字の会話・調査・案内として作成し、日本語設問は簡潔な試験文体に統一した。",
+    "difficulty_note": "表＋メモ復元、単資料読解、二資料を片方だけでは決め切れない図表統合、データと方針の対応、条件照合、欠落情報推論、フロー適用を組み合わせた。",
+    "source_integrity_note": "すべて架空の内部作成資料・数値であり、実在自治体の統計として提示していない。"
+  },
+  "workflow": {"state": "draft", "generation_mode": "manual_chat", "blueprint_version": "R8-2026-main-tsui-v4"}
+}

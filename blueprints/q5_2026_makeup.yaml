@@ -1,0 +1,71 @@
+section: Q5
+label_ja: 長文読解
+score: 60
+answer_numbers: [37, 50]
+answer_slot_count: 14
+surface_family: makeup_2026
+question_count: 10
+primary_reference: 2026_makeup
+
+article:
+  target_length: slightly_over_one_page
+  mode: long_reading
+  official_2026_genre_note: narrative prose with dialogue/action and emotional development
+  originality: fully_synthetic
+  prohibition:
+    - no official restaurant/family/waitress reskin
+    - no official characters or relationship sequence
+    - no official event sequence
+    - no official paragraph-semantic template
+
+verified_question_functions_from_official_self_evaluation:
+  content_understanding_questions: [1, 2, 3, 5, 6, 10]
+  chinese_word_or_sentence_choice_questions: [4, 7, 9]
+  inappropriate_choice_questions: [8]
+
+verified_slot_groups:
+  Q1: [37]
+  Q2: [38]
+  Q3: [39]
+  Q4: [40, 41]
+  Q5: [42]
+  Q6: [43]
+  Q7: [44]
+  Q8: [45, 46]
+  Q9: [47, 48]
+  Q10: [49, 50]
+
+surface_features:
+  - reason/content comprehension
+  - two-slot Chinese lexical/concept choice
+  - underlined phrase interpretation
+  - discourse connector/lexical choice
+  - choose unused/inappropriate items from a shared option bank
+  - chronology/order reasoning
+  - whole-text consistency multi-select
+
+schema_requirements:
+  article:
+    - paragraphs with stable paragraph_id
+    - anchors with stable anchor_id
+  anchor_kinds:
+    - blank
+    - underline
+    - phrase
+    - sentence
+    - time_marker
+  tasks:
+    - refer to anchors by id, never by substring search
+    - preserve question_no separately from answer numbers
+
+human_qa:
+  - article naturalness
+  - narrative coherence
+  - dialogue/action consistency
+  - anchor accuracy
+  - answer uniqueness
+  - distractor plausibility
+  - chronology integrity
+  - whole-text reasoning quality
+  - copyright/originality check
+  - booklet pagination

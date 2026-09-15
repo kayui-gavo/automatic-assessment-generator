@@ -1,4 +1,4 @@
-baseline_version: R8-2026-main-tsui-v3
+baseline_version: R8-2026-main-tsui-v4
 purpose: >-
   Production profile for original Q4 generation based on the 2026 main and makeup examinations.
   Earlier versions abstracted away too much of the observable item form. This version intentionally
@@ -105,6 +105,21 @@ information_dependency_modes:
   - cross_source
   - scenario_plus_source
 
+cross_source_quality:
+  definition: >-
+    A cross_source label is valid only when the requested answer cannot be uniquely determined from
+    any one cited source by itself. Merely mentioning facts from two sources in the correct option is
+    not enough.
+  construction_rules:
+    - for a single-choice two-source task, design competing options so source A alone leaves at least two candidates and source B alone also leaves at least two candidates
+    - a useful pattern is true_true / true_false / false_true / false_false, but wording should remain natural rather than mechanically symmetric
+    - for multi-select synthesis, each correct option should contain a relation that joins evidence from separate materials rather than restating one source
+    - if one source already states the survey conclusion and the policy in one paragraph, do not count a question that repeats that paragraph as cross-source merely because graphs are also cited
+    - distractors should often preserve one source correctly and fail only on the second source or on the relation between them
+  human_test:
+    - cover_each_source_in_turn_and_ask_whether_the_key_is_still_unique
+    - if_yes_for_any_single_source_rewrite_the_task_or_downgrade_dependency_mode
+
 quality_shape:
   - direct_comprehension_and_deeper_processing_should_coexist
   - numerical_information_should_test_reading_judgment_not_heavy_arithmetic
@@ -112,6 +127,7 @@ quality_shape:
   - materials_should_have_exam_like_density_not_card_style_micro_snippets
   - Japanese_instruction_text_should_control_the_task_while_Chinese_material_carries_the_content
   - the_question_should_feel_like_one_DNC_Q4_not_a_collection_of_worksheet_cards
+  - declared_cross_source_tasks_must_pass_the_single_source_ablation_test
 
 originality_boundary:
   must_preserve:

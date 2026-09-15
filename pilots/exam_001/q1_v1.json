@@ -1,0 +1,151 @@
+{
+  "schema_version": "0.5",
+  "section": "Q1",
+  "section_id": "TABITO-CN-PILOT-EXAM-001-Q1",
+  "title_ja": "発音・ピンイン",
+  "score": 24,
+  "tasks": [
+    {
+      "task_type": "phonetic_count",
+      "task_id": "Q1-A",
+      "subsection": "A",
+      "order": 1,
+      "target": "initial",
+      "prompt_ja": "見出し語と声母が同じものはいくつあるか。",
+      "headword": {"label": "見出し", "hanzi": "买", "pinyin": "mǎi"},
+      "candidates": [
+        {"label": "a", "hanzi": "门", "pinyin": "mén"},
+        {"label": "b", "hanzi": "明", "pinyin": "míng"},
+        {"label": "c", "hanzi": "年", "pinyin": "nián"},
+        {"label": "d", "hanzi": "饭", "pinyin": "fàn"}
+      ],
+      "options": ["一つ", "二つ", "三つ", "四つ", "なし"],
+      "answer_slot": {"slot_id": "Q1-1", "answer_number": 1, "correct_option": 2},
+      "rationale_ja": "「买 mǎi」の声母は m。候補では「门 mén」「明 míng」の二つが m で始まる。",
+      "distractor_rationales_ja": {
+        "1": "m で始まる語を一つ見落とした場合。",
+        "3": "韻母や字形を声母と取り違えた場合。",
+        "4": "すべて同じ声母だと誤認した場合。",
+        "5": "見出し語の声母 m を認識できていない場合。"
+      }
+    },
+    {
+      "task_type": "phonetic_count",
+      "task_id": "Q1-B",
+      "subsection": "B",
+      "order": 2,
+      "target": "final",
+      "prompt_ja": "声調を除き、見出し語と韻母が同じものはいくつあるか。",
+      "headword": {"label": "見出し", "hanzi": "忙", "pinyin": "máng"},
+      "candidates": [
+        {"label": "a", "hanzi": "糖", "pinyin": "táng"},
+        {"label": "b", "hanzi": "风", "pinyin": "fēng"},
+        {"label": "c", "hanzi": "常", "pinyin": "cháng"},
+        {"label": "d", "hanzi": "冷", "pinyin": "lěng"}
+      ],
+      "options": ["一つ", "二つ", "三つ", "四つ", "なし"],
+      "answer_slot": {"slot_id": "Q1-2", "answer_number": 2, "correct_option": 2},
+      "rationale_ja": "「忙 máng」の韻母は ang。候補では「糖 táng」「常 cháng」の二つが同じ ang をもつ。",
+      "distractor_rationales_ja": {
+        "1": "ang の語を一つ見落とした場合。",
+        "3": "ang と eng を同一視した場合。",
+        "4": "鼻音韻尾がある語をすべて同じ韻母とみなした場合。",
+        "5": "韻母 ang を認識できていない場合。"
+      }
+    },
+    {
+      "task_type": "phonetic_count",
+      "task_id": "Q1-C1",
+      "subsection": "C",
+      "order": 3,
+      "target": "tone_pattern",
+      "prompt_ja": "見出し語と声調の組合せが同じものはいくつあるか。",
+      "headword": {"label": "見出し", "hanzi": "见面", "pinyin": "jiànmiàn"},
+      "candidates": [
+        {"label": "a", "hanzi": "现在", "pinyin": "xiànzài"},
+        {"label": "b", "hanzi": "电话", "pinyin": "diànhuà"},
+        {"label": "c", "hanzi": "学校", "pinyin": "xuéxiào"},
+        {"label": "d", "hanzi": "朋友", "pinyin": "péngyou"}
+      ],
+      "options": ["一つ", "二つ", "三つ", "四つ", "なし"],
+      "answer_slot": {"slot_id": "Q1-3", "answer_number": 3, "correct_option": 2},
+      "rationale_ja": "「见面 jiànmiàn」は第四声＋第四声。「现在 xiànzài」「电话 diànhuà」の二つが同じ組合せ。",
+      "distractor_rationales_ja": {
+        "1": "第四声＋第四声の語を一つ見落とした場合。",
+        "3": "第二声＋第四声を混同した場合。",
+        "4": "各音節の声調を区別していない場合。",
+        "5": "二音節語の声調パターンを取れていない場合。"
+      }
+    },
+    {
+      "task_type": "phonetic_count",
+      "task_id": "Q1-C2",
+      "subsection": "C",
+      "order": 4,
+      "target": "tone_pattern",
+      "prompt_ja": "見出し語と声調の組合せが同じものはいくつあるか。",
+      "headword": {"label": "見出し", "hanzi": "北京", "pinyin": "Běijīng"},
+      "candidates": [
+        {"label": "a", "hanzi": "老师", "pinyin": "lǎoshī"},
+        {"label": "b", "hanzi": "小心", "pinyin": "xiǎoxīn"},
+        {"label": "c", "hanzi": "每天", "pinyin": "měitiān"},
+        {"label": "d", "hanzi": "很忙", "pinyin": "hěnmáng"}
+      ],
+      "options": ["一つ", "二つ", "三つ", "四つ", "なし"],
+      "answer_slot": {"slot_id": "Q1-4", "answer_number": 4, "correct_option": 3},
+      "rationale_ja": "「北京 Běijīng」は第三声＋第一声。「老师 lǎoshī」「小心 xiǎoxīn」「每天 měitiān」の三つが同じ組合せ。",
+      "distractor_rationales_ja": {
+        "1": "第三声＋第一声の候補を複数見落とした場合。",
+        "2": "候補を一つ見落とした場合。",
+        "4": "「很忙 hěnmáng」の第二音節を第一声と誤認した場合。",
+        "5": "声調記号から組合せを読めていない場合。"
+      }
+    },
+    {
+      "task_type": "pinyin_dialogue",
+      "task_id": "Q1-D1",
+      "subsection": "D",
+      "order": 5,
+      "lines": [
+        {"speaker": "A", "pinyin": "Nǐ bú shì shuō xiǎng qù kàn xīn diànyǐng ma? Wǎnshang yìqǐ qù ba."},
+        {"speaker": "B", "pinyin": "Wǒ yě xiǎng qù, kěshì míngtiān zǎoshang yǒu kǎoshì. Wǒ xiǎng jīntiān zǎodiǎn shuì."},
+        {"speaker": "A", "pinyin": "Nà wǒmen zhōumò zài qù."}
+      ],
+      "prompt_ja": "Bが今夜映画に行かない最も大きな理由は何か。",
+      "options": ["映画に興味がないから", "明朝試験があるから", "今夜映画館が休みだから", "週末に試験があるから"],
+      "answer_slot": {"slot_id": "Q1-5", "answer_number": 5, "correct_option": 2},
+      "rationale_ja": "Bは映画には行きたいが、翌朝に試験があるので今日は早く寝たいと述べている。",
+      "distractor_rationales_ja": {
+        "1": "「我也想去」を聞き落とした場合。",
+        "3": "会話にない映画館の営業情報を補ってしまった場合。",
+        "4": "「明天早上」と「周末」を取り違えた場合。"
+      }
+    },
+    {
+      "task_type": "pinyin_dialogue",
+      "task_id": "Q1-D2",
+      "subsection": "D",
+      "order": 6,
+      "lines": [
+        {"speaker": "A", "pinyin": "Wǒmen xiān qù chāoshì, ránhòu qù chēzhàn, zěnmeyàng?"},
+        {"speaker": "B", "pinyin": "Kěshì língshí yǒu diǎn duō, ná zhe qù chēzhàn bù fāngbiàn."},
+        {"speaker": "A", "pinyin": "Nà xiān qù chēzhàn bǎ xíngli cún le, zài qù chāoshì."},
+        {"speaker": "B", "pinyin": "Hǎo, zhèyàng bǐjiào qīngsōng."}
+      ],
+      "prompt_ja": "二人は最初に何をすることにしたか。",
+      "options": ["スーパーで買い物をする", "駅で荷物を預ける", "駅で食事をする", "買い物をやめる"],
+      "answer_slot": {"slot_id": "Q1-6", "answer_number": 6, "correct_option": 2},
+      "rationale_ja": "荷物を持ったまま買い物する不便を避けるため、まず駅で荷物を預け、その後スーパーへ行くことにした。",
+      "distractor_rationales_ja": {
+        "1": "Aの最初の提案だけを聞いて、変更後の計画を追えていない場合。",
+        "3": "駅へ行く目的を取り違えた場合。",
+        "4": "計画変更を予定中止と誤解した場合。"
+      }
+    }
+  ],
+  "workflow": {
+    "state": "draft",
+    "generation_mode": "manual_chat",
+    "blueprint_version": "R8-2026-full-v1"
+  }
+}
