@@ -455,3 +455,16 @@ class ExamHumanQA(BaseModel):
     defects: list[str] = Field(default_factory=list)
     biggest_rework_cause: str = ""
     note: str = ""
+
+    @model_validator(mode="after")
+    def approve_requires_completed_checks(self) -> ExamHumanQA:
+        if self.disposition != "approve":
+            return self
+        failed = [name for name, value in self.checks.model_dump().items() if not value]
+        if failed:
+            raise ValueError(
+                "Exam Human QA cannot be approved while required checks are incomplete ("
+                + ", ".join(failed)
+                + ")"
+            )
+        return self
