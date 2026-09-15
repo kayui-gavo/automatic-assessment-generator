@@ -11,8 +11,11 @@ def test_ui_launcher_points_to_full_exam_workbench():
 
 def test_full_exam_ui_source_compiles_and_uses_teacher_facing_workflow():
     entrypoint = app_path()
-    compile(entrypoint.read_text(encoding="utf-8"), str(entrypoint), "exec")
-    assert "render_simple_section_preview" in entrypoint.read_text(encoding="utf-8")
+    entrypoint_source = entrypoint.read_text(encoding="utf-8")
+    compile(entrypoint_source, str(entrypoint), "exec")
+    assert "teacher_workflow_state" in entrypoint_source
+    assert "需要返修" in entrypoint_source
+    assert "历史版本 / 回退" in entrypoint_source
 
     root = Path(__file__).resolve().parents[1]
     exam_ui = root / "src" / "tabito_itemgen" / "exam_ui.py"
@@ -23,7 +26,6 @@ def test_full_exam_ui_source_compiles_and_uses_teacher_facing_workflow():
     assert "新建模试" in source
     assert "独立审题" in source
     assert "教师确认" in source
-    assert "审题未通过" in source
     assert "返修版已导入" in source
     assert "定稿发布" in source
     assert "定稿并存入正式题库" in source
@@ -40,6 +42,7 @@ def test_full_exam_ui_source_compiles_and_uses_teacher_facing_workflow():
     preview_source = preview.read_text(encoding="utf-8")
     compile(preview_source, str(preview), "exec")
     assert "<b>見出し</b>" not in preview_source
+    assert 'chr(ord("a") + index)' in preview_source
 
     legacy = root / "src" / "tabito_itemgen" / "ui_entrypoint.py"
     assert legacy.exists()
