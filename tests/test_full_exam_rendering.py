@@ -43,8 +43,10 @@ def test_full_exam_renderer_writes_one_student_and_teacher_booklet(tmp_path):
     q1 = text.split("第1問", 1)[1].split("第2問", 1)[0]
     assert r"\uline{开}" in q1
     assert r"\uline{忙}" in q1
-    # Internal schema labels must never be printed as exam copy.
-    assert "見出し" not in q1
+    # `見出し語` is legitimate Japanese wording in the prompt. What must never
+    # leak is the standalone internal schema label rendered before the Hanzi.
+    assert r"\textbf{見出し}" not in q1
+    assert "見出し　事情" not in q1
     # Q1 A/B/C pronunciation metadata must not leak to the student surface.
     assert "kāi" not in q1
     assert "máng" not in q1
