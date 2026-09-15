@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tabito_itemgen.exam_ui as exam_ui
+from tabito_itemgen.exam_production import import_section_response as core_import_section_response
 from tabito_itemgen.exam_ui_style import APP_CSS
 from tabito_itemgen.response_audit import import_section_response as audited_import_section_response
 from tabito_itemgen.teacher_workflow_state import (
@@ -15,8 +16,9 @@ from tabito_itemgen.teacher_workflow_state import (
 exam_ui.APP_CSS = APP_CSS
 exam_ui._section_status = section_status
 exam_ui._next_action_text = next_action_text
-# All teacher-facing section imports first pass identity/renderability checks and
-# then preserve an immutable raw-response audit copy.
+# Teacher-pasted generation/revision responses preserve immutable raw evidence.
+# Internal rollback below deliberately bypasses this wrapper: restoring an old
+# candidate is a teacher action, not a fresh model response.
 exam_ui.import_section_response = audited_import_section_response
 # Teacher-facing states describe the next action, not internal pipeline jargon.
 exam_ui.STATUS_COPY["review_failed"] = ("需要返修", "bad")
@@ -79,7 +81,7 @@ def _render_history_restore(root, manifest, ref) -> None:
                 key=f"restore-{manifest.exam_id}-{ref.section}-{fingerprint[:12]}",
                 use_container_width=True,
             ):
-                restored_path, result = exam_ui.import_section_response(
+                restored_path, result = core_import_section_response(
                     root,
                     manifest.exam_id,
                     ref.section,
