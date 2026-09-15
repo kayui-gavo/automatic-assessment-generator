@@ -1,0 +1,306 @@
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+from collections import Counter, defaultdict
+from pathlib import Path
+from statistics import median
+from typing import Iterable
+
+ANSWER_COLUMNS = {
+    "participant_id",
+    "exam_id",
+    "exam_fingerprint",
+    "answer_number",
+    "section",
+    "selected_option",
+    "correct_option",
+    "is_correct",
+    "omitted",
+    "ambiguity_flag",
+    "note",
+}
+SECTION_COLUMNS = {
+    "participant_id",
+    "exam_id",
+    "exam_fingerprint",
+    "section",
+    "elapsed_seconds",
+    "completed",
+    "perceived_difficulty_1_5",
+    "note",
+}
+SECTIONS = {"Q1", "Q2", "Q3", "Q4", "Q5"}
+
+
+def _read_csv(path: Path) -> list[dict[str, str]]:
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if reader.fieldnames is None:
+            raise ValueError(f"{path}: missing CSV header")
+        return [dict(row) for row in reader]
+
+
+def _require_columns(path: Path, rows: list[dict[str, str]], required: set[str]) -> None:
+    if rows:
+        available = set(rows[0])
+    else:
+        with path.open("r", encoding="utf-8-sig", newline="") as handle:
+            reader = csv.DictReader(handle)
+            available = set(reader.fieldnames or [])
+    missing = sorted(required - available)
+    if missing:
+        raise ValueError(f"{path}: missing columns: {', '.join(missing)}")
+
+
+def _binary(value: str, field: str, row_no: int) -> int:
+    if value not in {"0", "1"}:
+        raise ValueError(f"row {row_no}: {field} must be 0 or 1")
+    return int(value)
+
+
+def _int(value: str, field: str, row_no: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"row {row_no}: {field} must be an integer") from exc
+
+
+def _identity(rows: Iterable[dict[str, str]]) -> tuple[str, str]:
+    identities = {(row["exam_id"].strip(), row["exam_fingerprint"].strip()) for row in rows}
+    if not identities:
+        raise ValueError("pilot data is empty")
+    if len(identities) != 1:
+        raise ValueError("pilot data mixes multiple exam_id / exam_fingerprint values")
+    exam_id, fingerprint = next(iter(identities))
+    if not exam_id or not fingerprint:
+        raise ValueError("exam_id and exam_fingerprint must be non-empty")
+    return exam_id, fingerprint
+
+
+def validate_answer_rows(rows: list[dict[str, str]]) -> tuple[str, str]:
+    exam_id, fingerprint = _identity(rows)
+    seen: set[tuple[str, int]] = set()
+    for row_no, row in enumerate(rows, start=2):
+        participant = row["participant_id"].strip()
+        if not participant:
+            raise ValueError(f"row {row_no}: participant_id must be non-empty")
+        answer_number = _int(row["answer_number"], "answer_number", row_no)
+        if not 1 <= answer_number <= 50:
+            raise ValueError(f"row {row_no}: answer_number must be in 1..50")
+        section = row["section"].strip()
+        if section not in SECTIONS:
+            raise ValueError(f"row {row_no}: section must be Q1..Q5")
+        key = (participant, answer_number)
+        if key in seen:
+            raise ValueError(f"row {row_no}: duplicate participant/answer_number {key}")
+        seen.add(key)
+
+        correct_option = _int(row["correct_option"], "correct_option", row_no)
+        if not 1 <= correct_option <= 10:
+            raise ValueError(f"row {row_no}: correct_option must be in 1..10")
+        omitted = _binary(row["omitted"], "omitted", row_no)
+        is_correct = _binary(row["is_correct"], "is_correct", row_no)
+        _binary(row["ambiguity_flag"], "ambiguity_flag", row_no)
+
+        selected = row["selected_option"].strip()
+        if omitted:
+            if selected:
+                raise ValueError(f"row {row_no}: omitted=1 requires blank selected_option")
+            if is_correct:
+                raise ValueError(f"row {row_no}: omitted answers cannot be correct")
+        else:
+            selected_option = _int(selected, "selected_option", row_no)
+            if not 1 <= selected_option <= 10:
+                raise ValueError(f"row {row_no}: selected_option must be in 1..10")
+            expected = int(selected_option == correct_option)
+            if is_correct != expected:
+                raise ValueError(
+                    f"row {row_no}: is_correct disagrees with selected_option/correct_option"
+                )
+    return exam_id, fingerprint
+
+
+def validate_section_rows(rows: list[dict[str, str]]) -> tuple[str, str]:
+    exam_id, fingerprint = _identity(rows)
+    seen: set[tuple[str, str]] = set()
+    for row_no, row in enumerate(rows, start=2):
+        participant = row["participant_id"].strip()
+        if not participant:
+            raise ValueError(f"row {row_no}: participant_id must be non-empty")
+        section = row["section"].strip()
+        if section not in {*SECTIONS, "TOTAL"}:
+            raise ValueError(f"row {row_no}: section must be Q1..Q5 or TOTAL")
+        key = (participant, section)
+        if key in seen:
+            raise ValueError(f"row {row_no}: duplicate participant/section {key}")
+        seen.add(key)
+        elapsed = _int(row["elapsed_seconds"], "elapsed_seconds", row_no)
+        if elapsed < 0:
+            raise ValueError(f"row {row_no}: elapsed_seconds must be non-negative")
+        _binary(row["completed"], "completed", row_no)
+        difficulty = row["perceived_difficulty_1_5"].strip()
+        if difficulty:
+            value = _int(difficulty, "perceived_difficulty_1_5", row_no)
+            if not 1 <= value <= 5:
+                raise ValueError(
+                    f"row {row_no}: perceived_difficulty_1_5 must be blank or 1..5"
+                )
+    return exam_id, fingerprint
+
+
+def analyze_answers(rows: list[dict[str, str]]) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    by_item: dict[int, list[dict[str, str]]] = defaultdict(list)
+    by_participant: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for row in rows:
+        by_item[int(row["answer_number"])].append(row)
+        by_participant[row["participant_id"].strip()].append(row)
+
+    item_summary: list[dict[str, object]] = []
+    for answer_number in sorted(by_item):
+        item_rows = by_item[answer_number]
+        n = len(item_rows)
+        correct = sum(int(row["is_correct"]) for row in item_rows)
+        omitted = sum(int(row["omitted"]) for row in item_rows)
+        ambiguity = sum(int(row["ambiguity_flag"]) for row in item_rows)
+        options = Counter(
+            int(row["selected_option"])
+            for row in item_rows
+            if row["selected_option"].strip()
+        )
+        first = item_rows[0]
+        summary: dict[str, object] = {
+            "answer_number": answer_number,
+            "section": first["section"].strip(),
+            "n": n,
+            "attempted": n - omitted,
+            "correct": correct,
+            "correct_rate": round(correct / n, 4),
+            "omission_rate": round(omitted / n, 4),
+            "ambiguity_reports": ambiguity,
+        }
+        for option in range(1, 11):
+            summary[f"option_{option}_count"] = options.get(option, 0)
+        item_summary.append(summary)
+
+    participant_summary: list[dict[str, object]] = []
+    for participant in sorted(by_participant):
+        participant_rows = by_participant[participant]
+        participant_summary.append(
+            {
+                "participant_id": participant,
+                "answered_rows": len(participant_rows),
+                "correct": sum(int(row["is_correct"]) for row in participant_rows),
+                "omitted": sum(int(row["omitted"]) for row in participant_rows),
+                "ambiguity_reports": sum(
+                    int(row["ambiguity_flag"]) for row in participant_rows
+                ),
+            }
+        )
+    return item_summary, participant_summary
+
+
+def analyze_sections(rows: list[dict[str, str]]) -> list[dict[str, object]]:
+    grouped: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for row in rows:
+        grouped[row["section"].strip()].append(row)
+
+    order = ["Q1", "Q2", "Q3", "Q4", "Q5", "TOTAL"]
+    summary: list[dict[str, object]] = []
+    for section in order:
+        section_rows = grouped.get(section)
+        if not section_rows:
+            continue
+        elapsed = [int(row["elapsed_seconds"]) for row in section_rows]
+        completed = [int(row["completed"]) for row in section_rows]
+        difficulties = [
+            int(row["perceived_difficulty_1_5"])
+            for row in section_rows
+            if row["perceived_difficulty_1_5"].strip()
+        ]
+        summary.append(
+            {
+                "section": section,
+                "n": len(section_rows),
+                "median_elapsed_seconds": float(median(elapsed)),
+                "completion_rate": round(sum(completed) / len(completed), 4),
+                "median_perceived_difficulty": (
+                    float(median(difficulties)) if difficulties else ""
+                ),
+            }
+        )
+    return summary
+
+
+def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
+    if not rows:
+        raise ValueError(f"cannot write empty summary: {path.name}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def analyze_pilot(answer_csv: Path, section_csv: Path, out_dir: Path) -> dict[str, object]:
+    answer_rows = _read_csv(answer_csv)
+    section_rows = _read_csv(section_csv)
+    _require_columns(answer_csv, answer_rows, ANSWER_COLUMNS)
+    _require_columns(section_csv, section_rows, SECTION_COLUMNS)
+    answer_identity = validate_answer_rows(answer_rows)
+    section_identity = validate_section_rows(section_rows)
+    if answer_identity != section_identity:
+        raise ValueError("answer and section files refer to different exam versions")
+
+    item_summary, participant_summary = analyze_answers(answer_rows)
+    section_summary = analyze_sections(section_rows)
+    exam_id, fingerprint = answer_identity
+
+    answer_participants = {row["participant_id"].strip() for row in answer_rows}
+    section_participants = {row["participant_id"].strip() for row in section_rows}
+    if answer_participants != section_participants:
+        raise ValueError("answer and section files contain different participant sets")
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    _write_csv(out_dir / "item_summary.csv", item_summary)
+    _write_csv(out_dir / "participant_summary.csv", participant_summary)
+    _write_csv(out_dir / "section_summary.csv", section_summary)
+
+    total_scores = [int(row["correct"]) for row in participant_summary]
+    summary = {
+        "exam_id": exam_id,
+        "exam_fingerprint": fingerprint,
+        "participants": len(participant_summary),
+        "median_correct_answers": float(median(total_scores)),
+        "max_correct_answers": max(total_scores),
+        "min_correct_answers": min(total_scores),
+    }
+    (out_dir / "pilot_summary.json").write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return summary
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Analyze TABITO timed student-pilot CSV files")
+    parser.add_argument("answers", type=Path, help="student_trial_answers.csv")
+    parser.add_argument("sections", type=Path, help="student_trial_sections.csv")
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        default=Path("pilot_analysis"),
+        help="directory for summary CSV/JSON files",
+    )
+    return parser
+
+
+def main() -> None:
+    args = build_parser().parse_args()
+    summary = analyze_pilot(args.answers, args.sections, args.out_dir)
+    print(json.dumps(summary, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()
