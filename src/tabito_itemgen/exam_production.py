@@ -147,6 +147,14 @@ def import_section_response(
     section_name: str,
     text: str,
 ) -> tuple[Path, ValidationResult]:
+    """Import a candidate section without changing model-response provenance.
+
+    Teacher-facing and CLI model-response imports go through ``response_audit``.
+    Keeping this core path provenance-neutral is important for rollback: restoring
+    an old candidate must not pretend that the historical JSON is a new model
+    response or replace the latest raw model output.
+    """
+
     path = manifest_path(root, exam_id)
     manifest = load_manifest(path)
     ref = _ref_for(manifest, section_name)
@@ -158,10 +166,6 @@ def import_section_response(
         raise ValueError(
             f"response section id {incoming_id!r} does not match request {ref.section_id!r}"
         )
-
-    response_dir = exam_workspace_dir(root, exam_id) / "responses"
-    response_dir.mkdir(parents=True, exist_ok=True)
-    dump_json(response_dir / f"{section_name.lower()}.response.json", data)
 
     from pydantic import TypeAdapter
 
@@ -764,12 +768,17 @@ def approve_exam(root: Path, exam_id: str) -> tuple[Path, Readiness]:
     if target.exists():
         approved_manifest = target / "exam.json"
         if approved_manifest.exists():
-            record = exam_release_record_path(root, exam_id)
-            if (
-                record.exists()
-                and load_json(record).get("exam_fingerprint") == readiness.fingerprint
-            ):
-                return target, readiness
+            record_candidates = [
+                target / "release.json",
+                exam_release_record_path(root, exam_id),
+            ]
+            for record_path in record_candidates:
+                if (
+                    record_path.exists()
+                    and load_json(record_path).get("exam_fingerprint")
+                    == readiness.fingerprint
+                ):
+                    return target, readiness
         raise ValueError(
             "approved exam_id already exists with different or unverifiable content"
         )
@@ -777,6 +786,7 @@ def approve_exam(root: Path, exam_id: str) -> tuple[Path, Readiness]:
     artifact_path = exam_artifact_manifest_path(root, exam_id)
     artifact_snapshot = load_json(artifact_path)
     artifact_source_dir = root / "output" / exam_id
+    workspace_source = exam_workspace_dir(root, exam_id)
     draft_manifest = load_manifest(source / "exam.json")
     review_execution_snapshot = _review_execution_snapshot(
         root,
@@ -786,6 +796,9 @@ def approve_exam(root: Path, exam_id: str) -> tuple[Path, Readiness]:
 
     shutil.copytree(source, target)
     shutil.copytree(artifact_source_dir, target / "artifacts")
+    if workspace_source.exists():
+        shutil.copytree(workspace_source, target / "provenance")
+
     approved_manifest = load_manifest(target / "exam.json")
     approved_manifest.workflow.state = "approved"
     for ref in approved_manifest.sections:
@@ -814,5 +827,6 @@ def approve_exam(root: Path, exam_id: str) -> tuple[Path, Readiness]:
     record_path = exam_release_record_path(root, exam_id)
     record_path.parent.mkdir(parents=True, exist_ok=True)
     dump_json(record_path, record)
+    dump_json(target / "release.json", record)
     shutil.rmtree(source)
     return target, readiness
