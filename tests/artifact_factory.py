@@ -5,6 +5,7 @@ from pathlib import Path
 from tabito_itemgen.artifact_preflight import (
     ArtifactCheck,
     ArtifactManifest,
+    renderer_revision,
     sha256_file,
     write_artifact_manifest,
 )
@@ -39,7 +40,7 @@ def write_clean_artifacts(root: Path, exam_id: str) -> Path:
     artifact = ArtifactManifest(
         exam_id=exam_id,
         exam_fingerprint=exam_fingerprint(root, exam_id),
-        renderer_revision="test-renderer-revision",
+        renderer_revision=renderer_revision(root),
         checks=tuple(checks),
     )
     return write_artifact_manifest(artifact, exam_artifact_manifest_path(root, exam_id))
