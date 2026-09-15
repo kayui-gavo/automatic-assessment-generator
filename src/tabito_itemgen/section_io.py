@@ -8,6 +8,7 @@ from pathlib import Path
 from pydantic import TypeAdapter
 
 from .exam_models import (
+    Q1PhoneticCountTask,
     Q1Section,
     Q2OrderingTask,
     Q2Section,
@@ -22,13 +23,34 @@ from .models import Item
 _SECTION_ADAPTER = TypeAdapter(SectionData)
 
 
+def _canonicalize_presentation(section: SectionData) -> SectionData:
+    """Normalize presentation-only fields that must never be model-controlled.
+
+    Q1 candidate markers are fixed booklet labels (a-d), not authored content.
+    Older or malformed JSON may contain arbitrary ``PinyinWord.label`` values;
+    normalizing them here keeps browser preview, blind review and PDF output on
+    the exact same visible surface without changing legitimate question content.
+    """
+
+    if not isinstance(section, Q1Section):
+        return section
+
+    normalized = section.model_copy(deep=True)
+    for task in normalized.tasks:
+        if not isinstance(task, Q1PhoneticCountTask):
+            continue
+        for index, candidate in enumerate(task.candidates):
+            candidate.label = chr(ord("a") + index)
+    return normalized
+
+
 def load_section(path: Path) -> SectionData:
-    return _SECTION_ADAPTER.validate_python(load_json(path))
+    return _canonicalize_presentation(_SECTION_ADAPTER.validate_python(load_json(path)))
 
 
 def save_section(path: Path, section: SectionData) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
-    dump_json(path, section.model_dump())
+    dump_json(path, _canonicalize_presentation(section).model_dump())
     return path
 
 
@@ -65,7 +87,7 @@ def section_answer_numbers(section: SectionData) -> list[int]:
 
 
 def section_fingerprint(section: SectionData) -> str:
-    payload = section.model_dump()
+    payload = _canonicalize_presentation(section).model_dump()
     workflow = payload.get("workflow")
     if isinstance(workflow, dict):
         workflow.pop("state", None)
@@ -110,7 +132,7 @@ def _archive_previous_candidate(
 
 
 def save_section_draft(exam_dir: Path, section: SectionData) -> Path:
-    draft = section.model_copy(deep=True)
+    draft = _canonicalize_presentation(section).model_copy(deep=True)
     draft.workflow.state = "draft"
     path = exam_dir / "sections" / f"{draft.section.lower()}.json"
     _archive_previous_candidate(exam_dir, path, section_fingerprint(draft))
