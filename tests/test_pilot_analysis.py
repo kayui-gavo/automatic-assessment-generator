@@ -29,6 +29,10 @@ SECTION_FIELDS = [
 ]
 
 
+def _sha256(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def _section_for(answer_number: int) -> str:
     if answer_number <= 6:
         return "Q1"
@@ -101,40 +105,62 @@ def _write_csv(path, fields, rows):
         writer.writerows(rows)
 
 
-def _write_bound_artifacts(tmp_path):
-    artifact_dir = tmp_path / "artifacts"
-    artifact_dir.mkdir()
+def _write_released_artifacts(tmp_path):
+    approved = tmp_path / "approved" / "EXAM-001"
+    artifact_dir = approved / "artifacts"
+    artifact_dir.mkdir(parents=True)
+
+    checks = []
+    for name in ("student", "teacher", "answer_sheet"):
+        pdf = artifact_dir / f"{name}.pdf"
+        pdf.write_bytes(f"%PDF-1.4\n{name}\n".encode())
+        checks.append({"name": name, "pdf_sha256": _sha256(pdf)})
+
     answer_key = artifact_dir / "answer_key.json"
     answer_key.write_text(
         json.dumps({str(number): 1 for number in range(1, 51)}, indent=2) + "\n",
         encoding="utf-8",
     )
-    digest = hashlib.sha256(answer_key.read_bytes()).hexdigest()
     manifest = artifact_dir / "artifact_manifest.json"
     manifest.write_text(
         json.dumps(
             {
                 "exam_id": "EXAM-001",
                 "exam_fingerprint": "fingerprint-001",
-                "extra_files": {"answer_key.json": digest},
+                "checks": checks,
+                "extra_files": {"answer_key.json": _sha256(answer_key)},
             },
             indent=2,
         )
         + "\n",
         encoding="utf-8",
     )
-    return manifest, answer_key
+    release = approved / "release.json"
+    release.write_text(
+        json.dumps(
+            {
+                "exam_id": "EXAM-001",
+                "exam_fingerprint": "fingerprint-001",
+                "artifact_manifest_sha256": _sha256(manifest),
+                "gates": [{"name": "release", "passed": True, "detail": "pass"}],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return release, answer_key, artifact_dir / "student.pdf"
 
 
 def test_pilot_analysis_emits_item_participant_section_and_exam_summaries(tmp_path):
     answers = tmp_path / "answers.csv"
     sections = tmp_path / "sections.csv"
     out_dir = tmp_path / "analysis"
-    artifact_manifest, _ = _write_bound_artifacts(tmp_path)
+    release_record, _, _ = _write_released_artifacts(tmp_path)
     _write_csv(answers, ANSWER_FIELDS, _answer_rows())
     _write_csv(sections, SECTION_FIELDS, _section_rows())
 
-    summary = analyze_pilot(answers, sections, artifact_manifest, out_dir)
+    summary = analyze_pilot(answers, sections, release_record, out_dir)
 
     assert summary == {
         "exam_id": "EXAM-001",
@@ -175,10 +201,22 @@ def test_answer_validation_rejects_missing_answer_rows():
 def test_pilot_analysis_rejects_tampered_answer_key(tmp_path):
     answers = tmp_path / "answers.csv"
     sections = tmp_path / "sections.csv"
-    artifact_manifest, answer_key = _write_bound_artifacts(tmp_path)
+    release_record, answer_key, _ = _write_released_artifacts(tmp_path)
     _write_csv(answers, ANSWER_FIELDS, _answer_rows())
     _write_csv(sections, SECTION_FIELDS, _section_rows())
     answer_key.write_text('{"1": 2}\n', encoding="utf-8")
 
     with pytest.raises(ValueError, match="hash does not match artifact manifest"):
-        analyze_pilot(answers, sections, artifact_manifest, tmp_path / "analysis")
+        analyze_pilot(answers, sections, release_record, tmp_path / "analysis")
+
+
+def test_pilot_analysis_rejects_tampered_student_pdf(tmp_path):
+    answers = tmp_path / "answers.csv"
+    sections = tmp_path / "sections.csv"
+    release_record, _, student_pdf = _write_released_artifacts(tmp_path)
+    _write_csv(answers, ANSWER_FIELDS, _answer_rows())
+    _write_csv(sections, SECTION_FIELDS, _section_rows())
+    student_pdf.write_bytes(b"%PDF-1.4\ntampered\n")
+
+    with pytest.raises(ValueError, match="student.pdf failed integrity verification"):
+        analyze_pilot(answers, sections, release_record, tmp_path / "analysis")
