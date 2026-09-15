@@ -1,3 +1,6 @@
+import pytest
+
+from tabito_itemgen.exam_generate import create_section_revision_request
 from tabito_itemgen.exam_models import ExamHumanQA, ExamQAChecks
 from tabito_itemgen.exam_production import (
     exam_fingerprint,
@@ -87,3 +90,18 @@ def test_changing_q3_invalidates_q3_and_exam_qa_but_not_other_sections(tmp_path)
     assert not release.ready
     artifact = next(gate for gate in release.gates if gate.name == "artifact preflight")
     assert "stale" in artifact.detail
+
+
+def test_revision_request_rejects_review_from_previous_candidate_version(tmp_path):
+    manifest, _ = build_exam(tmp_path, "main_2026")
+    _approve_section_evidence(tmp_path, manifest.exam_id, "Q3")
+
+    current = load_manifest(manifest_path(tmp_path, manifest.exam_id))
+    q3_ref = next(ref for ref in current.sections if ref.section == "Q3")
+    q3_path = manifest_path(tmp_path, manifest.exam_id).parent / q3_ref.path
+    q3 = load_section(q3_path)
+    q3.tasks[0].source_text += "（返修後）"
+    dump_json(q3_path, q3.model_dump())
+
+    with pytest.raises(ValueError, match="earlier candidate version"):
+        create_section_revision_request(tmp_path, manifest.exam_id, "Q3")
