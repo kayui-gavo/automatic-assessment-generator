@@ -27,6 +27,12 @@ HIDDEN_AUTHOR_KEYS = frozenset(
         "operations",
         "anchor_refs",
         "operation",
+        # Pure authoring / transport metadata. These are never printed on the
+        # student booklet and therefore must not bias an independent solver.
+        "schema_version",
+        "section_id",
+        "item_id",
+        "slot_id",
     }
 )
 
@@ -43,28 +49,78 @@ def _strip_author_keys(value):
     return value
 
 
-def blind_section_dict(section) -> dict:
-    """Return the information an independent solver may legitimately see.
+def _q1_blind_surface(section: Q1Section) -> dict:
+    """Return Q1 as booklet-visible content plus minimal review bookkeeping.
 
-    The result is stricter than merely deleting answer keys: author-side evidence
-    links and intended cognitive-operation labels are removed. At the same time,
-    metadata that is necessary to reconstruct the visible booklet is preserved.
-    For example, Q5 ``source_excerpt`` identifies the text visibly underlined in
-    the student booklet, so hiding it would make the review surface *less* faithful.
-
-    Q1 needs one section-specific rule: pinyin is internal metadata for A/B/C and
-    must be hidden, while D is itself a pinyin-dialogue task and therefore keeps
-    the pinyin that candidates actually read.
+    Q1 is especially easy to leak because ``PinyinWord`` contains authoring
+    labels, pinyin and a semantic ``target`` field.  The booklet only shows the
+    Hanzi, the visible underline position, candidate labels a-d, prompts,
+    options and answer-box numbers.  Build that surface explicitly instead of
+    serializing the internal model and trying to blacklist fields afterwards.
     """
 
-    data = _strip_author_keys(section.model_dump())
+    tasks: list[dict] = []
+    for task in section.tasks:
+        if isinstance(task, Q1PhoneticCountTask):
+            tasks.append(
+                {
+                    "task_id": task.task_id,
+                    "subsection": task.subsection,
+                    "prompt_ja": task.prompt_ja,
+                    "headword": {
+                        "hanzi": task.headword.hanzi,
+                        "target_index": task.headword.target_index,
+                    },
+                    "candidates": [
+                        {
+                            "label": candidate.label,
+                            "hanzi": candidate.hanzi,
+                            "target_index": candidate.target_index,
+                        }
+                        for candidate in task.candidates
+                    ],
+                    "options": list(task.options),
+                    "answer_slot": {"answer_number": task.answer_slot.answer_number},
+                }
+            )
+            continue
+
+        tasks.append(
+            {
+                "task_id": task.task_id,
+                "subsection": task.subsection,
+                "lines": [
+                    {"speaker": line.speaker, "pinyin": line.pinyin}
+                    for line in task.lines
+                ],
+                "prompt_ja": task.prompt_ja,
+                "options": list(task.options),
+                "answer_slot": {"answer_number": task.answer_slot.answer_number},
+            }
+        )
+
+    return {
+        "section": "Q1",
+        "title_ja": section.title_ja,
+        "score": section.score,
+        "tasks": tasks,
+    }
+
+
+def blind_section_dict(section) -> dict:
+    """Return only information an independent solver may legitimately see.
+
+    The result is stricter than merely deleting answer keys: answer-side
+    rationales, evidence links, intended cognitive-operation labels and pure
+    transport metadata are removed.  Metadata that is necessary to reconstruct
+    an actually visible booklet feature may remain.  For example, Q5
+    ``source_excerpt`` identifies the span visibly underlined after its marker.
+
+    Q1 receives an explicit allow-list surface because its internal model also
+    stores hidden pronunciation data and authoring labels such as ``見出し``.
+    """
 
     if isinstance(section, Q1Section):
-        for source_task, blind_task in zip(section.tasks, data["tasks"], strict=True):
-            if not isinstance(source_task, Q1PhoneticCountTask):
-                continue
-            blind_task["headword"].pop("pinyin", None)
-            for candidate in blind_task["candidates"]:
-                candidate.pop("pinyin", None)
+        return _q1_blind_surface(section)
 
-    return data
+    return _strip_author_keys(section.model_dump())
