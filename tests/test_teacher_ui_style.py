@@ -16,4 +16,5 @@ def test_teacher_workbench_uses_flat_workflow_and_exam_surfaces():
     assert ".next-action" in APP_CSS
     assert ".exam-header" in APP_CSS
     assert ".source-text" in APP_CSS
+    assert ".gate-mark.bad" in APP_CSS
     assert "border-bottom: 1px solid var(--line)" in APP_CSS
