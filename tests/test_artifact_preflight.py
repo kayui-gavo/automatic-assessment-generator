@@ -67,7 +67,7 @@ def test_preflight_warns_but_does_not_fail_for_tiny_overfull(tmp_path: Path) -> 
     assert result.warnings
 
 
-def test_stale_renderer_manifest_remains_readable_and_preserves_source_revision() -> None:
+def test_stale_renderer_manifest_remains_readable_without_rewriting_provenance() -> None:
     current = renderer_revision()
     stale = "renderer-sha256:" + "0" * 64
     assert current != "unknown"
@@ -86,8 +86,34 @@ def test_stale_renderer_manifest_remains_readable_and_preserves_source_revision(
         ),
     )
 
-    assert manifest.renderer_revision == "unknown"
-    assert manifest.source_renderer_revision == stale
+    assert manifest.renderer_revision == stale
+    assert manifest.source_renderer_revision is None
+    assert manifest.checks[0].errors == ()
+
+
+def test_historical_manifest_parse_does_not_touch_filesystem(tmp_path: Path) -> None:
+    missing_dir = tmp_path / "already-cleaned-output"
+    original = ArtifactManifest(
+        exam_id="EXAM-1",
+        exam_fingerprint="f" * 64,
+        renderer_revision="renderer-sha256:" + "1" * 64,
+        checks=(
+            ArtifactCheck(
+                name="student",
+                tex_path=str(missing_dir / "student.tex"),
+                pdf_path=str(missing_dir / "student.pdf"),
+                pdf_sha256="2" * 64,
+            ),
+        ),
+        extra_files={"answer_key.json": "3" * 64},
+    )
+    snapshot = original.model_dump()
+
+    reparsed = ArtifactManifest.model_validate(snapshot)
+
+    assert reparsed.model_dump() == snapshot
+    assert reparsed.passed
+    assert not missing_dir.exists()
 
 
 def test_current_renderer_manifest_keeps_current_revision() -> None:
