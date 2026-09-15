@@ -24,6 +24,8 @@ def test_blind_packet_removes_answer_key_rationales_and_authoring_metadata():
     assert "difficulty" not in blind
     assert "topic" not in blind
     assert "surface_family" not in blind
+    assert "schema_version" not in blind
+    assert "item_id" not in blind
 
     for material in blind["materials"]:
         assert "bundle_id" not in material
@@ -36,6 +38,7 @@ def test_blind_packet_removes_answer_key_rationales_and_authoring_metadata():
         assert "distractor_rationales_ja" not in task
         assert "slot_distractor_rationales_ja" not in task
         assert all("correct_option" not in slot for slot in task["answer_slots"])
+        assert all("slot_id" not in slot for slot in task["answer_slots"])
 
 
 def test_blind_packet_hides_first_class_surface_family_but_keeps_visible_intro():
@@ -59,10 +62,13 @@ def _section(root: Path, exam_id: str, section_name: str):
     return load_section(manifest_path(root, exam_id).parent / ref.path)
 
 
-def test_q1_blind_surface_hides_internal_pinyin_but_keeps_dialogue_pinyin(tmp_path):
+def test_q1_blind_surface_hides_internal_pinyin_and_schema_but_keeps_dialogue_pinyin(tmp_path):
     manifest, _ = build_exam(tmp_path, "main_2026")
     q1 = _section(tmp_path, manifest.exam_id, "Q1")
     blind = blind_section_dict(q1)
+
+    assert "schema_version" not in blind
+    assert "section_id" not in blind
 
     phonetic_tasks = [task for task in blind["tasks"] if "headword" in task]
     dialogue_tasks = [task for task in blind["tasks"] if "lines" in task]
@@ -70,11 +76,20 @@ def test_q1_blind_surface_hides_internal_pinyin_but_keeps_dialogue_pinyin(tmp_pa
     assert dialogue_tasks
 
     for task in phonetic_tasks:
+        assert "task_type" not in task
+        assert "order" not in task
+        assert "target" not in task
         assert "pinyin" not in task["headword"]
+        assert "label" not in task["headword"]
+        assert set(task["headword"]) == {"hanzi", "target_index"}
         assert all("pinyin" not in candidate for candidate in task["candidates"])
+        assert all("slot_id" not in task["answer_slot"] for _ in [0])
 
     for task in dialogue_tasks:
+        assert "task_type" not in task
+        assert "order" not in task
         assert all(line.get("pinyin") for line in task["lines"])
+        assert "slot_id" not in task["answer_slot"]
 
 
 def test_q4_blind_surface_hides_evidence_and_operation_taxonomy(tmp_path):
@@ -83,11 +98,14 @@ def test_q4_blind_surface_hides_evidence_and_operation_taxonomy(tmp_path):
     blind = blind_section_dict(q4)
 
     assert "difficulty" not in blind
+    assert "schema_version" not in blind
+    assert "item_id" not in blind
     for task in blind["tasks"]:
         assert "evidence" not in task
         assert "dependency_mode" not in task
         assert "operations" not in task
         assert "rationale_ja" not in task
+        assert all("slot_id" not in slot for slot in task["answer_slots"])
 
 
 def test_q5_blind_surface_removes_prelinks_but_preserves_visible_underline(tmp_path):
@@ -99,8 +117,11 @@ def test_q5_blind_surface_removes_prelinks_but_preserves_visible_underline(tmp_p
     q5.anchors[0].source_excerpt = "她觉得这种做法很有意思。"
     blind = blind_section_dict(q5)
 
+    assert "schema_version" not in blind
+    assert "section_id" not in blind
     for task in blind["tasks"]:
         assert "anchor_refs" not in task
         assert "operation" not in task
         assert "rationale_ja" not in task
+        assert all("slot_id" not in slot for slot in task["answer_slots"])
     assert blind["anchors"][0]["source_excerpt"] == "她觉得这种做法很有意思。"
