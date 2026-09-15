@@ -15,6 +15,7 @@ from tabito_itemgen.exam_review_models import (
 from tabito_itemgen.section_io import load_section, section_fingerprint
 from tabito_itemgen.teacher_workflow_state import (
     revision_block_message,
+    section_is_rejected,
     section_status,
 )
 
@@ -71,7 +72,7 @@ def test_bad_review_execution_routes_back_to_review_not_item_revision(tmp_path):
         context_mode=ISOLATED,
     )
 
-    current, ref, path, section = _section_context(tmp_path, manifest.exam_id, "Q1")
+    current, ref, _, section = _section_context(tmp_path, manifest.exam_id, "Q1")
     assert section_status(tmp_path, current, manifest_path(tmp_path, manifest.exam_id), ref) == "blind_review"
     message = revision_block_message(tmp_path, current, ref, section)
     assert message is not None
@@ -93,7 +94,27 @@ def test_review_content_failure_routes_to_revision(tmp_path):
 
     current, ref, _, section = _section_context(tmp_path, manifest.exam_id, "Q1")
     assert section_status(tmp_path, current, manifest_path(tmp_path, manifest.exam_id), ref) == "review_failed"
+    assert not section_is_rejected(tmp_path, current, ref, section)
     assert revision_block_message(tmp_path, current, ref, section) is None
+
+
+def test_review_reject_routes_to_regeneration_not_revision(tmp_path):
+    manifest, _ = build_exam(tmp_path, "main_2026")
+    review = _review(tmp_path, manifest.exam_id, "Q1", verdict="reject")
+    import_section_review(
+        tmp_path,
+        manifest.exam_id,
+        "Q1",
+        review.model_dump_json(),
+        reasoning_level="high",
+        fresh_chat_confirmed=True,
+        context_mode=ISOLATED,
+    )
+
+    current, ref, _, section = _section_context(tmp_path, manifest.exam_id, "Q1")
+    assert section_status(tmp_path, current, manifest_path(tmp_path, manifest.exam_id), ref) == "rejected"
+    assert section_is_rejected(tmp_path, current, ref, section)
+    assert "重新出题" in revision_block_message(tmp_path, current, ref, section)
 
 
 def test_teacher_revision_note_is_included_in_revision_prompt(tmp_path):
@@ -115,7 +136,7 @@ def test_teacher_revision_note_is_included_in_revision_prompt(tmp_path):
         section="Q1",
         section_id=ref.section_id,
         candidate_fingerprint=fingerprint,
-        reviewer="TABITO 教研",
+        reviewer="QA",
         disposition="revise",
         checks=SectionQAChecks(**{name: True for name in SectionQAChecks.model_fields}),
         section_specific_checks={name: True for name in SECTION_SPECIFIC_QA["Q1"]},
@@ -131,3 +152,34 @@ def test_teacher_revision_note_is_included_in_revision_prompt(tmp_path):
     text = request.read_text(encoding="utf-8")
     assert "## Teacher QA" in text
     assert "把第三个候选的措辞改得更自然" in text
+
+
+def test_teacher_reject_routes_to_regeneration(tmp_path):
+    manifest, _ = build_exam(tmp_path, "main_2026")
+    review = _review(tmp_path, manifest.exam_id, "Q1", verdict="pass")
+    import_section_review(
+        tmp_path,
+        manifest.exam_id,
+        "Q1",
+        review.model_dump_json(),
+        reasoning_level="high",
+        fresh_chat_confirmed=True,
+        context_mode=ISOLATED,
+    )
+
+    current, ref, _, section = _section_context(tmp_path, manifest.exam_id, "Q1")
+    qa = SectionHumanQA(
+        section="Q1",
+        section_id=ref.section_id,
+        candidate_fingerprint=section_fingerprint(section),
+        reviewer="QA",
+        disposition="reject",
+        checks=SectionQAChecks(),
+        section_specific_checks={},
+        note="这一版不用。",
+    )
+    save_section_human_qa(tmp_path, manifest.exam_id, "Q1", qa)
+
+    assert section_status(tmp_path, current, manifest_path(tmp_path, manifest.exam_id), ref) == "rejected"
+    assert section_is_rejected(tmp_path, current, ref, section)
+    assert "重新出题" in revision_block_message(tmp_path, current, ref, section)
