@@ -130,4 +130,9 @@ def test_q5_anchor_renderer_draws_blank_and_underlined_excerpt():
 
     rendered = _q5_paragraph_text(section, paragraph)
     assert r"{\small\textbf{〔空欄A〕}}\,\underline{\hspace{4.2em}}" in rendered
-    assert r"{\small\textbf{〔下線部A〕}}\uline{她保留了店里的判断。}" in rendered
+    # Keep a legal break immediately after the visible marker.  Without this,
+    # the first uline box can be forced past the A4 right margin.
+    assert (
+        r"{\small\textbf{〔下線部A〕}}\allowbreak{}"
+        r"\uline{她保留了店里的判断。}"
+    ) in rendered
