@@ -1,1 +1,1 @@
-participant_id,exam_id,exam_fingerprint,answer_number,section,selected_option,correct_option,is_correct,omitted,ambiguity_flag,note
+participant_id,exam_id,exam_fingerprint,answer_number,section,selected_option,omitted,ambiguity_flag,note
