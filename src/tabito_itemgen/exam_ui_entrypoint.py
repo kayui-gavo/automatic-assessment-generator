@@ -17,7 +17,22 @@ exam_ui._next_action_text = next_action_text
 # telling the teacher that the failure necessarily came from blind review.
 exam_ui.STATUS_COPY["review_failed"] = ("需要返修", "bad")
 
+_original_save_exam_human_qa = exam_ui.save_exam_human_qa
 _original_revision_import = exam_ui._render_revision_import
+
+
+def _guarded_save_exam_human_qa(root, exam_id, qa):
+    """Do not let the UI say final QA is approved with unchecked requirements."""
+
+    if qa.disposition == "approve":
+        failed = [name for name, value in qa.checks.model_dump().items() if not value]
+        if failed:
+            labels = [exam_ui.EXAM_QA_LABELS.get(name, name) for name in failed]
+            raise ValueError("整卷不能标记为「通过」。以下检查尚未确认：" + "；".join(labels))
+    return _original_save_exam_human_qa(root, exam_id, qa)
+
+
+exam_ui.save_exam_human_qa = _guarded_save_exam_human_qa
 
 
 def _render_history_restore(root, manifest, ref) -> None:
