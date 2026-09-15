@@ -9,7 +9,12 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from .artifact_preflight import ArtifactManifest, sha256_file
+from .artifact_preflight import (
+    REQUIRED_EXTRA_FILES,
+    ArtifactManifest,
+    renderer_revision,
+    sha256_file,
+)
 from .exam_models import (
     ExamHumanQA,
     ExamManifest,
@@ -489,15 +494,40 @@ def _artifact_gate(root: Path, exam_id: str) -> Gate:
     current_fingerprint = exam_fingerprint(root, exam_id)
     if artifact.exam_fingerprint != current_fingerprint:
         return Gate("artifact preflight", False, "PDF artifacts are stale for the current exam content")
+
+    current_renderer = renderer_revision(root)
+    if current_renderer == "unknown":
+        return Gate("artifact preflight", False, "current renderer revision could not be determined")
     if artifact.renderer_revision == "unknown":
-        return Gate("artifact preflight", False, "renderer revision is unknown")
+        return Gate("artifact preflight", False, "artifact renderer revision is unknown")
+    if artifact.renderer_revision != current_renderer:
+        return Gate(
+            "artifact preflight",
+            False,
+            "PDF artifacts are stale for the current renderer; regenerate and preflight again",
+        )
 
     required = {"student", "teacher", "answer_sheet"}
     names = {check.name for check in artifact.checks}
     if names != required:
         return Gate("artifact preflight", False, f"artifact set must be exactly {sorted(required)}, got {sorted(names)}")
+
+    missing_extra_records = [
+        filename for filename in REQUIRED_EXTRA_FILES if filename not in artifact.extra_files
+    ]
+    if missing_extra_records:
+        return Gate(
+            "artifact preflight",
+            False,
+            "required artifact hashes missing from manifest: " + ", ".join(missing_extra_records),
+        )
+
     if not artifact.passed:
-        failed = [f"{check.name}: {'; '.join(check.errors)}" for check in artifact.checks if not check.passed]
+        failed = [
+            f"{check.name}: {'; '.join(check.errors)}"
+            for check in artifact.checks
+            if not check.passed
+        ]
         return Gate("artifact preflight", False, " | ".join(failed))
 
     out_dir = root / "output" / exam_id
@@ -507,6 +537,17 @@ def _artifact_gate(root: Path, exam_id: str) -> Gate:
             return Gate("artifact preflight", False, f"{check.name}.pdf missing from output")
         if sha256_file(pdf) != check.pdf_sha256:
             return Gate("artifact preflight", False, f"{check.name}.pdf changed after preflight")
+
+    for filename, expected_sha in artifact.extra_files.items():
+        file_name = Path(filename)
+        if file_name.is_absolute() or file_name.name != filename:
+            return Gate("artifact preflight", False, f"invalid artifact filename {filename!r}")
+        artifact_file = out_dir / filename
+        if not artifact_file.exists() or not artifact_file.is_file():
+            return Gate("artifact preflight", False, f"{filename} missing after preflight")
+        if sha256_file(artifact_file) != expected_sha:
+            return Gate("artifact preflight", False, f"{filename} changed after preflight")
+
     return Gate("artifact preflight", True, f"pass · renderer {artifact.renderer_revision[:12]}")
 
 
