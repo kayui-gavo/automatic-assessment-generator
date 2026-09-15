@@ -10,6 +10,7 @@ from tabito_itemgen.exam_generate import (
     create_exam_section_request,
     create_section_review_request,
     create_section_revision_request,
+    create_section_structure_fix_request,
 )
 from tabito_itemgen.exam_models import ExamHumanQA, ExamQAChecks, ExamQATiming
 from tabito_itemgen.exam_preview import render_simple_section_preview
@@ -284,7 +285,7 @@ def _next_action_text(ref, status: str) -> str:
     if status == "not_generated":
         return f"打开 {section}，先生成题目。"
     if status == "needs_fix":
-        return f"打开 {section}，修正结构校验问题后再继续。"
+        return f"打开 {section} 的「返修」，先修正结构校验问题。"
     if status in {"draft", "blind_review"}:
         return f"打开 {section} 的「质量检查」，完成独立审题。"
     if status == "review_failed":
@@ -694,7 +695,7 @@ def _render_section_gate_summary(readiness) -> None:
 def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None:
     result = validate_section_file(path)
     if not result.passed:
-        st.error("这道大题还有结构问题，先返修后再审题。")
+        st.error("这道大题还有结构问题，先进入「返修」修正结构后再审题。")
         for error in result.errors:
             st.markdown(f"- {error}")
         return
@@ -794,7 +795,73 @@ def _render_review_panel(root: Path, manifest, ref, section, path: Path) -> None
         st.caption("独立审题通过后，这里会自动出现「教师确认」。")
 
 
-def _render_revision_import(root: Path, manifest, ref, section) -> None:
+def _render_structure_fix_import(root: Path, manifest, ref, section, path: Path) -> None:
+    validation = validate_section_file(path)
+    st.markdown("### 结构修正")
+    st.caption("当前版本还没有通过格式与结构检查。先修正这些机器可确定的问题，不需要先做独立审题。")
+    for error in validation.errors:
+        st.markdown(f"- {error}")
+
+    try:
+        request = create_section_structure_fix_request(root, manifest.exam_id, ref.section)
+    except Exception as exc:
+        st.error(str(exc))
+        return
+
+    fingerprint = section_fingerprint(section)
+    with st.expander("复制结构修正指令", expanded=True):
+        st.code(request.read_text(encoding="utf-8"), language=None)
+        st.download_button(
+            "下载结构修正指令",
+            request.read_text(encoding="utf-8"),
+            file_name=request.name,
+            key=f"download-structure-fix-{ref.section}-{fingerprint[:8]}",
+        )
+
+    fixed_json = st.text_area(
+        "粘贴修正后的 JSON",
+        height=340,
+        placeholder="把结构修正后的完整 JSON 粘贴到这里。",
+        key=f"structure-fix-json-{ref.section}-{fingerprint[:8]}",
+    )
+    if st.button(
+        "导入结构修正版",
+        type="primary",
+        key=f"structure-fix-import-{ref.section}-{fingerprint[:8]}",
+    ):
+        try:
+            fixed_path, result = import_section_response(
+                root,
+                manifest.exam_id,
+                ref.section,
+                fixed_json,
+            )
+            if result.errors:
+                st.error("仍有结构问题：" + " | ".join(result.errors))
+                return
+
+            fixed = load_section(fixed_path)
+            fixed_fingerprint = section_fingerprint(fixed)
+            st.session_state[
+                _section_view_key(manifest.exam_id, ref.section, fixed_fingerprint)
+            ] = "质量检查"
+            _set_flash(
+                manifest.exam_id,
+                ref.section,
+                "success",
+                "结构修正已导入并通过检查。下一步进行独立审题。",
+            )
+            st.rerun()
+        except Exception as exc:
+            st.error(str(exc))
+
+
+def _render_revision_import(root: Path, manifest, ref, section, path: Path) -> None:
+    validation = validate_section_file(path)
+    if not validation.passed:
+        _render_structure_fix_import(root, manifest, ref, section, path)
+        return
+
     review_file = section_review_path(root, manifest.exam_id, ref.section)
     st.markdown("### 返修")
     if not review_file.exists():
@@ -846,8 +913,18 @@ def _render_revision_import(root: Path, manifest, ref, section) -> None:
                 revised_json,
             )
             if result.errors:
-                st.error("返修版已保存，但结构校验仍未通过：" + " | ".join(result.errors))
-                return
+                revised = load_section(revised_path)
+                revised_fingerprint = section_fingerprint(revised)
+                st.session_state[
+                    _section_view_key(manifest.exam_id, ref.section, revised_fingerprint)
+                ] = "返修"
+                _set_flash(
+                    manifest.exam_id,
+                    ref.section,
+                    "warning",
+                    "返修版已导入，但仍有结构问题。请继续完成结构修正。",
+                )
+                st.rerun()
 
             revised = load_section(revised_path)
             revised_fingerprint = section_fingerprint(revised)
@@ -897,10 +974,19 @@ def _render_generation_panel(root: Path, manifest, ref) -> None:
     if st.button("导入题目", type="primary", key=f"import-{ref.section}"):
         try:
             path, result = import_section_response(root, manifest.exam_id, ref.section, response)
+            fingerprint = section_fingerprint(load_section(path))
             if result.errors:
-                st.error("题目已保存，但结构校验未通过：" + " | ".join(result.errors))
+                st.session_state[
+                    _section_view_key(manifest.exam_id, ref.section, fingerprint)
+                ] = "返修"
+                _set_flash(
+                    manifest.exam_id,
+                    ref.section,
+                    "warning",
+                    "题目已导入，但还有结构问题。请先完成结构修正。",
+                )
+                st.rerun()
             else:
-                fingerprint = section_fingerprint(load_section(path))
                 st.session_state[
                     _section_view_key(manifest.exam_id, ref.section, fingerprint)
                 ] = "质量检查"
@@ -1023,7 +1109,7 @@ def _render_section_workspace(
     if view_key not in st.session_state:
         st.session_state[view_key] = (
             "返修"
-            if status == "review_failed"
+            if status in {"review_failed", "needs_fix"}
             else "质量检查"
             if status in {"blind_review", "teacher_qa", "draft"}
             else "学生题面"
@@ -1046,7 +1132,7 @@ def _render_section_workspace(
     elif view == "质量检查":
         _render_review_panel(root, manifest, ref, section, path)
     else:
-        _render_revision_import(root, manifest, ref, section)
+        _render_revision_import(root, manifest, ref, section, path)
 
 
 def _render_release_workspace(
