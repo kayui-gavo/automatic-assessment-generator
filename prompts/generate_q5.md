@@ -10,6 +10,8 @@
 - 文章は1ページ強を想定した自然な現代簡体字長文にする。
 - `paragraphs` を安定した paragraph_id で分割する。
 - 空欄・下線部・語句・時系列手掛かりは `anchors` として定義し、設問は `anchor_refs` で参照する。substring検索前提にしない。
+- **下線部を示す `underline` / `phrase` / `sentence` anchor は、`marker_label` に加えて学生版で実際に下線を引く本文を `source_excerpt` に完全一致で入れる。`source_excerpt` は本文中の `〔marker_label〕` の直後から始まる文字列にする。** marker だけ置いて下線範囲を省略してはいけない。
+- `blank` anchor は `source_excerpt` を持たせない。
 - 37–50の14解答枠を正確に一度ずつ使う。
 - main_2026 は問1～11、makeup_2026 は問1～10。
 - 語彙・文法だけでなく、文脈・理由・心情/意図・全体内容を混ぜる。
@@ -63,6 +65,7 @@
 5. 本文各段落の役割が「設問の答えを置く箱」になっていないか。
 6. 公式題と人物・出来事・段落の意味順序まで似ていないか。
 7. 後半3問の認知操作が本当に異なるか。
+8. `下線部` の marker だけが残り、実際の `source_excerpt` が欠けていないか。各下線 span は marker 直後の本文と一字ずつ一致するか。
 
 ## Item spec
 
