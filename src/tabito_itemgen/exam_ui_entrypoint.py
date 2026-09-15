@@ -5,6 +5,7 @@ from tabito_itemgen.exam_ui_style import APP_CSS
 from tabito_itemgen.teacher_workflow_state import (
     next_action_text,
     revision_block_message,
+    section_is_rejected,
     section_status,
 )
 
@@ -13,12 +14,13 @@ from tabito_itemgen.teacher_workflow_state import (
 exam_ui.APP_CSS = APP_CSS
 exam_ui._section_status = section_status
 exam_ui._next_action_text = next_action_text
-# This state can come from either independent review or teacher QA, so avoid
-# telling the teacher that the failure necessarily came from blind review.
+# Teacher-facing states describe the next action, not internal pipeline jargon.
 exam_ui.STATUS_COPY["review_failed"] = ("需要返修", "bad")
+exam_ui.STATUS_COPY["rejected"] = ("不采用", "bad")
 
 _original_save_exam_human_qa = exam_ui.save_exam_human_qa
 _original_revision_import = exam_ui._render_revision_import
+_original_section_workspace = exam_ui._render_section_workspace
 
 
 def _guarded_save_exam_human_qa(root, exam_id, qa):
@@ -103,6 +105,14 @@ def _render_history_restore(root, manifest, ref) -> None:
 
 def _guarded_revision_import(root, manifest, ref, section, path) -> None:
     _render_history_restore(root, manifest, ref)
+    if section_is_rejected(root, manifest, ref, section):
+        exam_ui.st.markdown("### 不采用")
+        exam_ui.st.caption(
+            "当前版本保留在历史记录中，但不再继续返修。请重新生成这一大题。"
+        )
+        exam_ui._render_generation_panel(root, manifest, ref)
+        return
+
     message = revision_block_message(root, manifest, ref, section)
     if message:
         exam_ui.st.markdown("### 返修")
@@ -112,6 +122,45 @@ def _guarded_revision_import(root, manifest, ref, section, path) -> None:
 
 
 exam_ui._render_revision_import = _guarded_revision_import
+
+
+def _routed_section_workspace(
+    root,
+    manifest,
+    exam_path,
+    ref,
+    status,
+    *,
+    is_approved,
+):
+    # The stock workspace defaults only review_failed to the revision page.
+    # Rejected candidates need the same tab selected, but the patched revision
+    # surface below presents a clean re-generation action instead of a revise prompt.
+    if status == "rejected" and ref.path:
+        path = exam_path.parent / ref.path
+        if path.exists():
+            try:
+                section = exam_ui.load_section(path)
+                fingerprint = exam_ui.section_fingerprint(section)
+                view_key = exam_ui._section_view_key(
+                    manifest.exam_id,
+                    ref.section,
+                    fingerprint,
+                )
+                exam_ui.st.session_state.setdefault(view_key, "返修")
+            except Exception:
+                pass
+    return _original_section_workspace(
+        root,
+        manifest,
+        exam_path,
+        ref,
+        status,
+        is_approved=is_approved,
+    )
+
+
+exam_ui._render_section_workspace = _routed_section_workspace
 
 
 def main() -> None:
