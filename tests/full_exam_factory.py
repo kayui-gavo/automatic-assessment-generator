@@ -237,12 +237,18 @@ def q5(section_id: str, family: str = "main_2026") -> Q5Section:
             text_zh="活动结束时，她没有急着拿走最热门的书，而是选了一本几乎没人注意的小册子。〔下線部3〕她想先看看陌生人的一句话，会不会让自己用新的眼光读它。",
         ),
     ]
+    excerpts = [
+        "她觉得这种做法很有意思。",
+        "林悦开始觉得，交换的不只是书，也是读书时留下的想法。",
+        "她想先看看陌生人的一句话，会不会让自己用新的眼光读它。",
+    ]
     anchors = [
         ArticleAnchor(
             anchor_id=f"A{index}",
             paragraph_id=f"P{index}",
-            kind="phrase",
+            kind="sentence",
             marker_label=f"下線部{index}",
+            source_excerpt=excerpts[index - 1],
         )
         for index in range(1, 4)
     ]
