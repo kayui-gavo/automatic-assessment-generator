@@ -9,6 +9,7 @@ from .blind_surface import blind_section_dict
 from .exam_models import ExamManifest, Q1Section, Q2Section, Q3Section, Q5Section
 from .exam_production import exam_workspace_dir, load_manifest, manifest_path
 from .exam_review_models import SectionReview
+from .io import load_json
 from .model_policy import execution_protocol
 from .models import Item
 from .section_io import load_section, section_fingerprint
@@ -186,9 +187,19 @@ def create_section_revision_request(root: Path, exam_id: str, section: str) -> P
     if not ref.path:
         raise ValueError(f"{section} has not been generated")
     section_path = manifest_path(root, exam_id).parent / ref.path
+    section_data = load_section(section_path)
+    current_fingerprint = section_fingerprint(section_data)
     review_path = exam_workspace_dir(root, exam_id) / "reviews" / f"{section.lower()}.review.json"
     if not review_path.exists():
         raise ValueError("review JSON is missing")
+    review = SectionReview.model_validate(load_json(review_path))
+    if review.section != section or review.section_id != ref.section_id:
+        raise ValueError("review JSON does not match the current section")
+    if review.candidate_fingerprint != current_fingerprint:
+        raise ValueError(
+            "review JSON belongs to an earlier candidate version; run a new independent review "
+            "before creating another revision request"
+        )
     if section == "Q4":
         blueprint = _q4_context(root)["generation_profile_yaml"]
     else:
