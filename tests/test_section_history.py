@@ -3,7 +3,8 @@ from tabito_itemgen.exam_production import (
     load_manifest,
     manifest_path,
 )
-from tabito_itemgen.section_io import load_section, section_fingerprint
+from tabito_itemgen.io import dump_json, load_json
+from tabito_itemgen.section_io import load_section, save_section, section_fingerprint
 
 from tests.full_exam_factory import build_exam
 
@@ -52,3 +53,31 @@ def test_identical_section_import_does_not_create_history_noise(tmp_path):
 
     history_dir = manifest_path(tmp_path, manifest.exam_id).parent / "history" / "q2"
     assert not history_dir.exists()
+
+
+def test_q1_candidate_labels_are_presentation_owned_not_model_owned(tmp_path):
+    manifest, _ = build_exam(tmp_path, "main_2026")
+    current = load_manifest(manifest_path(tmp_path, manifest.exam_id))
+    ref = next(ref for ref in current.sections if ref.section == "Q1")
+    section_path = manifest_path(tmp_path, manifest.exam_id).parent / ref.path
+
+    # Simulate an older / malformed stored candidate whose authoring labels
+    # contain arbitrary text. Loading the section must recover the booklet's
+    # fixed a-d labels before any browser/PDF renderer can see them.
+    raw = load_json(section_path)
+    raw["tasks"][0]["candidates"][0]["label"] = "見出し"
+    raw["tasks"][0]["candidates"][1]["label"] = "事情"
+    dump_json(section_path, raw)
+
+    q1 = load_section(section_path)
+    assert [word.label for word in q1.tasks[0].candidates] == ["a", "b", "c", "d"]
+
+    # Saving the normalized candidate also cleans the persisted representation.
+    save_section(section_path, q1)
+    stored = load_json(section_path)
+    assert [word["label"] for word in stored["tasks"][0]["candidates"]] == [
+        "a",
+        "b",
+        "c",
+        "d",
+    ]
