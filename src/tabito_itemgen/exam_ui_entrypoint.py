@@ -133,9 +133,8 @@ def _routed_section_workspace(
     *,
     is_approved,
 ):
-    # The stock workspace defaults only review_failed to the revision page.
-    # Rejected candidates need the same tab selected, but the patched revision
-    # surface below presents a clean re-generation action instead of a revise prompt.
+    # Rejected candidates should immediately land on the re-generation surface
+    # even if the same fingerprint's radio state was previously "质量检查".
     if status == "rejected" and ref.path:
         path = exam_path.parent / ref.path
         if path.exists():
@@ -147,7 +146,7 @@ def _routed_section_workspace(
                     ref.section,
                     fingerprint,
                 )
-                exam_ui.st.session_state.setdefault(view_key, "返修")
+                exam_ui.st.session_state[view_key] = "返修"
             except Exception:
                 pass
     return _original_section_workspace(
