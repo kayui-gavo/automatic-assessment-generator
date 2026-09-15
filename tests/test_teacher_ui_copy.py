@@ -34,7 +34,7 @@ def test_teacher_ui_statuses_do_not_expose_pipeline_jargon():
         "需修正",
         "草稿",
         "待独立审题",
-        "审题未通过",
+        "需要返修",
         "待教师确认",
         "已就绪",
         "已定稿",
