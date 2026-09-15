@@ -48,7 +48,7 @@ def _validate_surface_contract(section: SectionData) -> None:
     """Reject metadata combinations that cannot render the intended booklet.
 
     Pydantic validates types and broad section architecture, but a few relations
-    exist specifically between stored metadata and the printed surface.  These
+    exist specifically between stored metadata and the printed surface. These
     must fail before the candidate replaces the current draft; otherwise browser
     and PDF renderers can silently display a different question than the author
     intended.
@@ -98,10 +98,21 @@ def _validate_surface_contract(section: SectionData) -> None:
                     "because the booklet renderer cannot place an underline without its marker"
                 )
 
-            if anchor.kind == "blank" and anchor.source_excerpt:
-                raise ValueError(
-                    f"Q5 anchor {anchor.anchor_id}: blank anchors must not carry source_excerpt"
-                )
+            if anchor.kind == "blank":
+                if anchor.source_excerpt:
+                    raise ValueError(
+                        f"Q5 anchor {anchor.anchor_id}: blank anchors must not carry source_excerpt"
+                    )
+            elif anchor.kind in {"underline", "phrase", "sentence"}:
+                if not marker_label:
+                    raise ValueError(
+                        f"Q5 anchor {anchor.anchor_id}: {anchor.kind} anchors require marker_label"
+                    )
+                if not anchor.source_excerpt:
+                    raise ValueError(
+                        f"Q5 anchor {anchor.anchor_id}: {anchor.kind} anchors require an explicit "
+                        "source_excerpt so the visible underline span is unambiguous"
+                    )
 
             if anchor.source_excerpt and marker_label:
                 token = f"〔{marker_label}〕"
