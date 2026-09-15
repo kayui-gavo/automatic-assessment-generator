@@ -1,19 +1,8 @@
-from pathlib import Path
-
 import pytest
 
-from tabito_itemgen.artifact_preflight import (
-    ArtifactCheck,
-    ArtifactManifest,
-    renderer_revision,
-    sha256_file,
-    write_artifact_manifest,
-)
 from tabito_itemgen.exam_models import ExamHumanQA, ExamQAChecks
 from tabito_itemgen.exam_production import (
     approve_exam,
-    exam_artifact_manifest_path,
-    exam_fingerprint,
     exam_release_readiness,
     exam_release_record_path,
     import_section_review,
@@ -33,6 +22,7 @@ from tabito_itemgen.exam_review_models import (
 from tabito_itemgen.io import load_json
 from tabito_itemgen.section_io import load_section, section_fingerprint
 
+from tests.artifact_factory import write_clean_artifacts
 from tests.full_exam_factory import build_exam
 
 
@@ -79,33 +69,6 @@ def _complete_section_qa(root, exam_id, section_name):
         section_specific_checks={name: True for name in SECTION_SPECIFIC_QA[section_name]},
     )
     save_section_human_qa(root, exam_id, section_name, qa)
-
-
-def _write_clean_artifacts(root: Path, exam_id: str) -> Path:
-    out = root / "output" / exam_id
-    out.mkdir(parents=True, exist_ok=True)
-    checks = []
-    for name in ("student", "teacher", "answer_sheet"):
-        tex = out / f"{name}.tex"
-        pdf = out / f"{name}.pdf"
-        tex.write_text("synthetic release fixture\n", encoding="utf-8")
-        pdf.write_bytes(b"%PDF-1.4\nsynthetic release fixture\n")
-        checks.append(
-            ArtifactCheck(
-                name=name,
-                tex_path=str(tex),
-                pdf_path=str(pdf),
-                pdf_sha256=sha256_file(pdf),
-                page_count=1,
-            )
-        )
-    artifact = ArtifactManifest(
-        exam_id=exam_id,
-        exam_fingerprint=exam_fingerprint(root, exam_id),
-        renderer_revision=renderer_revision(root),
-        checks=tuple(checks),
-    )
-    return write_artifact_manifest(artifact, exam_artifact_manifest_path(root, exam_id))
 
 
 def test_ordered_multislot_review_does_not_accept_reversed_q2_answers(tmp_path):
@@ -228,7 +191,7 @@ def test_exam_release_requires_sections_artifacts_and_final_exam_qa(tmp_path):
         _complete_section_qa(tmp_path, manifest.exam_id, section_name)
     assert not exam_release_readiness(tmp_path, manifest.exam_id).ready
 
-    artifact_path = _write_clean_artifacts(tmp_path, manifest.exam_id)
+    artifact_path = write_clean_artifacts(tmp_path, manifest.exam_id)
     assert artifact_path.exists()
     assert not exam_release_readiness(tmp_path, manifest.exam_id).ready
 
@@ -251,6 +214,7 @@ def test_exam_release_requires_sections_artifacts_and_final_exam_qa(tmp_path):
     assert (target / "artifacts" / "student.pdf").exists()
     assert (target / "artifacts" / "teacher.pdf").exists()
     assert (target / "artifacts" / "answer_sheet.pdf").exists()
+    assert (target / "artifacts" / "answer_key.json").exists()
     record = load_json(exam_release_record_path(tmp_path, manifest.exam_id))
     assert record["exam_fingerprint"] == release.fingerprint
     assert record["artifact_manifest_sha256"]
@@ -266,7 +230,7 @@ def test_artifact_change_invalidates_final_exam_qa(tmp_path):
     manifest, _ = build_exam(tmp_path, "main_2026")
     for section_name in ("Q1", "Q2", "Q3", "Q4", "Q5"):
         _complete_section_qa(tmp_path, manifest.exam_id, section_name)
-    _write_clean_artifacts(tmp_path, manifest.exam_id)
+    write_clean_artifacts(tmp_path, manifest.exam_id)
 
     final_qa = ExamHumanQA(
         exam_id=manifest.exam_id,
@@ -283,3 +247,16 @@ def test_artifact_change_invalidates_final_exam_qa(tmp_path):
     assert not readiness.ready
     artifact_gate = next(gate for gate in readiness.gates if gate.name == "artifact preflight")
     assert "changed after preflight" in artifact_gate.detail
+
+
+def test_answer_key_change_invalidates_artifact_gate(tmp_path):
+    manifest, _ = build_exam(tmp_path, "main_2026")
+    write_clean_artifacts(tmp_path, manifest.exam_id)
+
+    answer_key = tmp_path / "output" / manifest.exam_id / "answer_key.json"
+    answer_key.write_text('{"1": 4}\n', encoding="utf-8")
+
+    readiness = exam_release_readiness(tmp_path, manifest.exam_id)
+    artifact_gate = next(gate for gate in readiness.gates if gate.name == "artifact preflight")
+    assert not artifact_gate.passed
+    assert "answer_key.json changed after preflight" in artifact_gate.detail
