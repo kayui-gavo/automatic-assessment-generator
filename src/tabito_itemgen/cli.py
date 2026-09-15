@@ -12,7 +12,6 @@ from .exam_production import (
     approve_exam,
     create_exam_project,
     exam_release_readiness,
-    import_section_response,
     import_section_review,
     manifest_path,
 )
@@ -25,6 +24,7 @@ from .models import Item, Review
 from .paths import find_project_root
 from .production import approve_item, import_item_response, release_readiness
 from .render import compile_xelatex, render_item_tex
+from .response_audit import import_section_response
 from .review_io import import_bound_review_response
 from .validate import check_bank_similarity, compare_review, validate_item_file
 
@@ -355,12 +355,18 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("exam_id")
     command.set_defaults(func=cmd_exam_validate)
 
-    command = sub.add_parser("exam-review-request", help="Create a blind-review prompt for one section")
+    command = sub.add_parser(
+        "exam-review-request",
+        help="Create a blind-review prompt for one section",
+    )
     command.add_argument("exam_id")
     command.add_argument("section", choices=["Q1", "Q2", "Q3", "Q4", "Q5"])
     command.set_defaults(func=cmd_exam_review_request)
 
-    command = sub.add_parser("exam-import-review", help="Import a fingerprint-bound section review")
+    command = sub.add_parser(
+        "exam-import-review",
+        help="Import a fingerprint-bound section review",
+    )
     command.add_argument("exam_id")
     command.add_argument("section", choices=["Q1", "Q2", "Q3", "Q4", "Q5"])
     command.add_argument("file")
@@ -373,7 +379,10 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument(
         "--fresh-chat-confirmed",
         action="store_true",
-        help="Confirm that the reviewer ran in an independent context with no authoring/revision context",
+        help=(
+            "Confirm that the reviewer ran in an independent context with no "
+            "authoring/revision context"
+        ),
     )
     command.add_argument(
         "--context-mode",
@@ -389,11 +398,17 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument(
         "--authoring-context-seen",
         action="store_true",
-        help="Record that the reviewer saw authoring context; this intentionally fails the release gate",
+        help=(
+            "Record that the reviewer saw authoring context; this intentionally "
+            "fails the release gate"
+        ),
     )
     command.set_defaults(func=cmd_exam_import_review)
 
-    command = sub.add_parser("exam-revision-request", help="Create a revision prompt for one section")
+    command = sub.add_parser(
+        "exam-revision-request",
+        help="Create a revision prompt for one section",
+    )
     command.add_argument("exam_id")
     command.add_argument("section", choices=["Q1", "Q2", "Q3", "Q4", "Q5"])
     command.set_defaults(func=cmd_exam_revision_request)
@@ -402,7 +417,10 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("exam_id")
     command.set_defaults(func=cmd_exam_release_check)
 
-    command = sub.add_parser("exam-approve", help="Approve a full exam only when every gate passes")
+    command = sub.add_parser(
+        "exam-approve",
+        help="Approve a full exam only when every gate passes",
+    )
     command.add_argument("exam_id")
     command.set_defaults(func=cmd_exam_approve)
 
@@ -411,7 +429,10 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("--compile", action="store_true")
     command.set_defaults(func=cmd_exam_render)
 
-    command = sub.add_parser("new-item", help="Create a manual ChatGPT request for legacy Q4-only use")
+    command = sub.add_parser(
+        "new-item",
+        help="Create a manual ChatGPT request for legacy Q4-only use",
+    )
     command.add_argument("--topic", required=True)
     command.add_argument(
         "--difficulty",
@@ -429,7 +450,10 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("--notes", default=None)
     command.set_defaults(func=cmd_new_item)
 
-    command = sub.add_parser("import-response", help="Import generated Q4 JSON as a canonical draft")
+    command = sub.add_parser(
+        "import-response",
+        help="Import generated Q4 JSON as a canonical draft",
+    )
     command.add_argument("file")
     command.set_defaults(func=cmd_import)
 
@@ -437,20 +461,32 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("file")
     command.set_defaults(func=cmd_validate)
 
-    command = sub.add_parser("review-request", help="Create a fingerprint-bound Q4 blind-review prompt")
+    command = sub.add_parser(
+        "review-request",
+        help="Create a fingerprint-bound Q4 blind-review prompt",
+    )
     command.add_argument("file")
     command.set_defaults(func=cmd_review_request)
 
-    command = sub.add_parser("import-review", help="Verify fingerprint and save a Q4 review JSON")
+    command = sub.add_parser(
+        "import-review",
+        help="Verify fingerprint and save a Q4 review JSON",
+    )
     command.add_argument("file")
     command.set_defaults(func=cmd_import_review)
 
-    command = sub.add_parser("review-check", help="Compare Q4 blind-review answers with the answer key")
+    command = sub.add_parser(
+        "review-check",
+        help="Compare Q4 blind-review answers with the answer key",
+    )
     command.add_argument("--item", required=True)
     command.add_argument("--review", required=True)
     command.set_defaults(func=cmd_review_check)
 
-    command = sub.add_parser("revision-request", help="Create a Q4 revision prompt from item + review")
+    command = sub.add_parser(
+        "revision-request",
+        help="Create a Q4 revision prompt from item + review",
+    )
     command.add_argument("--item", required=True)
     command.add_argument("--review", required=True)
     command.set_defaults(func=cmd_revision_request)
@@ -463,7 +499,10 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("file")
     command.set_defaults(func=cmd_release_check)
 
-    command = sub.add_parser("approve", help="Approve Q4 only after persisted release gates pass")
+    command = sub.add_parser(
+        "approve",
+        help="Approve Q4 only after persisted release gates pass",
+    )
     command.add_argument("file")
     command.set_defaults(func=cmd_approve)
 
