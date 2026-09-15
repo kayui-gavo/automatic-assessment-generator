@@ -91,6 +91,7 @@ def create_review_request(root: Path, item_path: Path) -> Path:
     prompt_path = root / "prompts" / "review_q4.md"
     prompt = Template(prompt_path.read_text(encoding="utf-8")).render(
         **_review_reference_context(root),
+        item_id=item.item_id,
         item_json=blind_json,
         candidate_fingerprint=fingerprint,
     )
