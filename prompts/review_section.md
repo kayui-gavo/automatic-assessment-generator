@@ -58,12 +58,13 @@
 - `revise`: 正答は成立するが、易しすぎる、誤答が弱い、語塊が大きすぎる、複数資料統合が名目だけ、後半設問が反復する等、命題品質に修正余地がある。
 - `reject`: 複数解、正答不成立、重大な言語誤り、資料矛盾、公式題の実質的換皮等。
 
-## Candidate binding
+## Review bookkeeping
 
-この値は内容バージョンを識別する opaque fingerprint であり、問題内容の手掛かりではない。
-出力 JSON の `candidate_fingerprint` に**一字も変えず**そのまま返すこと。
+以下の3値は問題内容ではなく、保存先と内容バージョンを識別する opaque binding である。解答の手掛かりとして使わず、出力 JSON に一字も変えずそのまま返すこと。
 
-`{{ candidate_fingerprint }}`
+- `section`: `{{ section_name }}`
+- `section_id`: `{{ section_id }}`
+- `candidate_fingerprint`: `{{ candidate_fingerprint }}`
 
 ## Section blueprint
 
