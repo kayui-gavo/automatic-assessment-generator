@@ -78,12 +78,16 @@ def section_fingerprint(section: SectionData) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _archive_previous_candidate(exam_dir: Path, path: Path) -> None:
-    """Preserve the previous candidate before a successful schema-level overwrite.
+def _archive_previous_candidate(
+    exam_dir: Path,
+    path: Path,
+    incoming_fingerprint: str,
+) -> None:
+    """Preserve the previous candidate before a content-changing overwrite.
 
     Revision and structure-fix imports intentionally become the current draft even
-    when deterministic validation still reports issues.  Without this archive a
-    single bad import permanently destroyed the last usable candidate.  History is
+    when deterministic validation still reports issues. Without this archive a
+    single bad import permanently destroyed the last usable candidate. History is
     content-addressed, so repeated imports of the same version do not create noise.
     """
 
@@ -92,6 +96,8 @@ def _archive_previous_candidate(exam_dir: Path, path: Path) -> None:
     try:
         current = load_section(path)
         fingerprint = section_fingerprint(current)
+        if fingerprint == incoming_fingerprint:
+            return
     except Exception:
         # A corrupt existing file is still worth preserving for forensic recovery.
         fingerprint = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -107,5 +113,5 @@ def save_section_draft(exam_dir: Path, section: SectionData) -> Path:
     draft = section.model_copy(deep=True)
     draft.workflow.state = "draft"
     path = exam_dir / "sections" / f"{draft.section.lower()}.json"
-    _archive_previous_candidate(exam_dir, path)
+    _archive_previous_candidate(exam_dir, path, section_fingerprint(draft))
     return save_section(path, draft)
