@@ -37,10 +37,14 @@ def write_clean_artifacts(root: Path, exam_id: str) -> Path:
                 page_count=1,
             )
         )
+
+    answer_key = out / "answer_key.json"
+    answer_key.write_text("{}\n", encoding="utf-8")
     artifact = ArtifactManifest(
         exam_id=exam_id,
         exam_fingerprint=exam_fingerprint(root, exam_id),
         renderer_revision=renderer_revision(root),
         checks=tuple(checks),
+        extra_files={"answer_key.json": sha256_file(answer_key)},
     )
     return write_artifact_manifest(artifact, exam_artifact_manifest_path(root, exam_id))
