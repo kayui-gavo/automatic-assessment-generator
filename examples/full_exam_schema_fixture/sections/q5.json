@@ -6,9 +6,9 @@
     {"paragraph_id":"P3","text_zh":"活动结束时，她没有急着拿走最热门的书，而是选了一本几乎没人注意的小册子。〔下線部C〕她想先看看陌生人的一句话，会不会让自己用新的眼光读它。"}
   ],
   "anchors":[
-    {"anchor_id":"A1","paragraph_id":"P1","kind":"sentence","marker_label":"下線部A","source_excerpt":null},
-    {"anchor_id":"A2","paragraph_id":"P2","kind":"sentence","marker_label":"下線部B","source_excerpt":null},
-    {"anchor_id":"A3","paragraph_id":"P3","kind":"sentence","marker_label":"下線部C","source_excerpt":null}
+    {"anchor_id":"A1","paragraph_id":"P1","kind":"sentence","marker_label":"下線部A","source_excerpt":"她觉得这种做法很有意思。"},
+    {"anchor_id":"A2","paragraph_id":"P2","kind":"sentence","marker_label":"下線部B","source_excerpt":"林悦开始觉得，交换的不只是书，也是读书时留下的想法。"},
+    {"anchor_id":"A3","paragraph_id":"P3","kind":"sentence","marker_label":"下線部C","source_excerpt":"她想先看看陌生人的一句话，会不会让自己用新的眼光读它。"}
   ],
   "tasks":[
     {"task_id":"Q5-Q1","question_no":1,"order":1,"prompt_ja":"本文から読み取れるものを二つ選べ。","options":["林悦は本を一冊も持ってこなかった。","参加者の中には本に小さなメモを残す人がいた。","林悦は最初から一番人気の本を探していた。","交換会は学校の授業として行われた。","林悦は本を手放すつもりで参加した。"],"response_mode":"multi_select","answer_slots":[{"slot_id":"Q5-37","answer_number":37,"correct_option":2},{"slot_id":"Q5-38","answer_number":38,"correct_option":5}],"option_reuse":"forbidden","anchor_refs":["A1"],"operation":"content_understanding","rationale_ja":"第1段落の二つの事実に対応する。","distractor_rationales_ja":{},"slot_distractor_rationales_ja":{}},
