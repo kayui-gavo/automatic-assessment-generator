@@ -5,7 +5,7 @@ import json
 import re
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 _OVERFULL_RE = re.compile(r"Overfull \\hbox \((?P<points>[0-9.]+)pt too wide\)")
 _PAGE_RE = re.compile(r"Output written on .*?\((?P<pages>\d+) pages?")
@@ -42,17 +42,32 @@ class ArtifactCheck(BaseModel):
 class ArtifactManifest(BaseModel):
     """Immutable description of one rendered artifact set.
 
-    The manifest deliberately does *not* reject older renderer revisions while
-    parsing. Approved historical exams must remain readable and auditable after
-    renderer code changes. Freshness is a release-policy concern enforced by
-    ``exam_production._artifact_gate`` for the current draft.
+    Historical manifests must remain parseable after renderer upgrades. When an
+    older renderer fingerprint is loaded under newer code, preserve its original
+    value in ``source_renderer_revision`` and expose ``renderer_revision`` as
+    ``unknown``. The existing release gate already rejects unknown renderers,
+    while audit code can still inspect the renderer that originally produced the
+    artifact.
     """
 
     exam_id: str
     exam_fingerprint: str
     renderer_revision: str
+    source_renderer_revision: str | None = None
     checks: tuple[ArtifactCheck, ...]
     extra_files: dict[str, str] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def annotate_stale_renderer(self) -> ArtifactManifest:
+        current = renderer_revision()
+        if (
+            current != "unknown"
+            and self.renderer_revision not in {"unknown", current}
+        ):
+            if self.source_renderer_revision is None:
+                self.source_renderer_revision = self.renderer_revision
+            self.renderer_revision = "unknown"
+        return self
 
     @property
     def passed(self) -> bool:
