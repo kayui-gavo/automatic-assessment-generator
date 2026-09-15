@@ -9,6 +9,7 @@ from .blind_surface import blind_section_dict
 from .exam_models import ExamManifest, Q1Section, Q2Section, Q3Section, Q5Section
 from .exam_production import exam_workspace_dir, load_manifest, manifest_path
 from .exam_review_models import SectionReview
+from .exam_validation import validate_section_file
 from .io import load_json
 from .model_policy import execution_protocol
 from .models import Item
@@ -69,6 +70,12 @@ def _q4_review_contract(root: Path) -> str:
         + "\n\n# Q4 Reference Patterns — reviewer-only observed surface\n"
         + patterns
     )
+
+
+def _authoring_blueprint(root: Path, manifest: ExamManifest, section: str) -> str:
+    if section == "Q4":
+        return _q4_context(root)["generation_profile_yaml"]
+    return _blueprint_path(root, manifest, section).read_text(encoding="utf-8")
 
 
 def _section_spec(manifest: ExamManifest, section: str) -> dict:
@@ -181,6 +188,38 @@ def create_section_review_request(root: Path, exam_id: str, section: str) -> Pat
     return out
 
 
+def create_section_structure_fix_request(root: Path, exam_id: str, section: str) -> Path:
+    """Build a repair prompt for a schema-valid section that fails deterministic checks.
+
+    This path deliberately uses only authoring-safe blueprint context. It must not
+    import reviewer-only reference patterns merely because the candidate is invalid.
+    """
+
+    manifest = load_manifest(manifest_path(root, exam_id))
+    ref = next(ref for ref in manifest.sections if ref.section == section)
+    if not ref.path:
+        raise ValueError(f"{section} has not been generated")
+    section_path = manifest_path(root, exam_id).parent / ref.path
+    validation = validate_section_file(section_path)
+    if validation.passed:
+        raise ValueError("current section already passes deterministic validation")
+
+    template = Template((root / "prompts" / "fix_section_structure.md").read_text(encoding="utf-8"))
+    prompt = template.render(
+        validation_errors="\n".join(f"- {error}" for error in validation.errors),
+        section_blueprint=_authoring_blueprint(root, manifest, section),
+        item_json=section_path.read_text(encoding="utf-8"),
+        json_schema=json.dumps(
+            SECTION_MODELS[section].model_json_schema(), ensure_ascii=False, indent=2
+        ),
+    )
+    prompt = _with_execution_protocol("revision", section, prompt)
+    out = exam_workspace_dir(root, exam_id) / "reviews" / f"{section.lower()}.structure_fix_request.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(prompt, encoding="utf-8")
+    return out
+
+
 def create_section_revision_request(root: Path, exam_id: str, section: str) -> Path:
     manifest = load_manifest(manifest_path(root, exam_id))
     ref = next(ref for ref in manifest.sections if ref.section == section)
@@ -200,10 +239,7 @@ def create_section_revision_request(root: Path, exam_id: str, section: str) -> P
             "review JSON belongs to an earlier candidate version; run a new independent review "
             "before creating another revision request"
         )
-    if section == "Q4":
-        blueprint = _q4_context(root)["generation_profile_yaml"]
-    else:
-        blueprint = _blueprint_path(root, manifest, section).read_text(encoding="utf-8")
+    blueprint = _authoring_blueprint(root, manifest, section)
     template = Template((root / "prompts" / "revise_section.md").read_text(encoding="utf-8"))
     prompt = template.render(
         section_blueprint=blueprint,
