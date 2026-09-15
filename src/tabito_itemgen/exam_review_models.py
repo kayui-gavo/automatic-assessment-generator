@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from .exam_models import SectionKind
 from .models import ReviewIssue
@@ -76,6 +76,33 @@ class SectionHumanQA(BaseModel):
     timing: SectionQATiming = Field(default_factory=SectionQATiming)
     biggest_rework_cause: str = ""
     note: str = ""
+
+    @model_validator(mode="after")
+    def approve_requires_completed_checks(self) -> SectionHumanQA:
+        if self.disposition != "approve":
+            return self
+
+        failed_common = [
+            name for name, value in self.checks.model_dump().items() if not value
+        ]
+        required_specific = SECTION_SPECIFIC_QA[self.section]
+        failed_specific = [
+            name
+            for name in required_specific
+            if not self.section_specific_checks.get(name, False)
+        ]
+        if failed_common or failed_specific:
+            details: list[str] = []
+            if failed_common:
+                details.append("common: " + ", ".join(failed_common))
+            if failed_specific:
+                details.append("section: " + ", ".join(failed_specific))
+            raise ValueError(
+                "Section Human QA cannot be approved while required checks are incomplete ("
+                + " | ".join(details)
+                + ")"
+            )
+        return self
 
 
 SECTION_SPECIFIC_QA: dict[str, tuple[str, ...]] = {
