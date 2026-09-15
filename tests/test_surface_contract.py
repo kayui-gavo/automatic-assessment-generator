@@ -30,6 +30,14 @@ def test_q2_ordering_answer_numbers_must_run_left_to_right(tmp_path):
         save_section_draft(tmp_path, section)
 
 
+def test_q5_underlined_anchor_requires_explicit_excerpt(tmp_path):
+    section = q5("Q5-surface-test", "main_2026")
+    section.anchors[0].source_excerpt = None
+
+    with pytest.raises(ValueError, match="require an explicit source_excerpt"):
+        save_section_draft(tmp_path, section)
+
+
 def test_q5_underlined_excerpt_must_start_at_its_visible_marker(tmp_path):
     section = q5("Q5-surface-test", "main_2026")
     anchor = section.anchors[0]
