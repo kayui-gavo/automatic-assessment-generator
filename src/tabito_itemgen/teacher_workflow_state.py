@@ -54,19 +54,23 @@ def _current_qa(
 
 
 def review_needs_revision(review: SectionReview, blind_detail: str) -> bool:
-    """Tell content failure from review-execution failure.
+    """Tell content failure from review-execution failure."""
 
-    A pass review can still fail the gate because the reviewer used the wrong
-    context mode, did not confirm isolation, or submitted malformed bookkeeping.
-    Those cases require another independent review, not a rewrite of the item.
-    """
-
-    if review.verdict in {"revise", "reject"}:
+    if review.verdict == "revise":
         return True
     return (
         "review contains high-severity issue" in blind_detail
         or ": reviewer answer " in blind_detail
     )
+
+
+def section_is_rejected(root: Path, manifest, ref, section) -> bool:
+    fingerprint = section_fingerprint(section)
+    qa = _current_qa(root, manifest.exam_id, ref.section, fingerprint)
+    if qa and qa.disposition == "reject":
+        return True
+    review = _current_review(root, manifest.exam_id, ref.section, fingerprint)
+    return bool(review and review.verdict == "reject")
 
 
 def section_status(root: Path, manifest, exam_path: Path, ref) -> str:
@@ -91,17 +95,21 @@ def section_status(root: Path, manifest, exam_path: Path, ref) -> str:
     blind = next((gate for gate in readiness.gates if gate.name == "blind review"), None)
     if blind and blind.passed:
         qa = _current_qa(root, manifest.exam_id, ref.section, fingerprint)
-        if qa and qa.disposition in {"revise", "reject"}:
+        if qa and qa.disposition == "reject":
+            return "rejected"
+        if qa and qa.disposition == "revise":
             return "review_failed"
         return "teacher_qa"
 
     review = _current_review(root, manifest.exam_id, ref.section, fingerprint)
     if review is None:
         return "blind_review"
+    if review.verdict == "reject":
+        return "rejected"
     if blind and review_needs_revision(review, blind.detail):
         return "review_failed"
 
-    # The candidate itself has no revision evidence.  The failed gate came from
+    # The candidate itself has no revision evidence. The failed gate came from
     # review execution / provenance, so route the teacher back to independent
     # review instead of telling them to rewrite a good item.
     return "blind_review"
@@ -117,6 +125,8 @@ def next_action_text(ref, status: str) -> str:
         return f"打开 {section} 的「质量检查」，完成或重新进行独立审题。"
     if status == "review_failed":
         return f"打开 {section} 的「返修」，按当前审题或教师意见修改后重新独立审题。"
+    if status == "rejected":
+        return f"打开 {section} 的「返修」，保留本版记录并重新出题。"
     if status == "teacher_qa":
         return f"打开 {section} 的「质量检查」，完成教师确认。"
     return f"{section} 已就绪。"
@@ -127,12 +137,16 @@ def revision_block_message(root: Path, manifest, ref, section) -> str | None:
 
     fingerprint = section_fingerprint(section)
     qa = _current_qa(root, manifest.exam_id, ref.section, fingerprint)
-    if qa and qa.disposition in {"revise", "reject"}:
+    if qa and qa.disposition == "revise":
         return None
+    if qa and qa.disposition == "reject":
+        return "当前版本已标记为「不采用」。请重新出题，而不是继续返修这一版。"
 
     review = _current_review(root, manifest.exam_id, ref.section, fingerprint)
     if review is None:
         return None  # Let the existing UI explain missing/stale review files.
+    if review.verdict == "reject":
+        return "独立审题结论为「不采用」。请重新出题，而不是继续返修这一版。"
 
     try:
         readiness = section_release_readiness(root, manifest.exam_id, ref.section)
