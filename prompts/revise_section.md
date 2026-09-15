@@ -14,6 +14,7 @@
 - Q5なら paragraph/anchor id を不用意に壊さない。
 - Q2 ordering なら token_pool/correct_sequence/answer_positions の整合を保つ。
 - 修訂後は完全な section JSON 全体を返す。差分だけ返さない。
+- Teacher QA が付いている場合は、Blind Review より後段の人間確認として同じ current candidate に対する追加の修訂要求として扱う。特に disposition / note / 未達チェックを無視しない。
 
 ## Section別 regression check
 
@@ -64,6 +65,14 @@
 ## Review
 
 {{ review_json }}
+
+{% if human_qa_json %}
+## Teacher QA
+
+以下は現在の candidate に対する教師確認結果である。返修要求・未達項目・note を修訂へ反映すること。
+
+{{ human_qa_json }}
+{% endif %}
 
 ## Output schema
 
