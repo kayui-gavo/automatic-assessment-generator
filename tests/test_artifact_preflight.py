@@ -1,6 +1,11 @@
 from pathlib import Path
 
-from tabito_itemgen.artifact_preflight import preflight_pdf
+from tabito_itemgen.artifact_preflight import (
+    ArtifactCheck,
+    ArtifactManifest,
+    preflight_pdf,
+    renderer_revision,
+)
 
 
 def _write_pdf(path: Path) -> None:
@@ -53,10 +58,52 @@ def test_preflight_warns_but_does_not_fail_for_tiny_overfull(tmp_path: Path) -> 
     _write_pdf(pdf)
     log.write_text(
         "Overfull \\hbox (2.2pt too wide) in paragraph at lines 1--2\n"
-        "Output written on answer_sheet.pdf (1 page).\n",
+        "Output written on answer_sheet.pdf (1 pages).\n",
         encoding="utf-8",
     )
 
     result = preflight_pdf(tex, pdf)
     assert result.passed
     assert result.warnings
+
+
+def test_stale_renderer_manifest_remains_readable_and_preserves_source_revision() -> None:
+    current = renderer_revision()
+    stale = "renderer-sha256:" + "0" * 64
+    assert current != "unknown"
+    assert stale != current
+
+    manifest = ArtifactManifest(
+        exam_id="EXAM-1",
+        exam_fingerprint="f" * 64,
+        renderer_revision=stale,
+        checks=(
+            ArtifactCheck(
+                name="student",
+                tex_path="student.tex",
+                pdf_path="student.pdf",
+            ),
+        ),
+    )
+
+    assert manifest.renderer_revision == "unknown"
+    assert manifest.source_renderer_revision == stale
+
+
+def test_current_renderer_manifest_keeps_current_revision() -> None:
+    current = renderer_revision()
+    manifest = ArtifactManifest(
+        exam_id="EXAM-1",
+        exam_fingerprint="f" * 64,
+        renderer_revision=current,
+        checks=(
+            ArtifactCheck(
+                name="student",
+                tex_path="student.tex",
+                pdf_path="student.pdf",
+            ),
+        ),
+    )
+
+    assert manifest.renderer_revision == current
+    assert manifest.source_renderer_revision is None
