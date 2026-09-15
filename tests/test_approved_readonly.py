@@ -115,3 +115,12 @@ def test_repeated_approval_rejects_tampered_approved_content(tmp_path):
 
     with pytest.raises(ValueError, match="release fingerprint"):
         approve_exam(tmp_path, manifest.exam_id)
+
+
+def test_repeated_approval_rejects_tampered_approved_answer_key(tmp_path):
+    manifest, target = _approve_test_exam(tmp_path)
+    answer_key = target / "artifacts" / "answer_key.json"
+    answer_key.write_text('{"tampered": true}\n', encoding="utf-8")
+
+    with pytest.raises(ValueError, match="answer_key.json failed integrity"):
+        approve_exam(tmp_path, manifest.exam_id)
