@@ -143,8 +143,10 @@ def _render_q1(section: Q1Section, teacher: bool) -> str:
                 rf"{_box(task.answer_slot.answer_number)}\par"
             )
             underline_target = task.target in {"initial", "final"}
+            # `headword` is an internal schema role.  The booklet must show only
+            # the actual target word, never an authoring label such as 「見出し」.
             tex += _tex_line(
-                rf"\noindent\textbf{{見出し}}\quad {{\zhfont {_q1_word_surface(task.headword, underline_target=underline_target)}}}"
+                rf"\noindent{{\zhfont {_q1_word_surface(task.headword, underline_target=underline_target)}}}"
                 r"\par\smallskip"
             )
             for word in task.candidates:
