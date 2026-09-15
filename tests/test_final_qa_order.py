@@ -16,6 +16,26 @@ def _exam_qa(exam_id: str, disposition: str) -> ExamHumanQA:
     )
 
 
+def test_final_exam_qa_model_rejects_approve_with_incomplete_checks():
+    with pytest.raises(ValueError, match="required checks are incomplete"):
+        ExamHumanQA(
+            exam_id="EXAM-1",
+            reviewer="Final QA",
+            disposition="approve",
+            checks=ExamQAChecks(),
+        )
+
+
+def test_final_exam_qa_model_allows_revise_with_incomplete_checks():
+    qa = ExamHumanQA(
+        exam_id="EXAM-1",
+        reviewer="Final QA",
+        disposition="revise",
+        checks=ExamQAChecks(),
+    )
+    assert qa.disposition == "revise"
+
+
 def test_final_exam_qa_cannot_approve_before_all_sections_are_ready(tmp_path):
     manifest, _ = build_exam(tmp_path, "main_2026")
     write_clean_artifacts(tmp_path, manifest.exam_id)
