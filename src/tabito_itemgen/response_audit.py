@@ -13,6 +13,7 @@ from .exam_production import (
     load_manifest,
     manifest_path,
 )
+from .io import dump_json
 from .models import Item
 from .production import parse_chat_json
 from .section_io import _canonicalize_presentation, _validate_surface_contract
@@ -30,7 +31,7 @@ def _validated_response_data(
 
     ``exam_production.import_section_response`` intentionally accepts candidates
     that still have deterministic quality errors so teachers can repair them in
-    the workbench.  What must not overwrite the latest raw response, however, is
+    the workbench. What must not overwrite raw-response provenance, however, is
     malformed JSON, the wrong section/exam identity, or metadata that cannot
     render the promised student surface at all.
     """
@@ -59,6 +60,10 @@ def _validated_response_data(
     return data
 
 
+def _response_root(root: Path, exam_id: str) -> Path:
+    return exam_workspace_dir(root, exam_id) / "responses"
+
+
 def _archive_raw_response(
     root: Path,
     exam_id: str,
@@ -72,12 +77,7 @@ def _archive_raw_response(
         + "\n"
     ).encode("utf-8")
     digest = hashlib.sha256(encoded).hexdigest()
-    directory = (
-        exam_workspace_dir(root, exam_id)
-        / "responses"
-        / "history"
-        / section_name.lower()
-    )
+    directory = _response_root(root, exam_id) / "history" / section_name.lower()
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / f"{digest}.json"
     if not path.exists():
@@ -94,9 +94,13 @@ def import_section_response(
     section_name: str,
     text: str,
 ):
-    """Audited UI import preserving both latest and immutable raw-response history."""
+    """Import a model response and preserve latest + immutable raw provenance."""
 
     data = _validated_response_data(root, exam_id, section_name, text)
     result = _import_section_response(root, exam_id, section_name, text)
+
+    response_root = _response_root(root, exam_id)
+    response_root.mkdir(parents=True, exist_ok=True)
+    dump_json(response_root / f"{section_name.lower()}.response.json", data)
     _archive_raw_response(root, exam_id, section_name, data)
     return result
