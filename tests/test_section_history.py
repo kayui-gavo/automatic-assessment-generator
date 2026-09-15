@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from tabito_itemgen.exam_production import (
@@ -74,7 +76,7 @@ def test_invalid_import_does_not_replace_current_candidate_or_manifest_binding(t
             tmp_path,
             manifest.exam_id,
             "Q3",
-            __import__("json").dumps(broken, ensure_ascii=False),
+            json.dumps(broken, ensure_ascii=False),
         )
 
     after = load_section(section_path)
