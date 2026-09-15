@@ -63,10 +63,17 @@ def _ordering_frame(task: Q2OrderingTask) -> str:
 
 
 def _breakable_underline(source: str, *, chunk_size: int = 10) -> str:
-    """Underline CJK prose while leaving legal line-break opportunities."""
+    """Underline CJK prose while leaving legal line-break opportunities.
+
+    The leading ``\\allowbreak{}`` is intentional.  Without a legal break before
+    the first ``\\uline`` box, a marker near the right margin can force that whole
+    first chunk beyond A4 even though later underline chunks are breakable.
+    """
 
     chunks = [source[index : index + chunk_size] for index in range(0, len(source), chunk_size)]
-    return r"\allowbreak{}".join(rf"\uline{{{latex_escape(chunk)}}}" for chunk in chunks)
+    return r"\allowbreak{}" + r"\allowbreak{}".join(
+        rf"\uline{{{latex_escape(chunk)}}}" for chunk in chunks
+    )
 
 
 def _q1_word_surface(word, *, underline_target: bool) -> str:
@@ -143,7 +150,7 @@ def _render_q1(section: Q1Section, teacher: bool) -> str:
                 rf"{_box(task.answer_slot.answer_number)}\par"
             )
             underline_target = task.target in {"initial", "final"}
-            # `headword` is an internal schema role.  The booklet must show only
+            # `headword` is an internal schema role. The booklet must show only
             # the actual target word, never an authoring label such as 「見出し」.
             tex += _tex_line(
                 rf"\noindent{{\zhfont {_q1_word_surface(task.headword, underline_target=underline_target)}}}"
