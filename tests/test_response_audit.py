@@ -6,6 +6,7 @@ import tabito_itemgen.cli as cli
 import tabito_itemgen.response_audit as response_audit
 from tabito_itemgen.exam_production import (
     exam_workspace_dir,
+    import_section_response as import_candidate_without_audit,
     load_manifest,
     manifest_path,
 )
@@ -58,6 +59,43 @@ def test_valid_ui_import_keeps_latest_and_content_addressed_raw_history(tmp_path
         revised.model_dump_json(),
     )
     assert len(list((response_root / "history" / "q3").glob("*.json"))) == 1
+
+
+def test_rollback_changes_candidate_without_rewriting_model_response_provenance(tmp_path):
+    manifest, _ = build_exam(tmp_path, "main_2026")
+    _, _, original = _section_context(tmp_path, manifest.exam_id, "Q3")
+    revised = original.model_copy(deep=True)
+    revised.tasks[0].source_text += "（模型新版本）"
+
+    import_section_response(
+        tmp_path,
+        manifest.exam_id,
+        "Q3",
+        revised.model_dump_json(),
+    )
+    response_root = exam_workspace_dir(tmp_path, manifest.exam_id) / "responses"
+    latest = response_root / "q3.response.json"
+    latest_before = latest.read_text(encoding="utf-8")
+    history_before = {
+        path.name: path.read_text(encoding="utf-8")
+        for path in (response_root / "history" / "q3").glob("*.json")
+    }
+
+    # The UI rollback path deliberately uses the provenance-neutral core import.
+    import_candidate_without_audit(
+        tmp_path,
+        manifest.exam_id,
+        "Q3",
+        original.model_dump_json(),
+    )
+
+    _, _, restored = _section_context(tmp_path, manifest.exam_id, "Q3")
+    assert restored.tasks[0].source_text == original.tasks[0].source_text
+    assert latest.read_text(encoding="utf-8") == latest_before
+    assert {
+        path.name: path.read_text(encoding="utf-8")
+        for path in (response_root / "history" / "q3").glob("*.json")
+    } == history_before
 
 
 def test_malformed_or_unrenderable_ui_import_cannot_overwrite_latest_raw_response(tmp_path):
