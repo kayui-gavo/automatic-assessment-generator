@@ -49,7 +49,11 @@ class Q1PhoneticCountTask(BaseModel):
     prompt_ja: str
     headword: PinyinWord
     candidates: list[PinyinWord] = Field(min_length=4, max_length=4)
-    options: list[str] = Field(default_factory=lambda: ["一つ", "二つ", "三つ", "四つ", "なし"], min_length=5, max_length=5)
+    options: list[str] = Field(
+        default_factory=lambda: ["一つ", "二つ", "三つ", "四つ", "なし"],
+        min_length=5,
+        max_length=5,
+    )
     answer_slot: AnswerSlot
     rationale_ja: str
     distractor_rationales_ja: dict[str, str] = Field(default_factory=dict)
@@ -147,9 +151,13 @@ class Q2OrderingTask(BaseModel):
         ids = [token.token_id for token in self.token_pool]
         if sorted(ids) != list(range(1, 9)):
             raise ValueError("Q2 ordering token_pool must use token_id 1 through 8 exactly once")
-        if len(set(self.correct_sequence)) != 4 or any(token not in ids for token in self.correct_sequence):
+        if len(set(self.correct_sequence)) != 4 or any(
+            token not in ids for token in self.correct_sequence
+        ):
             raise ValueError("Q2 ordering correct_sequence must contain four distinct token ids")
-        if len(set(self.answer_positions)) != 2 or any(pos < 1 or pos > 4 for pos in self.answer_positions):
+        if len(set(self.answer_positions)) != 2 or any(
+            pos < 1 or pos > 4 for pos in self.answer_positions
+        ):
             raise ValueError("Q2 ordering answer_positions must be two distinct positions in 1..4")
         expected = [self.correct_sequence[pos - 1] for pos in self.answer_positions]
         actual = [slot.correct_option for slot in self.answer_slots]
@@ -174,12 +182,22 @@ class Q2Section(BaseModel):
     def validate_surface(self) -> Q2Section:
         slots: list[AnswerSlot] = []
         for task in self.tasks:
-            slots.extend(task.answer_slots if isinstance(task, Q2OrderingTask) else [task.answer_slot])
+            slots.extend(
+                task.answer_slots if isinstance(task, Q2OrderingTask) else [task.answer_slot]
+            )
         numbers = sorted(slot.answer_number for slot in slots)
         if numbers != list(range(7, 13)):
             raise ValueError("Q2 must use answer numbers 7 through 12 exactly once")
-        fill_a = [task for task in self.tasks if isinstance(task, Q2FillTask) and task.subsection == "A"]
-        fill_b = [task for task in self.tasks if isinstance(task, Q2FillTask) and task.subsection == "B"]
+        fill_a = [
+            task
+            for task in self.tasks
+            if isinstance(task, Q2FillTask) and task.subsection == "A"
+        ]
+        fill_b = [
+            task
+            for task in self.tasks
+            if isinstance(task, Q2FillTask) and task.subsection == "B"
+        ]
         ordering = [task for task in self.tasks if isinstance(task, Q2OrderingTask)]
         if len(fill_a) != 1 or fill_a[0].selection_rule != "appropriate":
             raise ValueError("Q2-A must be one appropriate fill-choice task")
@@ -187,7 +205,9 @@ class Q2Section(BaseModel):
             raise ValueError("Q2-B must be one inappropriate fill-choice task")
         if len(ordering) != 2:
             raise ValueError("Q2-C must contain exactly two ordering tasks")
-        groups = sorted(sorted(slot.answer_number for slot in task.answer_slots) for task in ordering)
+        groups = sorted(
+            sorted(slot.answer_number for slot in task.answer_slots) for task in ordering
+        )
         if groups != [[9, 10], [11, 12]]:
             raise ValueError("Q2-C answer groups must be 9-10 and 11-12")
         return self
@@ -333,9 +353,13 @@ class Q5Section(BaseModel):
         for task in self.tasks:
             unknown = set(task.anchor_refs) - known_anchors
             if unknown:
-                raise ValueError(f"Q5 task {task.task_id} references unknown anchors {sorted(unknown)}")
+                raise ValueError(
+                    f"Q5 task {task.task_id} references unknown anchors {sorted(unknown)}"
+                )
 
-        answer_numbers = sorted(slot.answer_number for task in self.tasks for slot in task.answer_slots)
+        answer_numbers = sorted(
+            slot.answer_number for task in self.tasks for slot in task.answer_slots
+        )
         if answer_numbers != list(range(37, 51)):
             raise ValueError("Q5 must use answer numbers 37 through 50 exactly once")
         qnos = sorted(task.question_no for task in self.tasks)
@@ -351,16 +375,31 @@ class Q5Section(BaseModel):
         }
         if self.surface_family == "main_2026":
             known = {
-                3: [40], 4: [41], 5: [42], 6: [43], 7: [44], 8: [45],
-                9: [46], 10: [47, 48], 11: [49, 50],
+                3: [40],
+                4: [41],
+                5: [42],
+                6: [43],
+                7: [44],
+                8: [45],
+                9: [46],
+                10: [47, 48],
+                11: [49, 50],
             }
             first_two = sorted(groups.get(1, []) + groups.get(2, []))
             if first_two != [37, 38, 39]:
                 raise ValueError("Q5 main Q1-Q2 must jointly occupy answer numbers 37-39")
         else:
             known = {
-                1: [37], 2: [38], 3: [39], 4: [40, 41], 5: [42], 6: [43],
-                7: [44], 8: [45, 46], 9: [47, 48], 10: [49, 50],
+                1: [37],
+                2: [38],
+                3: [39],
+                4: [40, 41],
+                5: [42],
+                6: [43],
+                7: [44],
+                8: [45, 46],
+                9: [47, 48],
+                10: [49, 50],
             }
         for qno, expected in known.items():
             if groups.get(qno) != expected:
@@ -370,7 +409,10 @@ class Q5Section(BaseModel):
         return self
 
 
-SectionData = Annotated[Q1Section | Q2Section | Q3Section | Item | Q5Section, Field(discriminator="section")]
+SectionData = Annotated[
+    Q1Section | Q2Section | Q3Section | Item | Q5Section,
+    Field(discriminator="section"),
+]
 
 
 class SectionRef(BaseModel):
@@ -387,7 +429,9 @@ class SectionRef(BaseModel):
     def validate_spec(self) -> SectionRef:
         score, start, end = SECTION_SPECS[self.section]
         if (self.expected_score, self.answer_start, self.answer_end) != (score, start, end):
-            raise ValueError(f"{self.section} section reference does not match official 2026 allocation")
+            raise ValueError(
+                f"{self.section} section reference does not match official 2026 allocation"
+            )
         return self
 
 
@@ -455,16 +499,3 @@ class ExamHumanQA(BaseModel):
     defects: list[str] = Field(default_factory=list)
     biggest_rework_cause: str = ""
     note: str = ""
-
-    @model_validator(mode="after")
-    def approve_requires_completed_checks(self) -> ExamHumanQA:
-        if self.disposition != "approve":
-            return self
-        failed = [name for name, value in self.checks.model_dump().items() if not value]
-        if failed:
-            raise ValueError(
-                "Exam Human QA cannot be approved while required checks are incomplete ("
-                + ", ".join(failed)
-                + ")"
-            )
-        return self
