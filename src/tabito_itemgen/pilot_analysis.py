@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -15,8 +16,6 @@ ANSWER_COLUMNS = {
     "answer_number",
     "section",
     "selected_option",
-    "correct_option",
-    "is_correct",
     "omitted",
     "ambiguity_flag",
     "note",
@@ -92,6 +91,69 @@ def _section_for_answer(answer_number: int) -> str:
     return "Q5"
 
 
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _load_bound_answer_key(
+    artifact_manifest_path: Path,
+    *,
+    exam_id: str,
+    exam_fingerprint: str,
+) -> dict[int, int]:
+    try:
+        manifest = json.loads(artifact_manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot read artifact manifest: {artifact_manifest_path}") from exc
+
+    if manifest.get("exam_id") != exam_id:
+        raise ValueError("artifact manifest exam_id does not match student pilot data")
+    if manifest.get("exam_fingerprint") != exam_fingerprint:
+        raise ValueError("artifact manifest fingerprint does not match student pilot data")
+
+    extra_files = manifest.get("extra_files")
+    if not isinstance(extra_files, dict):
+        raise ValueError("artifact manifest has no valid extra_files map")
+    expected_sha = extra_files.get("answer_key.json")
+    if not isinstance(expected_sha, str) or not expected_sha:
+        raise ValueError("artifact manifest does not bind answer_key.json")
+
+    answer_key_path = artifact_manifest_path.parent / "answer_key.json"
+    if not answer_key_path.exists():
+        raise ValueError("answer_key.json is missing beside artifact manifest")
+    if _sha256_file(answer_key_path) != expected_sha:
+        raise ValueError("answer_key.json hash does not match artifact manifest")
+
+    try:
+        raw_key = json.loads(answer_key_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("answer_key.json cannot be parsed") from exc
+    if not isinstance(raw_key, dict):
+        raise ValueError("answer_key.json must be an object")
+
+    parsed: dict[int, int] = {}
+    for raw_number, raw_option in raw_key.items():
+        try:
+            number = int(raw_number)
+            option = int(raw_option)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("answer_key.json contains a non-integer answer mapping") from exc
+        if not 1 <= number <= 50 or not 1 <= option <= 10:
+            raise ValueError("answer_key.json contains an out-of-range answer mapping")
+        parsed[number] = option
+    if set(parsed) != EXPECTED_ANSWERS:
+        missing = sorted(EXPECTED_ANSWERS - set(parsed))
+        extra = sorted(set(parsed) - EXPECTED_ANSWERS)
+        raise ValueError(
+            f"answer_key.json must contain answer numbers 1..50 exactly; missing={missing}, extra={extra}"
+        )
+    return parsed
+
+
 def validate_answer_rows(rows: list[dict[str, str]]) -> tuple[str, str]:
     exam_id, fingerprint = _identity(rows)
     seen: set[tuple[str, int]] = set()
@@ -115,28 +177,16 @@ def validate_answer_rows(rows: list[dict[str, str]]) -> tuple[str, str]:
         seen.add(key)
         participant_answers[participant].add(answer_number)
 
-        correct_option = _int(row["correct_option"], "correct_option", row_no)
-        if not 1 <= correct_option <= 10:
-            raise ValueError(f"row {row_no}: correct_option must be in 1..10")
         omitted = _binary(row["omitted"], "omitted", row_no)
-        is_correct = _binary(row["is_correct"], "is_correct", row_no)
         _binary(row["ambiguity_flag"], "ambiguity_flag", row_no)
-
         selected = row["selected_option"].strip()
         if omitted:
             if selected:
                 raise ValueError(f"row {row_no}: omitted=1 requires blank selected_option")
-            if is_correct:
-                raise ValueError(f"row {row_no}: omitted answers cannot be correct")
         else:
             selected_option = _int(selected, "selected_option", row_no)
             if not 1 <= selected_option <= 10:
                 raise ValueError(f"row {row_no}: selected_option must be in 1..10")
-            expected = int(selected_option == correct_option)
-            if is_correct != expected:
-                raise ValueError(
-                    f"row {row_no}: is_correct disagrees with selected_option/correct_option"
-                )
 
     for participant, answers in participant_answers.items():
         if answers != EXPECTED_ANSWERS:
@@ -184,7 +234,17 @@ def validate_section_rows(rows: list[dict[str, str]]) -> tuple[str, str]:
     return exam_id, fingerprint
 
 
-def analyze_answers(rows: list[dict[str, str]]) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+def _row_is_correct(row: dict[str, str], answer_key: dict[int, int]) -> bool:
+    selected = row["selected_option"].strip()
+    if not selected:
+        return False
+    return int(selected) == answer_key[int(row["answer_number"])]
+
+
+def analyze_answers(
+    rows: list[dict[str, str]],
+    answer_key: dict[int, int],
+) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     by_item: dict[int, list[dict[str, str]]] = defaultdict(list)
     by_participant: dict[str, list[dict[str, str]]] = defaultdict(list)
     for row in rows:
@@ -195,7 +255,7 @@ def analyze_answers(rows: list[dict[str, str]]) -> tuple[list[dict[str, object]]
     for answer_number in sorted(by_item):
         item_rows = by_item[answer_number]
         n = len(item_rows)
-        correct = sum(int(row["is_correct"]) for row in item_rows)
+        correct = sum(_row_is_correct(row, answer_key) for row in item_rows)
         omitted = sum(int(row["omitted"]) for row in item_rows)
         ambiguity = sum(int(row["ambiguity_flag"]) for row in item_rows)
         options = Counter(
@@ -207,6 +267,7 @@ def analyze_answers(rows: list[dict[str, str]]) -> tuple[list[dict[str, object]]
         summary: dict[str, object] = {
             "answer_number": answer_number,
             "section": first["section"].strip(),
+            "correct_option": answer_key[answer_number],
             "n": n,
             "attempted": n - omitted,
             "correct": correct,
@@ -225,7 +286,7 @@ def analyze_answers(rows: list[dict[str, str]]) -> tuple[list[dict[str, object]]
             {
                 "participant_id": participant,
                 "answered_rows": len(participant_rows),
-                "correct": sum(int(row["is_correct"]) for row in participant_rows),
+                "correct": sum(_row_is_correct(row, answer_key) for row in participant_rows),
                 "omitted": sum(int(row["omitted"]) for row in participant_rows),
                 "ambiguity_reports": sum(
                     int(row["ambiguity_flag"]) for row in participant_rows
@@ -277,7 +338,12 @@ def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
         writer.writerows(rows)
 
 
-def analyze_pilot(answer_csv: Path, section_csv: Path, out_dir: Path) -> dict[str, object]:
+def analyze_pilot(
+    answer_csv: Path,
+    section_csv: Path,
+    artifact_manifest_path: Path,
+    out_dir: Path,
+) -> dict[str, object]:
     answer_rows = _read_csv(answer_csv)
     section_rows = _read_csv(section_csv)
     _require_columns(answer_csv, answer_rows, ANSWER_COLUMNS)
@@ -287,9 +353,14 @@ def analyze_pilot(answer_csv: Path, section_csv: Path, out_dir: Path) -> dict[st
     if answer_identity != section_identity:
         raise ValueError("answer and section files refer to different exam versions")
 
-    item_summary, participant_summary = analyze_answers(answer_rows)
-    section_summary = analyze_sections(section_rows)
     exam_id, fingerprint = answer_identity
+    answer_key = _load_bound_answer_key(
+        artifact_manifest_path,
+        exam_id=exam_id,
+        exam_fingerprint=fingerprint,
+    )
+    item_summary, participant_summary = analyze_answers(answer_rows, answer_key)
+    section_summary = analyze_sections(section_rows)
 
     answer_participants = {row["participant_id"].strip() for row in answer_rows}
     section_participants = {row["participant_id"].strip() for row in section_rows}
@@ -301,14 +372,14 @@ def analyze_pilot(answer_csv: Path, section_csv: Path, out_dir: Path) -> dict[st
     _write_csv(out_dir / "participant_summary.csv", participant_summary)
     _write_csv(out_dir / "section_summary.csv", section_summary)
 
-    total_scores = [int(row["correct"]) for row in participant_summary]
+    correct_counts = [int(row["correct"]) for row in participant_summary]
     summary = {
         "exam_id": exam_id,
         "exam_fingerprint": fingerprint,
         "participants": len(participant_summary),
-        "median_correct_answers": float(median(total_scores)),
-        "max_correct_answers": max(total_scores),
-        "min_correct_answers": min(total_scores),
+        "median_correct_answers": float(median(correct_counts)),
+        "max_correct_answers": max(correct_counts),
+        "min_correct_answers": min(correct_counts),
     }
     (out_dir / "pilot_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
@@ -322,6 +393,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("answers", type=Path, help="student_trial_answers.csv")
     parser.add_argument("sections", type=Path, help="student_trial_sections.csv")
     parser.add_argument(
+        "--artifact-manifest",
+        type=Path,
+        required=True,
+        help="approved artifacts/artifact_manifest.json used to bind and verify answer_key.json",
+    )
+    parser.add_argument(
         "--out-dir",
         type=Path,
         default=Path("pilot_analysis"),
@@ -332,7 +409,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
-    summary = analyze_pilot(args.answers, args.sections, args.out_dir)
+    summary = analyze_pilot(
+        args.answers,
+        args.sections,
+        args.artifact_manifest,
+        args.out_dir,
+    )
     print(json.dumps(summary, ensure_ascii=False))
 
 
