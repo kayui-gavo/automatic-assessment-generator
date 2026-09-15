@@ -53,9 +53,9 @@ def _q1_blind_surface(section: Q1Section) -> dict:
     """Return Q1 as booklet-visible content plus minimal review bookkeeping.
 
     Q1 is especially easy to leak because ``PinyinWord`` contains authoring
-    labels, pinyin and a semantic ``target`` field.  The booklet only shows the
-    Hanzi, the visible underline position, candidate labels a-d, prompts,
-    options and answer-box numbers.  Build that surface explicitly instead of
+    labels, pinyin and a semantic ``target`` field. The booklet only shows the
+    Hanzi, the visible underline position, fixed candidate labels a-d, prompts,
+    options and answer-box numbers. Build that surface explicitly instead of
     serializing the internal model and trying to blacklist fields afterwards.
     """
 
@@ -73,11 +73,13 @@ def _q1_blind_surface(section: Q1Section) -> dict:
                     },
                     "candidates": [
                         {
-                            "label": candidate.label,
+                            # Candidate labels are a presentation convention, not
+                            # trusted model content. Derive a-d from list position.
+                            "label": chr(ord("a") + index),
                             "hanzi": candidate.hanzi,
                             "target_index": candidate.target_index,
                         }
-                        for candidate in task.candidates
+                        for index, candidate in enumerate(task.candidates)
                     ],
                     "options": list(task.options),
                     "answer_slot": {"answer_number": task.answer_slot.answer_number},
@@ -112,8 +114,8 @@ def blind_section_dict(section) -> dict:
 
     The result is stricter than merely deleting answer keys: answer-side
     rationales, evidence links, intended cognitive-operation labels and pure
-    transport metadata are removed.  Metadata that is necessary to reconstruct
-    an actually visible booklet feature may remain.  For example, Q5
+    transport metadata are removed. Metadata that is necessary to reconstruct
+    an actually visible booklet feature may remain. For example, Q5
     ``source_excerpt`` identifies the span visibly underlined after its marker.
 
     Q1 receives an explicit allow-list surface because its internal model also
