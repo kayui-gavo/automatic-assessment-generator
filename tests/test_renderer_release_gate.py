@@ -14,14 +14,15 @@ def test_stale_renderer_artifact_is_rejected_by_release_gate(tmp_path):
     raw["renderer_revision"] = stale
     dump_json(artifact_path, raw)
 
-    # Historical artifact data remains parseable for audit.
+    # Historical evidence remains parseable and preserves the exact renderer
+    # provenance that produced it. Freshness is a release-gate concern.
     historical = ArtifactManifest.model_validate(load_json(artifact_path))
-    assert historical.renderer_revision == "unknown"
-    assert historical.source_renderer_revision == stale
+    assert historical.renderer_revision == stale
+    assert historical.source_renderer_revision is None
 
     readiness = exam_release_readiness(tmp_path, manifest.exam_id)
     artifact_gate = next(
         gate for gate in readiness.gates if gate.name == "artifact preflight"
     )
     assert not artifact_gate.passed
-    assert "renderer revision is unknown" in artifact_gate.detail
+    assert "stale for the current renderer" in artifact_gate.detail
