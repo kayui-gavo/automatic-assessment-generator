@@ -60,7 +60,7 @@ def _official_header(section) -> None:
 
 def _ordering_html(task: Q2OrderingTask) -> str:
     # ordering_surface_parts represents an unasked blank with answer_number=None
-    # and empty text.  Materialize those entries as visible underlines.
+    # and empty text. Materialize those entries as visible underlines.
     result: list[str] = []
     for part in ordering_surface_parts(task):
         if part.answer_number is not None:
@@ -125,10 +125,10 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
                 )
                 candidates = "".join(
                     '<span class="q1-choice">'
-                    f'<b>{html.escape(word.label)}</b>　'
+                    f'<b>{chr(ord("a") + index)}</b>　'
                     f'{_q1_hanzi_html(word, underline_target=underline_target)}'
                     '</span>'
-                    for word in task.candidates
+                    for index, word in enumerate(task.candidates)
                 )
                 st.markdown(
                     f'<div class="q1-choice-row">{candidates}</div>',
@@ -182,7 +182,10 @@ def render_simple_section_preview(section, teacher: bool = False) -> None:
                     f"{OPTION_MARKS[token.token_id - 1]} {html.escape(token.text_zh)}"
                     for token in task.token_pool
                 )
-                st.markdown(token_text, unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="source-text">{token_text}</div>',
+                    unsafe_allow_html=True,
+                )
                 if teacher:
                     answer = " / ".join(
                         f"[{slot.answer_number}] {slot.correct_option}" for slot in task.answer_slots
