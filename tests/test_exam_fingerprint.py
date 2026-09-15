@@ -1,6 +1,9 @@
 import pytest
 
-from tabito_itemgen.exam_generate import create_section_revision_request
+from tabito_itemgen.exam_generate import (
+    create_section_revision_request,
+    create_section_structure_fix_request,
+)
 from tabito_itemgen.exam_models import ExamHumanQA, ExamQAChecks
 from tabito_itemgen.exam_production import (
     exam_fingerprint,
@@ -105,3 +108,19 @@ def test_revision_request_rejects_review_from_previous_candidate_version(tmp_pat
 
     with pytest.raises(ValueError, match="earlier candidate version"):
         create_section_revision_request(tmp_path, manifest.exam_id, "Q3")
+
+
+def test_structure_fix_request_exists_before_blind_review_for_invalid_candidate(tmp_path):
+    manifest, _ = build_exam(tmp_path, "main_2026")
+    current = load_manifest(manifest_path(tmp_path, manifest.exam_id))
+    q1_ref = next(ref for ref in current.sections if ref.section == "Q1")
+    q1_path = manifest_path(tmp_path, manifest.exam_id).parent / q1_ref.path
+    q1 = load_section(q1_path)
+    q1.tasks[0].headword.pinyin = "kai"
+    dump_json(q1_path, q1.model_dump())
+
+    request = create_section_structure_fix_request(tmp_path, manifest.exam_id, "Q1")
+    text = request.read_text(encoding="utf-8")
+    assert "Deterministic validation errors" in text
+    assert "has no Unicode tone mark" in text
+    assert "Current candidate" in text
