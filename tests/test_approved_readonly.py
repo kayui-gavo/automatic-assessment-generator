@@ -6,6 +6,7 @@ from tabito_itemgen.artifact_preflight import ArtifactManifest
 from tabito_itemgen.exam_models import ExamHumanQA, ExamQAChecks
 from tabito_itemgen.exam_production import (
     approve_exam,
+    exam_workspace_dir,
     import_section_response,
     load_manifest,
     save_exam_human_qa,
@@ -47,13 +48,22 @@ def test_approved_exam_cannot_be_reimported_through_draft_pipeline(tmp_path):
     assert approved.workflow.state == "approved"
 
 
-def test_approved_artifacts_are_detached_from_mutable_output(tmp_path):
+def test_approved_archive_is_self_contained_after_workspace_and_output_cleanup(tmp_path):
     manifest, target = _approve_test_exam(tmp_path)
     approved_artifacts = target / "artifacts"
     approved_answer = approved_artifacts / "answer_key.json"
     approved_student = approved_artifacts / "student.pdf"
+    provenance = target / "provenance"
+    release_record = target / "release.json"
     answer_snapshot = approved_answer.read_bytes()
     student_snapshot = approved_student.read_bytes()
+
+    assert (provenance / "reviews" / "q1.review.json").exists()
+    assert (provenance / "reviews" / "q1.review_execution.json").exists()
+    assert (provenance / "human_qa" / "q1.human_qa.json").exists()
+    assert (provenance / "exam_qa.json").exists()
+    assert (provenance / "exam_qa.meta.json").exists()
+    assert release_record.exists()
 
     output = tmp_path / "output" / manifest.exam_id
     (output / "answer_key.json").write_text('{"tampered": true}\n', encoding="utf-8")
@@ -63,10 +73,16 @@ def test_approved_artifacts_are_detached_from_mutable_output(tmp_path):
     assert approved_student.read_bytes() == student_snapshot
 
     shutil.rmtree(output)
+    shutil.rmtree(exam_workspace_dir(tmp_path, manifest.exam_id))
+
     historical = ArtifactManifest.model_validate(
         load_json(approved_artifacts / "artifact_manifest.json")
     )
+    archived_release = load_json(release_record)
     assert historical.passed
     assert historical.renderer_revision.startswith("renderer-sha256:")
+    assert archived_release["exam_id"] == manifest.exam_id
+    assert archived_release["exam_fingerprint"]
     assert approved_answer.read_bytes() == answer_snapshot
     assert approved_student.read_bytes() == student_snapshot
+    assert (provenance / "reviews" / "q1.review.json").exists()
