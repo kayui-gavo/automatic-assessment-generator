@@ -11,7 +11,7 @@ from tabito_itemgen.exam_production import (
     load_manifest,
     save_exam_human_qa,
 )
-from tabito_itemgen.io import load_json
+from tabito_itemgen.io import dump_json, load_json
 
 from tests.artifact_factory import write_clean_artifacts
 from tests.full_exam_factory import build_exam
@@ -32,6 +32,14 @@ def _approve_test_exam(root):
     save_exam_human_qa(root, manifest.exam_id, qa)
     target, _ = approve_exam(root, manifest.exam_id)
     return manifest, target
+
+
+def _tree_bytes(root):
+    return {
+        path.relative_to(root): path.read_bytes()
+        for path in root.rglob("*")
+        if path.is_file()
+    }
 
 
 def test_approved_exam_cannot_be_reimported_through_draft_pipeline(tmp_path):
@@ -86,3 +94,24 @@ def test_approved_archive_is_self_contained_after_workspace_and_output_cleanup(t
     assert approved_answer.read_bytes() == answer_snapshot
     assert approved_student.read_bytes() == student_snapshot
     assert (provenance / "reviews" / "q1.review.json").exists()
+
+    # Repeating release after mutable workspace/output cleanup is a verified no-op.
+    before = _tree_bytes(target)
+    same_target, readiness = approve_exam(tmp_path, manifest.exam_id)
+    assert same_target == target
+    assert readiness.ready
+    assert readiness.fingerprint == archived_release["exam_fingerprint"]
+    assert _tree_bytes(target) == before
+
+
+def test_repeated_approval_rejects_tampered_approved_content(tmp_path):
+    manifest, target = _approve_test_exam(tmp_path)
+    approved = load_manifest(target / "exam.json")
+    q1 = next(ref for ref in approved.sections if ref.section == "Q1")
+    q1_path = target / q1.path
+    data = load_json(q1_path)
+    data["title_ja"] = data.get("title_ja", "") + "（改変）"
+    dump_json(q1_path, data)
+
+    with pytest.raises(ValueError, match="release fingerprint"):
+        approve_exam(tmp_path, manifest.exam_id)
