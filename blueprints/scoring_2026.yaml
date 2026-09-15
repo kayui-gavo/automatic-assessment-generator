@@ -1,0 +1,207 @@
+scoring_version: R8-2026-scoring-v1
+exam: Common Test Chinese
+reference_year: 2026
+total_score: 200
+
+sources:
+  main_answer_key: https://www.dnc.ac.jp/albums/abm.php?d=2137&f=abm00006041.pdf
+  makeup_answer_key: https://www.dnc.ac.jp/albums/abm.php?d=2138&f=abm00006077.pdf
+
+source_conventions:
+  starred_group: "＊ means points are awarded only when every answer in the group is correct"
+  hyphenated_answers: "hyphen-connected correct answers are order-independent"
+  each_points: "各N means N points are awarded per correct answer in the order-independent group"
+
+shared_rules:
+  - rule_id: q1_independent
+    section: Q1
+    answer_numbers: [1, 2, 3, 4, 5, 6]
+    mode: independent
+    points_per_correct: 4
+    max_points: 24
+  - rule_id: q2_ab_independent
+    section: Q2
+    answer_numbers: [7, 8]
+    mode: independent
+    points_per_correct: 4
+    max_points: 8
+  - rule_id: q2_c1_ordered_all
+    section: Q2
+    answer_numbers: [9, 10]
+    mode: ordered_all_or_nothing
+    max_points: 4
+  - rule_id: q2_c2_ordered_all
+    section: Q2
+    answer_numbers: [11, 12]
+    mode: ordered_all_or_nothing
+    max_points: 4
+  - rule_id: q3_independent
+    section: Q3
+    answer_numbers: [13, 14, 15, 16, 17, 18, 19, 20]
+    mode: independent
+    points_per_correct: 5
+    max_points: 40
+
+families:
+  main_2026:
+    rules:
+      - rule_id: q4_21_22_unordered_each
+        section: Q4
+        answer_numbers: [21, 22]
+        mode: unordered_per_correct
+        points_per_correct: 5
+        max_points: 10
+      - rule_id: q4_23_24_ordered_all
+        section: Q4
+        answer_numbers: [23, 24]
+        mode: ordered_all_or_nothing
+        max_points: 5
+      - rule_id: q4_25_26_independent
+        section: Q4
+        answer_numbers: [25, 26]
+        mode: independent
+        points_per_correct: 5
+        max_points: 10
+      - rule_id: q4_27_28_unordered_all
+        section: Q4
+        answer_numbers: [27, 28]
+        mode: unordered_all_or_nothing
+        max_points: 5
+      - rule_id: q4_29_30_unordered_each
+        section: Q4
+        answer_numbers: [29, 30]
+        mode: unordered_per_correct
+        points_per_correct: 5
+        max_points: 10
+      - rule_id: q4_31_32_ordered_all
+        section: Q4
+        answer_numbers: [31, 32]
+        mode: ordered_all_or_nothing
+        max_points: 5
+      - rule_id: q4_33_34_independent
+        section: Q4
+        answer_numbers: [33, 34]
+        mode: independent
+        points_per_correct: 5
+        max_points: 10
+      - rule_id: q4_35_36_ordered_all
+        section: Q4
+        answer_numbers: [35, 36]
+        mode: ordered_all_or_nothing
+        max_points: 5
+      - rule_id: q5_37_independent
+        section: Q5
+        answer_numbers: [37]
+        mode: independent
+        points_per_correct: 5
+        max_points: 5
+      - rule_id: q5_38_39_ordered_all
+        section: Q5
+        answer_numbers: [38, 39]
+        mode: ordered_all_or_nothing
+        max_points: 5
+      - rule_id: q5_40_46_independent
+        section: Q5
+        answer_numbers: [40, 41, 42, 43, 44, 45, 46]
+        mode: independent
+        points_per_correct: 5
+        max_points: 35
+      - rule_id: q5_47_48_unordered_all
+        section: Q5
+        answer_numbers: [47, 48]
+        mode: unordered_all_or_nothing
+        max_points: 5
+      - rule_id: q5_49_50_unordered_each
+        section: Q5
+        answer_numbers: [49, 50]
+        mode: unordered_per_correct
+        points_per_correct: 5
+        max_points: 10
+
+  makeup_2026:
+    rules:
+      - rule_id: q4_21_22_unordered_all
+        section: Q4
+        answer_numbers: [21, 22]
+        mode: unordered_all_or_nothing
+        max_points: 5
+      - rule_id: q4_23_24_unordered_all
+        section: Q4
+        answer_numbers: [23, 24]
+        mode: unordered_all_or_nothing
+        max_points: 5
+      - rule_id: q4_25_26_unordered_each
+        section: Q4
+        answer_numbers: [25, 26]
+        mode: unordered_per_correct
+        points_per_correct: 5
+        max_points: 10
+      - rule_id: q4_27_28_unordered_each
+        section: Q4
+        answer_numbers: [27, 28]
+        mode: unordered_per_correct
+        points_per_correct: 5
+        max_points: 10
+      - rule_id: q4_29_30_unordered_all
+        section: Q4
+        answer_numbers: [29, 30]
+        mode: unordered_all_or_nothing
+        max_points: 5
+      - rule_id: q4_31_32_unordered_each
+        section: Q4
+        answer_numbers: [31, 32]
+        mode: unordered_per_correct
+        points_per_correct: 5
+        max_points: 10
+      - rule_id: q4_33_34_unordered_each
+        section: Q4
+        answer_numbers: [33, 34]
+        mode: unordered_per_correct
+        points_per_correct: 5
+        max_points: 10
+      - rule_id: q4_35_36_unordered_all
+        section: Q4
+        answer_numbers: [35, 36]
+        mode: unordered_all_or_nothing
+        max_points: 5
+      - rule_id: q5_37_39_independent
+        section: Q5
+        answer_numbers: [37, 38, 39]
+        mode: independent
+        points_per_correct: 5
+        max_points: 15
+      - rule_id: q5_40_41_unordered_all
+        section: Q5
+        answer_numbers: [40, 41]
+        mode: unordered_all_or_nothing
+        max_points: 5
+      - rule_id: q5_42_44_independent
+        section: Q5
+        answer_numbers: [42, 43, 44]
+        mode: independent
+        points_per_correct: 5
+        max_points: 15
+      - rule_id: q5_45_46_unordered_each
+        section: Q5
+        answer_numbers: [45, 46]
+        mode: unordered_per_correct
+        points_per_correct: 5
+        max_points: 10
+      - rule_id: q5_47_48_ordered_all
+        section: Q5
+        answer_numbers: [47, 48]
+        mode: ordered_all_or_nothing
+        max_points: 5
+      - rule_id: q5_49_50_unordered_each
+        section: Q5
+        answer_numbers: [49, 50]
+        mode: unordered_per_correct
+        points_per_correct: 5
+        max_points: 10
+
+section_totals:
+  Q1: 24
+  Q2: 16
+  Q3: 40
+  Q4: 60
+  Q5: 60
