@@ -33,6 +33,9 @@ HIDDEN_AUTHOR_KEYS = frozenset(
         "section_id",
         "item_id",
         "slot_id",
+        "title_ja",
+        "scope",
+        "domain",
     }
 )
 
@@ -103,7 +106,6 @@ def _q1_blind_surface(section: Q1Section) -> dict:
 
     return {
         "section": "Q1",
-        "title_ja": section.title_ja,
         "score": section.score,
         "tasks": tasks,
     }
