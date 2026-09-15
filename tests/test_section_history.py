@@ -1,3 +1,5 @@
+import pytest
+
 from tabito_itemgen.exam_production import (
     import_section_response,
     load_manifest,
@@ -53,6 +55,33 @@ def test_identical_section_import_does_not_create_history_noise(tmp_path):
 
     history_dir = manifest_path(tmp_path, manifest.exam_id).parent / "history" / "q2"
     assert not history_dir.exists()
+
+
+def test_invalid_import_does_not_replace_current_candidate_or_manifest_binding(tmp_path):
+    manifest, _ = build_exam(tmp_path, "main_2026")
+    manifest_file = manifest_path(tmp_path, manifest.exam_id)
+    current = load_manifest(manifest_file)
+    ref = next(ref for ref in current.sections if ref.section == "Q3")
+    section_path = manifest_file.parent / ref.path
+    before = load_section(section_path)
+    before_fingerprint = section_fingerprint(before)
+    before_ref_fingerprint = ref.fingerprint
+
+    broken = before.model_dump()
+    del broken["tasks"][0]["source_text"]
+    with pytest.raises(Exception):
+        import_section_response(
+            tmp_path,
+            manifest.exam_id,
+            "Q3",
+            __import__("json").dumps(broken, ensure_ascii=False),
+        )
+
+    after = load_section(section_path)
+    after_manifest = load_manifest(manifest_file)
+    after_ref = next(ref for ref in after_manifest.sections if ref.section == "Q3")
+    assert section_fingerprint(after) == before_fingerprint
+    assert after_ref.fingerprint == before_ref_fingerprint
 
 
 def test_q1_candidate_labels_are_presentation_owned_not_model_owned(tmp_path):
