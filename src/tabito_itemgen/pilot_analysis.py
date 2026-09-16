@@ -9,7 +9,7 @@ from pathlib import Path
 from statistics import median
 from typing import Iterable
 
-from .scoring import ScoringScheme, score_with_scheme
+from .scoring import ScoringGroup, ScoringScheme, score_with_scheme
 
 ANSWER_COLUMNS = {
     "participant_id",
@@ -219,9 +219,6 @@ def _load_released_scoring_evidence(
     except Exception as exc:
         raise ValueError("scoring_scheme.json is invalid") from exc
 
-    # Approved snapshots are self-contained. Tie the release-scoring family back
-    # to the canonical exam manifest as an additional defense against a valid but
-    # wrong-family scoring file being copied into the artifact directory.
     approved_manifest_path = release_record_path.parent / "exam.json"
     approved_manifest = _read_json(approved_manifest_path, "approved exam manifest")
     if not isinstance(approved_manifest, dict):
@@ -314,11 +311,12 @@ def validate_section_rows(rows: list[dict[str, str]]) -> tuple[str, str]:
     return exam_id, fingerprint
 
 
-def _row_is_correct(row: dict[str, str], answer_key: dict[int, int]) -> bool:
-    selected = row["selected_option"].strip()
-    if not selected:
-        return False
-    return int(selected) == answer_key[int(row["answer_number"])]
+def _groups_by_answer(scheme: ScoringScheme) -> dict[int, ScoringGroup]:
+    result: dict[int, ScoringGroup] = {}
+    for group in scheme.groups:
+        for number in group.answer_numbers:
+            result[number] = group
+    return result
 
 
 def _participant_response(rows: list[dict[str, str]]) -> dict[int, int]:
@@ -327,6 +325,44 @@ def _participant_response(rows: list[dict[str, str]]) -> dict[int, int]:
         for row in rows
         if row["selected_option"].strip()
     }
+
+
+def _participant_correctness(
+    rows: list[dict[str, str]],
+    answer_key: dict[int, int],
+    scheme: ScoringScheme,
+) -> dict[int, bool]:
+    """Return raw /50 correctness while respecting unordered answer groups.
+
+    In a set-comparison group the answer boxes are interchangeable. Swapping two
+    correct choices must therefore leave both raw answers correct. Duplicate use
+    of one correct choice is only credited once.
+    """
+
+    row_by_answer = {int(row["answer_number"]): row for row in rows}
+    result: dict[int, bool] = {}
+    for group in scheme.groups:
+        if group.comparison_mode == "ordered":
+            for number in group.answer_numbers:
+                selected = row_by_answer[number]["selected_option"].strip()
+                result[number] = bool(selected) and int(selected) == answer_key[number]
+            continue
+
+        correct_options = {answer_key[number] for number in group.answer_numbers}
+        if len(correct_options) != len(group.answer_numbers):
+            raise ValueError(f"answer key duplicates choices in unordered group {group.group_id}")
+        consumed: set[int] = set()
+        for number in group.answer_numbers:
+            selected = row_by_answer[number]["selected_option"].strip()
+            if not selected:
+                result[number] = False
+                continue
+            option = int(selected)
+            matched = option in correct_options and option not in consumed
+            result[number] = matched
+            if matched:
+                consumed.add(option)
+    return result
 
 
 def analyze_answers(
@@ -340,11 +376,25 @@ def analyze_answers(
         by_item[int(row["answer_number"])].append(row)
         by_participant[row["participant_id"].strip()].append(row)
 
+    correctness = {
+        participant: _participant_correctness(participant_rows, answer_key, scoring_scheme)
+        for participant, participant_rows in by_participant.items()
+    }
+    group_by_answer = _groups_by_answer(scoring_scheme)
+
     item_summary: list[dict[str, object]] = []
     for answer_number in sorted(by_item):
         item_rows = by_item[answer_number]
+        group = group_by_answer[answer_number]
+        accepted_options = (
+            [answer_key[answer_number]]
+            if group.comparison_mode == "ordered"
+            else sorted({answer_key[number] for number in group.answer_numbers})
+        )
         n = len(item_rows)
-        correct = sum(_row_is_correct(row, answer_key) for row in item_rows)
+        correct = sum(
+            correctness[row["participant_id"].strip()][answer_number] for row in item_rows
+        )
         omitted = sum(int(row["omitted"]) for row in item_rows)
         ambiguity = sum(int(row["ambiguity_flag"]) for row in item_rows)
         options = Counter(
@@ -356,7 +406,11 @@ def analyze_answers(
         summary: dict[str, object] = {
             "answer_number": answer_number,
             "section": first["section"].strip(),
-            "correct_option": answer_key[answer_number],
+            "scoring_group": group.group_id,
+            "comparison_mode": group.comparison_mode,
+            "award_mode": group.award_mode,
+            "canonical_correct_option": answer_key[answer_number],
+            "accepted_options": "|".join(str(option) for option in accepted_options),
             "n": n,
             "attempted": n - omitted,
             "correct": correct,
@@ -380,7 +434,7 @@ def analyze_answers(
             {
                 "participant_id": participant,
                 "answered_rows": len(participant_rows),
-                "correct": sum(_row_is_correct(row, answer_key) for row in participant_rows),
+                "correct": sum(correctness[participant].values()),
                 "score_200": score.earned,
                 "omitted": sum(int(row["omitted"]) for row in participant_rows),
                 "ambiguity_reports": sum(
