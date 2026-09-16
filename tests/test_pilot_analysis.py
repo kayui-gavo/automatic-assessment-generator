@@ -86,6 +86,15 @@ def _answer_rows():
     return rows
 
 
+def _participant_answer(rows, participant: str, answer_number: int):
+    return next(
+        row
+        for row in rows
+        if row["participant_id"] == participant
+        and int(row["answer_number"]) == answer_number
+    )
+
+
 def _section_rows():
     rows = []
     elapsed = {
@@ -189,15 +198,19 @@ def _write_released_artifacts(tmp_path):
     return release, answer_key, scoring, artifact_dir / "student.pdf"
 
 
-def test_pilot_analysis_emits_item_participant_section_and_exam_summaries(tmp_path):
+def _run_analysis(tmp_path, answer_rows):
     answers = tmp_path / "answers.csv"
     sections = tmp_path / "sections.csv"
     out_dir = tmp_path / "analysis"
     release_record, _, _, _ = _write_released_artifacts(tmp_path)
-    _write_csv(answers, ANSWER_FIELDS, _answer_rows())
+    _write_csv(answers, ANSWER_FIELDS, answer_rows)
     _write_csv(sections, SECTION_FIELDS, _section_rows())
-
     summary = analyze_pilot(answers, sections, release_record, out_dir)
+    return summary, out_dir
+
+
+def test_pilot_analysis_emits_item_participant_section_and_exam_summaries(tmp_path):
+    summary, out_dir = _run_analysis(tmp_path, _answer_rows())
 
     assert summary == {
         "exam_id": "EXAM-001",
@@ -217,7 +230,8 @@ def test_pilot_analysis_emits_item_participant_section_and_exam_summaries(tmp_pa
         items = list(csv.DictReader(handle))
     assert len(items) == 50
     assert items[0]["answer_number"] == "1"
-    assert items[0]["correct_option"] == "1"
+    assert items[0]["canonical_correct_option"] == "1"
+    assert items[0]["accepted_options"] == "1"
     assert items[0]["correct_rate"] == "0.5"
     assert items[0]["option_1_count"] == "1"
     assert items[0]["option_2_count"] == "1"
@@ -238,6 +252,42 @@ def test_pilot_analysis_emits_item_participant_section_and_exam_summaries(tmp_pa
 
     saved = json.loads((out_dir / "pilot_summary.json").read_text(encoding="utf-8"))
     assert saved == summary
+
+
+def test_unordered_swapped_answers_remain_raw_correct_and_full_score(tmp_path):
+    rows = _answer_rows()
+    left = _participant_answer(rows, "P001", 21)
+    right = _participant_answer(rows, "P001", 22)
+    left["selected_option"], right["selected_option"] = (
+        right["selected_option"],
+        left["selected_option"],
+    )
+
+    _, out_dir = _run_analysis(tmp_path, rows)
+    with (out_dir / "participant_summary.csv").open(encoding="utf-8", newline="") as handle:
+        participants = list(csv.DictReader(handle))
+    assert participants[0]["correct"] == "50"
+    assert participants[0]["score_200"] == "200"
+
+    with (out_dir / "item_summary.csv").open(encoding="utf-8", newline="") as handle:
+        items = {int(row["answer_number"]): row for row in csv.DictReader(handle)}
+    assert items[21]["comparison_mode"] == "set"
+    assert items[21]["accepted_options"] == "1|2"
+    assert items[21]["correct_rate"] == "1.0"
+    assert items[22]["correct_rate"] == "1.0"
+
+
+def test_unordered_duplicate_choice_is_not_counted_twice(tmp_path):
+    rows = _answer_rows()
+    left = _participant_answer(rows, "P001", 21)
+    right = _participant_answer(rows, "P001", 22)
+    right["selected_option"] = left["selected_option"]
+
+    _, out_dir = _run_analysis(tmp_path, rows)
+    with (out_dir / "participant_summary.csv").open(encoding="utf-8", newline="") as handle:
+        participants = list(csv.DictReader(handle))
+    assert participants[0]["correct"] == "49"
+    assert participants[0]["score_200"] == "195"
 
 
 def test_answer_validation_rejects_missing_answer_rows():
