@@ -3,12 +3,28 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from .exam_generate import (
+    create_all_section_requests,
+    create_section_review_request,
+    create_section_revision_request,
+)
+from .exam_production import (
+    approve_exam,
+    create_exam_project,
+    exam_release_readiness,
+    import_section_review,
+    manifest_path,
+)
+from .exam_render import render_exam
+from .exam_validation import validate_exam
 from .generate_request import create_q4_request, create_review_request, create_revision_request
 from .io import load_json
+from .model_policy import PREFERRED_MODEL
 from .models import Item, Review
 from .paths import find_project_root
 from .production import approve_item, import_item_response, release_readiness
 from .render import compile_xelatex, render_item_tex
+from .response_audit import import_section_response
 from .review_io import import_bound_review_response
 from .validate import check_bank_similarity, compare_review, validate_item_file
 
@@ -163,11 +179,260 @@ def cmd_render(args: argparse.Namespace) -> int:
     return 0
 
 
+def _resolve_exam_manifest(root: Path, exam_id: str) -> Path:
+    draft = manifest_path(root, exam_id)
+    if draft.exists():
+        return draft
+    approved = manifest_path(root, exam_id, approved=True)
+    if approved.exists():
+        return approved
+    raise FileNotFoundError(f"exam project not found: {exam_id}")
+
+
+def cmd_new_exam(args: argparse.Namespace) -> int:
+    root = find_project_root()
+    manifest, path = create_exam_project(
+        root,
+        exam_family=args.family,
+        title_ja=args.title,
+        notes=args.notes or "",
+        q4_topic_request=args.q4_topic or "",
+        q5_topic_request=args.q5_topic or "",
+    )
+    requests = create_all_section_requests(root, manifest.exam_id)
+    print(manifest.exam_id)
+    print(f"manifest: {path}")
+    for section, request in requests.items():
+        print(f"{section}: {request}")
+    return 0
+
+
+def cmd_exam_import_section(args: argparse.Namespace) -> int:
+    root = find_project_root()
+    source = Path(args.file).resolve()
+    try:
+        target, result = import_section_response(
+            root,
+            args.exam_id,
+            args.section,
+            source.read_text(encoding="utf-8"),
+        )
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"Cannot import section: {exc}")
+        return 1
+    print(f"saved: {target}")
+    for error in result.errors:
+        print(f"ERROR: {error}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    return 1 if result.errors else 0
+
+
+def cmd_exam_validate(args: argparse.Namespace) -> int:
+    root = find_project_root()
+    try:
+        path = _resolve_exam_manifest(root, args.exam_id)
+    except FileNotFoundError as exc:
+        print(str(exc))
+        return 1
+    result = validate_exam(path)
+    print("PASS" if result.passed else "FAIL")
+    for error in result.errors:
+        print(f"ERROR: {error}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    return 0 if result.passed else 1
+
+
+def cmd_exam_review_request(args: argparse.Namespace) -> int:
+    root = find_project_root()
+    try:
+        out = create_section_review_request(root, args.exam_id, args.section)
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"Cannot create review request: {exc}")
+        return 1
+    print(out)
+    return 0
+
+
+def cmd_exam_import_review(args: argparse.Namespace) -> int:
+    root = find_project_root()
+    source = Path(args.file).resolve()
+    try:
+        out = import_section_review(
+            root,
+            args.exam_id,
+            args.section,
+            source.read_text(encoding="utf-8"),
+            model_label=args.model,
+            reasoning_level=args.reasoning,
+            fresh_chat_confirmed=args.fresh_chat_confirmed,
+            context_mode=args.context_mode,
+            authoring_context_seen=args.authoring_context_seen,
+        )
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"Cannot import review: {exc}")
+        return 1
+    print(out)
+    if not args.fresh_chat_confirmed:
+        print("WARNING: blind-review release gate requires an independently executed review")
+    if args.context_mode == "unknown":
+        print("WARNING: blind-review release gate requires a confirmed memory-isolated context")
+    return 0
+
+
+def cmd_exam_revision_request(args: argparse.Namespace) -> int:
+    root = find_project_root()
+    try:
+        out = create_section_revision_request(root, args.exam_id, args.section)
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"Cannot create revision request: {exc}")
+        return 1
+    print(out)
+    return 0
+
+
+def cmd_exam_release_check(args: argparse.Namespace) -> int:
+    root = find_project_root()
+    try:
+        readiness = exam_release_readiness(root, args.exam_id)
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"Cannot evaluate release: {exc}")
+        return 1
+    print(f"exam_id: {readiness.subject_id}")
+    print(f"fingerprint: {readiness.fingerprint}")
+    for gate in readiness.gates:
+        status = "PASS" if gate.passed else "FAIL"
+        print(f"{status}: {gate.name} — {gate.detail}")
+    return 0 if readiness.ready else 1
+
+
+def cmd_exam_approve(args: argparse.Namespace) -> int:
+    root = find_project_root()
+    try:
+        target, readiness = approve_exam(root, args.exam_id)
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"Cannot approve exam: {exc}")
+        return 1
+    print(f"approved: {target}")
+    print(f"fingerprint: {readiness.fingerprint}")
+    return 0
+
+
+def cmd_exam_render(args: argparse.Namespace) -> int:
+    root = find_project_root()
+    try:
+        outputs = render_exam(root, args.exam_id, compile_pdf=args.compile)
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"Cannot render exam: {exc}")
+        return 1
+    for key, path in outputs.items():
+        print(f"{key}: {path or 'xelatex unavailable'}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tabito-itemgen")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    command = sub.add_parser("new-item", help="Create a manual ChatGPT request for Q4")
+    command = sub.add_parser("new-exam", help="Create a Q1-Q5 full mock-exam project")
+    command.add_argument(
+        "--family", choices=["main_2026", "makeup_2026"], default="main_2026"
+    )
+    command.add_argument("--title", default=None)
+    command.add_argument("--q4-topic", default=None)
+    command.add_argument("--q5-topic", default=None)
+    command.add_argument("--notes", default=None)
+    command.set_defaults(func=cmd_new_exam)
+
+    command = sub.add_parser("exam-import-section", help="Import one generated section JSON")
+    command.add_argument("exam_id")
+    command.add_argument("section", choices=["Q1", "Q2", "Q3", "Q4", "Q5"])
+    command.add_argument("file")
+    command.set_defaults(func=cmd_exam_import_section)
+
+    command = sub.add_parser("exam-validate", help="Validate one full 200-point exam")
+    command.add_argument("exam_id")
+    command.set_defaults(func=cmd_exam_validate)
+
+    command = sub.add_parser(
+        "exam-review-request",
+        help="Create a blind-review prompt for one section",
+    )
+    command.add_argument("exam_id")
+    command.add_argument("section", choices=["Q1", "Q2", "Q3", "Q4", "Q5"])
+    command.set_defaults(func=cmd_exam_review_request)
+
+    command = sub.add_parser(
+        "exam-import-review",
+        help="Import a fingerprint-bound section review",
+    )
+    command.add_argument("exam_id")
+    command.add_argument("section", choices=["Q1", "Q2", "Q3", "Q4", "Q5"])
+    command.add_argument("file")
+    command.add_argument("--model", default=PREFERRED_MODEL)
+    command.add_argument(
+        "--reasoning",
+        choices=["instant", "medium", "high", "extra_high", "pro", "unknown"],
+        default="high",
+    )
+    command.add_argument(
+        "--fresh-chat-confirmed",
+        action="store_true",
+        help=(
+            "Confirm that the reviewer ran in an independent context with no "
+            "authoring/revision context"
+        ),
+    )
+    command.add_argument(
+        "--context-mode",
+        choices=[
+            "non_personalized_temporary_chat",
+            "stateless_api",
+            "other_memory_isolated",
+            "unknown",
+        ],
+        default="unknown",
+        help="Record how cross-chat memory/personalization was excluded from the blind reviewer",
+    )
+    command.add_argument(
+        "--authoring-context-seen",
+        action="store_true",
+        help=(
+            "Record that the reviewer saw authoring context; this intentionally "
+            "fails the release gate"
+        ),
+    )
+    command.set_defaults(func=cmd_exam_import_review)
+
+    command = sub.add_parser(
+        "exam-revision-request",
+        help="Create a revision prompt for one section",
+    )
+    command.add_argument("exam_id")
+    command.add_argument("section", choices=["Q1", "Q2", "Q3", "Q4", "Q5"])
+    command.set_defaults(func=cmd_exam_revision_request)
+
+    command = sub.add_parser("exam-release-check", help="Show full-exam release gates")
+    command.add_argument("exam_id")
+    command.set_defaults(func=cmd_exam_release_check)
+
+    command = sub.add_parser(
+        "exam-approve",
+        help="Approve a full exam only when every gate passes",
+    )
+    command.add_argument("exam_id")
+    command.set_defaults(func=cmd_exam_approve)
+
+    command = sub.add_parser("exam-render", help="Render one continuous Q1-Q5 booklet")
+    command.add_argument("exam_id")
+    command.add_argument("--compile", action="store_true")
+    command.set_defaults(func=cmd_exam_render)
+
+    command = sub.add_parser(
+        "new-item",
+        help="Create a manual ChatGPT request for legacy Q4-only use",
+    )
     command.add_argument("--topic", required=True)
     command.add_argument(
         "--difficulty",
@@ -185,45 +450,63 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("--notes", default=None)
     command.set_defaults(func=cmd_new_item)
 
-    command = sub.add_parser("import-response", help="Import generated JSON as a canonical draft")
+    command = sub.add_parser(
+        "import-response",
+        help="Import generated Q4 JSON as a canonical draft",
+    )
     command.add_argument("file")
     command.set_defaults(func=cmd_import)
 
-    command = sub.add_parser("validate", help="Validate an item JSON")
+    command = sub.add_parser("validate", help="Validate a Q4 item JSON")
     command.add_argument("file")
     command.set_defaults(func=cmd_validate)
 
-    command = sub.add_parser("review-request", help="Create a fingerprint-bound blind-review prompt")
+    command = sub.add_parser(
+        "review-request",
+        help="Create a fingerprint-bound Q4 blind-review prompt",
+    )
     command.add_argument("file")
     command.set_defaults(func=cmd_review_request)
 
-    command = sub.add_parser("import-review", help="Verify fingerprint and save a review JSON")
+    command = sub.add_parser(
+        "import-review",
+        help="Verify fingerprint and save a Q4 review JSON",
+    )
     command.add_argument("file")
     command.set_defaults(func=cmd_import_review)
 
-    command = sub.add_parser("review-check", help="Compare blind-review answers with the answer key")
+    command = sub.add_parser(
+        "review-check",
+        help="Compare Q4 blind-review answers with the answer key",
+    )
     command.add_argument("--item", required=True)
     command.add_argument("--review", required=True)
     command.set_defaults(func=cmd_review_check)
 
-    command = sub.add_parser("revision-request", help="Create a revision prompt from item + review")
+    command = sub.add_parser(
+        "revision-request",
+        help="Create a Q4 revision prompt from item + review",
+    )
     command.add_argument("--item", required=True)
     command.add_argument("--review", required=True)
     command.set_defaults(func=cmd_revision_request)
 
-    command = sub.add_parser("similarity", help="Compare an item with the approved bank")
+    command = sub.add_parser("similarity", help="Compare a Q4 item with the approved bank")
     command.add_argument("file")
     command.set_defaults(func=cmd_similarity)
 
-    command = sub.add_parser("release-check", help="Show all release gates for one candidate")
+    command = sub.add_parser("release-check", help="Show all Q4 release gates")
     command.add_argument("file")
     command.set_defaults(func=cmd_release_check)
 
-    command = sub.add_parser("approve", help="Approve only after all persisted release gates pass")
+    command = sub.add_parser(
+        "approve",
+        help="Approve Q4 only after persisted release gates pass",
+    )
     command.add_argument("file")
     command.set_defaults(func=cmd_approve)
 
-    command = sub.add_parser("render", help="Render student/teacher LaTeX files")
+    command = sub.add_parser("render", help="Render Q4 student/teacher LaTeX files")
     command.add_argument("file")
     command.add_argument("--compile", action="store_true")
     command.set_defaults(func=cmd_render)

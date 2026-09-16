@@ -1,0 +1,78 @@
+section: Q3
+label_ja: 表現力
+score: 40
+answer_numbers: [13, 20]
+surface_family: shared_2026
+primary_references: [2026_main, 2026_makeup]
+
+structure:
+  A:
+    answers: [13, 14, 15, 16]
+    tasks: 4
+    direction: ja_to_zh
+    source_language: Japanese
+    option_language: tone_marked_pinyin
+    response_mode: single_choice
+  B:
+    answers: [17, 18, 19, 20]
+    tasks: 4
+    direction: zh_to_ja
+    source_language: tone_marked_pinyin
+    option_language: Japanese
+    response_mode: single_choice
+
+constructs:
+  - sentence_pattern
+  - semantic_scope
+  - negation_scope
+  - condition
+  - concession
+  - degree
+  - pragmatic_force
+  - result_and_reason
+  - natural_chinese_expression
+
+required_distractor_error_taxonomy:
+  - scope
+  - subject_object
+  - aspect
+  - modality
+  - lexical_meaning
+  - causal_relation
+  - pragmatic_force
+  - overtranslation
+  - undertranslation
+
+quality_calibration:
+  distractor_near_miss:
+    - preserve most of the source proposition in every distractor
+    - prefer changing one decisive semantic dimension; use two only when the distinction remains subtle
+    - avoid distractors that simultaneously change actor, action, time, polarity, and result
+    - do not make one unique verb or one unique connector sufficient for elimination unless that lexical distinction is itself the tested construct
+  sentence_level_processing:
+    - at least half of the eight tasks should require resolving scope, modality, aspect, relation, or information structure across more than one phrase
+    - do not let all four options differ only in one isolated content word
+    - all four options must remain natural language, including the wrong options
+  set_balance:
+    - distribute error types across the set
+    - include both local semantic distinctions and whole-sentence relation distinctions
+    - avoid eight variants of the same negation/concession trick
+
+hard_rules:
+  - do not reduce tasks to word-for-word translation
+  - every distractor records at least one concrete error type and explanation
+  - all Chinese shown in Q3 options/source must use correctly tone-marked pinyin where the official surface requires pinyin
+  - distractor error taxonomy must describe the actual difference, not a post-hoc label
+
+human_qa_required:
+  - pinyin_correctness
+  - translation_semantics_correct
+  - distractor_error_taxonomy_correct
+  - not_word_for_word_only
+  - near_miss_distractors
+  - no_keyword_shortcut
+  - semantic_operation_diversity
+
+originality:
+  - write new Japanese prompts and Chinese expressions
+  - do not paraphrase official sentence pairs by swapping nouns

@@ -1,0 +1,122 @@
+{
+  "schema_version": "0.5",
+  "section": "Q2",
+  "section_id": "TABITO-CN-PILOT-EXAM-001-Q2",
+  "title_ja": "語句",
+  "score": 16,
+  "tasks": [
+    {
+      "task_type": "fill_choice",
+      "task_id": "Q2-A",
+      "subsection": "A",
+      "order": 1,
+      "selection_rule": "appropriate",
+      "sentence_zh": "我本来想坐地铁去，＿＿＿发现今天那条线停运了，只好坐公交车。",
+      "blank_marker": "＿＿＿",
+      "prompt_ja": "空欄に入れるのに最も適当なものを選べ。",
+      "options": ["后来", "已经", "一边", "只要"],
+      "answer_slot": {"slot_id": "Q2-7", "answer_number": 7, "correct_option": 1},
+      "rationale_ja": "「本来想……，后来发现……」で、当初の予定から後に判明した事実へ展開するのが自然。",
+      "distractor_rationales_ja": {
+        "2": "「已经发现」自体は可能だが、ここでは「本来」と対応して時間的展開を示す「后来」が最も自然。",
+        "3": "「一边」は通常、二つの動作を同時進行で結ぶため、この文脈には合わない。",
+        "4": "「只要」は条件を導くので、後続の「发现」と意味関係が成立しない。"
+      }
+    },
+    {
+      "task_type": "fill_choice",
+      "task_id": "Q2-B",
+      "subsection": "B",
+      "order": 2,
+      "selection_rule": "inappropriate",
+      "sentence_zh": "会议结束以后，大家＿＿＿回到了自己的教室。",
+      "blank_marker": "＿＿＿",
+      "prompt_ja": "空欄に入れるのに適当でないものを選べ。",
+      "options": ["都", "马上", "已经", "把"],
+      "answer_slot": {"slot_id": "Q2-8", "answer_number": 8, "correct_option": 4},
+      "rationale_ja": "「都回到了」「马上回到了」「已经回到了」は成立するが、「把」は目的語を伴う把構文を作る必要があり、「把回到了」は成立しない。",
+      "distractor_rationales_ja": {
+        "1": "「大家都回到了……」は自然な全称表現。",
+        "2": "会議終了直後の行動として「马上回到了……」は自然。",
+        "3": "完了状態を示す「已经回到了……」も成立する。"
+      }
+    },
+    {
+      "task_type": "ordering",
+      "task_id": "Q2-C1",
+      "subsection": "C",
+      "order": 3,
+      "source_ja": "この店は駅から近いだけでなく、夜10時まで営業しています。",
+      "sentence_frame_zh": "这家店 ＿＿ ＿＿ ＿＿ ＿＿ 。",
+      "prompt_ja": "八つの語句から四つを選んで正しい中国語文を作るとき、指定された位置に入る語句の番号を答えよ。",
+      "token_pool": [
+        {"token_id": 1, "text_zh": "离车站很近"},
+        {"token_id": 2, "text_zh": "不但"},
+        {"token_id": 3, "text_zh": "而且"},
+        {"token_id": 4, "text_zh": "营业到晚上十点"},
+        {"token_id": 5, "text_zh": "虽然"},
+        {"token_id": 6, "text_zh": "因为"},
+        {"token_id": 7, "text_zh": "才"},
+        {"token_id": 8, "text_zh": "被"}
+      ],
+      "correct_sequence": [2, 1, 3, 4],
+      "answer_positions": [2, 4],
+      "answer_slots": [
+        {"slot_id": "Q2-9", "answer_number": 9, "correct_option": 1},
+        {"slot_id": "Q2-10", "answer_number": 10, "correct_option": 4}
+      ],
+      "rationale_ja": "「这家店不但离车站很近，而且营业到晚上十点。」となる。不但……而且……で二つの利点を並列する。",
+      "token_rationales_ja": {
+        "1": "「离车站很近」は第1の内容述部。",
+        "2": "「不但」は第1項目前に置く。",
+        "3": "「而且」は第2項目を導く。",
+        "4": "「营业到晚上十点」が第2の内容述部。",
+        "5": "「虽然」なら通常は「但是」等との譲歩関係が必要。",
+        "6": "因果関係ではない。",
+        "7": "限定・時間条件を表す位置ではない。",
+        "8": "受身構文を作る文脈ではない。"
+      }
+    },
+    {
+      "task_type": "ordering",
+      "task_id": "Q2-C2",
+      "subsection": "C",
+      "order": 4,
+      "source_ja": "先生は、分からないところがあれば授業のあとで質問してもよいと言いました。",
+      "sentence_frame_zh": "老师说 ＿＿ ＿＿ ＿＿ ＿＿ 。",
+      "prompt_ja": "八つの語句から四つを選んで正しい中国語文を作るとき、指定された位置に入る語句の番号を答えよ。",
+      "token_pool": [
+        {"token_id": 1, "text_zh": "如果有不懂的地方"},
+        {"token_id": 2, "text_zh": "可以"},
+        {"token_id": 3, "text_zh": "下课以后"},
+        {"token_id": 4, "text_zh": "问他"},
+        {"token_id": 5, "text_zh": "被"},
+        {"token_id": 6, "text_zh": "已经"},
+        {"token_id": 7, "text_zh": "只要"},
+        {"token_id": 8, "text_zh": "把"}
+      ],
+      "correct_sequence": [1, 3, 2, 4],
+      "answer_positions": [1, 3],
+      "answer_slots": [
+        {"slot_id": "Q2-11", "answer_number": 11, "correct_option": 1},
+        {"slot_id": "Q2-12", "answer_number": 12, "correct_option": 2}
+      ],
+      "rationale_ja": "「老师说如果有不懂的地方，下课以后可以问他。」となる。条件→時間→許可→行為の順が自然。",
+      "token_rationales_ja": {
+        "1": "条件節として文頭に置ける。",
+        "2": "「问他」に対する許可・可能を示す。",
+        "3": "質問する時点を示し、述語句の前に置く。",
+        "4": "中心となる行為。",
+        "5": "受身関係はない。",
+        "6": "完了を述べる文ではない。",
+        "7": "「只要」だけでは後続の対応表現が不足し、この四語構成では不自然。",
+        "8": "把構文を作る目的語と処置述語がない。"
+      }
+    }
+  ],
+  "workflow": {
+    "state": "draft",
+    "generation_mode": "manual_chat",
+    "blueprint_version": "R8-2026-full-v1"
+  }
+}

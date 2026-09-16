@@ -2,7 +2,7 @@ exam:
   name: 共通テスト 中国語
   reference_year: 2026
   reference_label: R8
-  blueprint_version: R8-2026-main-tsui-v3
+  blueprint_version: R8-2026-main-tsui-v4
   duration_minutes: 80
   total_score: 200
   answer_numbers: [1, 50]

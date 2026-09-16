@@ -1,0 +1,163 @@
+{
+  "schema_version": "0.5",
+  "section": "Q1",
+  "section_id": "TABITO-CN-PILOT-EXAM-001-Q1",
+  "title_ja": "発音・ピンイン",
+  "score": 24,
+  "tasks": [
+    {
+      "task_type": "phonetic_count",
+      "task_id": "Q1-A",
+      "subsection": "A",
+      "order": 1,
+      "target": "initial",
+      "prompt_ja": "下線部の声母が、見出し語の下線部と同じものはいくつあるか。",
+      "headword": {"label": "見出し", "hanzi": "条件", "pinyin": "tiáojiàn", "target_index": 2},
+      "candidates": [
+        {"label": "a", "hanzi": "季节", "pinyin": "jìjié", "target_index": 1},
+        {"label": "b", "hanzi": "了解", "pinyin": "liǎojiě", "target_index": 2},
+        {"label": "c", "hanzi": "结账", "pinyin": "jiézhàng", "target_index": 1},
+        {"label": "d", "hanzi": "请假", "pinyin": "qǐngjià", "target_index": 1}
+      ],
+      "options": ["一つ", "二つ", "三つ", "四つ", "なし"],
+      "answer_slot": {"slot_id": "Q1-1", "answer_number": 1, "correct_option": 3},
+      "rationale_ja": "見出し語「条件」の下線部「件 jiàn」の声母は j。候補では「季 jì」「解 jiě」「结 jié」が j、「请 qǐng」は q なので三つ。",
+      "distractor_rationales_ja": {
+        "1": "j と q の区別や複数の j 音節を正しく追えていない場合。",
+        "2": "j の候補を一つ見落とした場合。",
+        "4": "q を j と同一視した場合。",
+        "5": "下線部の声母を判定できていない場合。"
+      }
+    },
+    {
+      "task_type": "phonetic_count",
+      "task_id": "Q1-B",
+      "subsection": "B",
+      "order": 2,
+      "target": "final",
+      "prompt_ja": "声調を除き、下線部の韻母が、見出し語の下線部と同じものはいくつあるか。",
+      "headword": {"label": "見出し", "hanzi": "交通", "pinyin": "jiāotōng", "target_index": 2},
+      "candidates": [
+        {"label": "a", "hanzi": "内容", "pinyin": "nèiróng", "target_index": 2},
+        {"label": "b", "hanzi": "共同", "pinyin": "gòngtóng", "target_index": 1},
+        {"label": "c", "hanzi": "冷静", "pinyin": "lěngjìng", "target_index": 1},
+        {"label": "d", "hanzi": "情况", "pinyin": "qíngkuàng", "target_index": 1}
+      ],
+      "options": ["一つ", "二つ", "三つ", "四つ", "なし"],
+      "answer_slot": {"slot_id": "Q1-2", "answer_number": 2, "correct_option": 2},
+      "rationale_ja": "見出し語「交通」の下線部「通 tōng」の韻母は ong。候補では「容 róng」「共 gòng」が ong、「冷 lěng」は eng、「情 qíng」は ing なので二つ。",
+      "distractor_rationales_ja": {
+        "1": "ong の候補を一つ見落とした場合。",
+        "3": "ong と eng または ing の一方を同一視した場合。",
+        "4": "鼻音韻尾を持つ音節をすべて同じ韻母とみなした場合。",
+        "5": "韻母 ong を認識できていない場合。"
+      }
+    },
+    {
+      "task_type": "phonetic_count",
+      "task_id": "Q1-C1",
+      "subsection": "C",
+      "order": 3,
+      "target": "tone_pattern",
+      "prompt_ja": "見出し語と声調の組合せが同じものはいくつあるか。",
+      "headword": {"label": "見出し", "hanzi": "新闻", "pinyin": "xīnwén"},
+      "candidates": [
+        {"label": "a", "hanzi": "安全", "pinyin": "ānquán"},
+        {"label": "b", "hanzi": "欢迎", "pinyin": "huānyíng"},
+        {"label": "c", "hanzi": "问题", "pinyin": "wèntí"},
+        {"label": "d", "hanzi": "准备", "pinyin": "zhǔnbèi"}
+      ],
+      "options": ["一つ", "二つ", "三つ", "四つ", "なし"],
+      "answer_slot": {"slot_id": "Q1-3", "answer_number": 3, "correct_option": 2},
+      "rationale_ja": "「新闻 xīnwén」は第一声＋第二声。「安全 ānquán」「欢迎 huānyíng」の二つが同じ組合せ。",
+      "distractor_rationales_ja": {
+        "1": "第一声＋第二声の候補を一つ見落とした場合。",
+        "3": "第二音節だけを見て「问题 wèntí」も含めた場合。",
+        "4": "各音節の声調の組合せを区別していない場合。",
+        "5": "見出し語の声調パターンを取れていない場合。"
+      }
+    },
+    {
+      "task_type": "phonetic_count",
+      "task_id": "Q1-C2",
+      "subsection": "C",
+      "order": 4,
+      "target": "tone_pattern",
+      "prompt_ja": "見出し語と声調の組合せが同じものはいくつあるか。",
+      "headword": {"label": "見出し", "hanzi": "办法", "pinyin": "bànfǎ"},
+      "candidates": [
+        {"label": "a", "hanzi": "地点", "pinyin": "dìdiǎn"},
+        {"label": "b", "hanzi": "号码", "pinyin": "hàomǎ"},
+        {"label": "c", "hanzi": "每天", "pinyin": "měitiān"},
+        {"label": "d", "hanzi": "旅行", "pinyin": "lǚxíng"}
+      ],
+      "options": ["一つ", "二つ", "三つ", "四つ", "なし"],
+      "answer_slot": {"slot_id": "Q1-4", "answer_number": 4, "correct_option": 2},
+      "rationale_ja": "「办法 bànfǎ」は第四声＋第三声。「地点 dìdiǎn」「号码 hàomǎ」の二つが同じ組合せ。",
+      "distractor_rationales_ja": {
+        "1": "第四声＋第三声の候補を一つ見落とした場合。",
+        "3": "第一音節または第二音節だけを見て別パターンを混ぜた場合。",
+        "4": "二音節全体の声調順序を区別していない場合。",
+        "5": "見出し語の声調パターンを取れていない場合。"
+      }
+    },
+    {
+      "task_type": "pinyin_dialogue",
+      "task_id": "Q1-D1",
+      "subsection": "D",
+      "order": 5,
+      "lines": [
+        {"speaker": "A", "pinyin": "Nǐ bú shì shuō xiǎng qù kàn xīn zhǎnlǎn ma? Zhōuliù wǒmen yìqǐ qù ba."},
+        {"speaker": "B", "pinyin": "Zhōuliù shàngwǔ wǒ yào qù yīyuàn kàn nǎinai, xiàwǔ sì diǎn yǐhòu cái yǒu shíjiān."},
+        {"speaker": "A", "pinyin": "Kěshì zhǎnlǎnguǎn sì diǎn bàn jiù tíngzhǐ rùchǎng, cóng yīyuàn guòqu yào sìshí fēnzhōng."},
+        {"speaker": "B", "pinyin": "Nà zhōuliù kǒngpà bùxíng, wǒmen zài zhǎo bié de shíjiān ba."}
+      ],
+      "prompt_ja": "二人が土曜日に展覧会へ行くのをやめた理由として、最も適当なものはどれか。",
+      "options": [
+        "土曜日は展覧会そのものが休みだから",
+        "Bは土曜日の午後ずっと病院にいなければならないから",
+        "Bが空く時刻から移動すると、最終入場時刻に間に合わないから",
+        "Aは土曜日には病院へ行く予定があるから"
+      ],
+      "answer_slot": {"slot_id": "Q1-5", "answer_number": 5, "correct_option": 3},
+      "rationale_ja": "Bが空くのは16時以後で、病院から展示館まで40分かかる。一方、最終入場は16時30分なので間に合わない。二つの発話を組み合わせて判断する。",
+      "distractor_rationales_ja": {
+        "1": "休館とは述べておらず、16時30分まで入場できる。",
+        "2": "Bは16時以後は時間があると述べている。",
+        "4": "病院へ行く予定があるのはBである。"
+      }
+    },
+    {
+      "task_type": "pinyin_dialogue",
+      "task_id": "Q1-D2",
+      "subsection": "D",
+      "order": 6,
+      "lines": [
+        {"speaker": "A", "pinyin": "Wǒ xiǎng gěi Lǐ lǎoshī mǎi yí fèn lǐwù, nǐ juéde shū zěnmeyàng?"},
+        {"speaker": "B", "pinyin": "Tā zuìjìn shuō yǎnjing róngyì lèi, kǒngpà bù xiǎng kàn tài duō zì."},
+        {"speaker": "A", "pinyin": "Nà mǎi yì běn zhàopiàn duō de lǚxíng shū ne?"},
+        {"speaker": "B", "pinyin": "Kěyǐ. Dànshì tā xià zhōuyī jiù yào líkāi, wǎngshàng mǎi kěnéng láibují."},
+        {"speaker": "A", "pinyin": "Nà jīntiān xiàkè hòu qù xuéxiào pángbiān de shūdiàn kànkan."}
+      ],
+      "prompt_ja": "二人は、李先生への贈り物をどのように選ぶことにしたか。",
+      "options": [
+        "字の多い小説を今日インターネットで注文する",
+        "写真の多い旅行の本を、今日近くの書店で探す",
+        "来週になってから電子書籍を贈る",
+        "先生が出発するので、本を贈ること自体をやめる"
+      ],
+      "answer_slot": {"slot_id": "Q1-6", "answer_number": 6, "correct_option": 2},
+      "rationale_ja": "目が疲れやすいという情報から写真の多い旅行書を選び、来週月曜の出発にオンライン注文が間に合わない可能性があるため、今日近くの書店で探すことにした。複数の発話を統合する。",
+      "distractor_rationales_ja": {
+        "1": "字の多い本はBの懸念と逆で、オンライン購入も間に合わない可能性がある。",
+        "3": "来週では先生の出発に遅く、電子書籍の話も出ていない。",
+        "4": "贈り物をやめるのではなく、購入方法を変更している。"
+      }
+    }
+  ],
+  "workflow": {
+    "state": "draft",
+    "generation_mode": "manual_chat",
+    "blueprint_version": "R8-2026-full-v1"
+  }
+}

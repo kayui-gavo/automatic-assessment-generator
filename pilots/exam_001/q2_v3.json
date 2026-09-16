@@ -1,0 +1,118 @@
+{
+  "schema_version": "0.5",
+  "section": "Q2",
+  "section_id": "TABITO-CN-PILOT-EXAM-001-Q2",
+  "title_ja": "語句",
+  "score": 16,
+  "tasks": [
+    {
+      "task_type": "fill_choice",
+      "task_id": "Q2-A",
+      "subsection": "A",
+      "order": 1,
+      "selection_rule": "appropriate",
+      "sentence_zh": "两份名单看起来差不多，但还需要把姓名和号码一项一项地＿＿＿，才能确定有没有重复。",
+      "blank_marker": "＿＿＿",
+      "prompt_ja": "空欄に入れるのに最も適当なものを選べ。",
+      "options": ["核对", "承认", "证明", "保证"],
+      "answer_slot": {"slot_id": "Q2-7", "answer_number": 7, "correct_option": 1},
+      "rationale_ja": "姓名と番号を一項ずつ照らし合わせて重複の有無を確かめるので、「核对」が最も適切。",
+      "distractor_rationales_ja": {
+        "2": "「承认姓名和号码」は統語的には目的語を取れるが、情報を照合する意味にならない。",
+        "3": "「证明姓名和号码」では姓名・番号そのものを証明する意味になり、重複確認という目的に合わない。",
+        "4": "「保证姓名和号码」も目的語を取れるが、正確さを保証する意味で、二つの名单を一項ずつ照合する動作を表さない。"
+      }
+    },
+    {
+      "task_type": "fill_choice",
+      "task_id": "Q2-B",
+      "subsection": "B",
+      "order": 2,
+      "selection_rule": "inappropriate",
+      "sentence_zh": "为了避免误会，他又把会议时间＿＿＿了一遍。",
+      "blank_marker": "＿＿＿",
+      "prompt_ja": "空欄に入れるのに適当でないものを選べ。",
+      "options": ["确认", "核对", "说明", "怀疑"],
+      "answer_slot": {"slot_id": "Q2-8", "answer_number": 8, "correct_option": 4},
+      "rationale_ja": "「确认了一遍」「核对了一遍」「说明了一遍」は、誤解を避けるため会議時間を再確認・照合・説明する文として成立する。一方、「怀疑了一遍」は「一遍」と結びつく反復可能な確認動作を表さず、この文脈では不自然。",
+      "distractor_rationales_ja": {
+        "1": "会議時間をもう一度確認するという自然な用法。",
+        "2": "通知などと照合して時間を再確認する場面なら「核对了一遍」が成立する。",
+        "3": "相手に会議時間をもう一度説明するという読みで成立する。"
+      }
+    },
+    {
+      "task_type": "ordering",
+      "task_id": "Q2-C1",
+      "subsection": "C",
+      "order": 3,
+      "source_ja": "この店は駅から近いだけでなく、夜10時まで営業しています。",
+      "sentence_frame_zh": "这家店 ＿＿ ＿＿ ＿＿ ＿＿ 。",
+      "prompt_ja": "八つの語句から四つを選んで正しい中国語文を作るとき、指定された位置に入る語句の番号を答えよ。",
+      "token_pool": [
+        {"token_id": 1, "text_zh": "离车站很近"},
+        {"token_id": 2, "text_zh": "不但"},
+        {"token_id": 3, "text_zh": "而且"},
+        {"token_id": 4, "text_zh": "营业到晚上十点"},
+        {"token_id": 5, "text_zh": "虽然"},
+        {"token_id": 6, "text_zh": "但是"},
+        {"token_id": 7, "text_zh": "已经"},
+        {"token_id": 8, "text_zh": "才"}
+      ],
+      "correct_sequence": [2, 1, 3, 4],
+      "answer_positions": [2, 4],
+      "answer_slots": [
+        {"slot_id": "Q2-9", "answer_number": 9, "correct_option": 1},
+        {"slot_id": "Q2-10", "answer_number": 10, "correct_option": 4}
+      ],
+      "rationale_ja": "「这家店不但离车站很近，而且营业到晚上十点。」となり、日本語の「～だけでなく～も」に対応する追加関係を正確に表す。",
+      "token_rationales_ja": {
+        "1": "第1の利点を表す述部で、「不但」の後に置かれる。",
+        "2": "第1の利点を提示し、第2の利点へ追加する構造を作る。",
+        "3": "第2の利点を導き、「不但」と対応する。",
+        "4": "第2の利点となる述部。",
+        "5": "「虽然离车站很近……」自体は局所的に成立するが、原文には譲歩・逆接がない。",
+        "6": "「但是营业到晚上十点」と組めば文法的には成立するものの、二つの利点を逆接で結び原文の意味関係を変える。",
+        "7": "「已经营业到晚上十点」は文脈次第で成立し得るが、現在の営業時間という恒常的特徴を表す原文とは異なる。",
+        "8": "「才营业到晚上十点」は『10時までしか営業しない』という限定的な含意を生み、原文の利点提示と異なる。"
+      }
+    },
+    {
+      "task_type": "ordering",
+      "task_id": "Q2-C2",
+      "subsection": "C",
+      "order": 4,
+      "source_ja": "駅に着いてから、友達が送ってくれた地図をもう一度見て、やっと入口を見つけました。",
+      "sentence_frame_zh": "＿＿ ＿＿ ＿＿ ＿＿ 。",
+      "prompt_ja": "八つの語句から四つを選んで正しい中国語文を作るとき、指定された位置に入る語句の番号を答えよ。",
+      "token_pool": [
+        {"token_id": 1, "text_zh": "到了车站以后"},
+        {"token_id": 2, "text_zh": "我又看了一遍"},
+        {"token_id": 3, "text_zh": "朋友发给我的地图"},
+        {"token_id": 4, "text_zh": "才找到入口"},
+        {"token_id": 5, "text_zh": "在到车站以前"},
+        {"token_id": 6, "text_zh": "我只看了一遍"},
+        {"token_id": 7, "text_zh": "朋友刚发来的地图"},
+        {"token_id": 8, "text_zh": "就找到入口"}
+      ],
+      "correct_sequence": [1, 2, 3, 4],
+      "answer_positions": [2, 4],
+      "answer_slots": [
+        {"slot_id": "Q2-11", "answer_number": 11, "correct_option": 2},
+        {"slot_id": "Q2-12", "answer_number": 12, "correct_option": 4}
+      ],
+      "rationale_ja": "「到了车站以后，我又看了一遍朋友发给我的地图，才找到入口。」となる。到着後→もう一度地図を見る→ようやく見つける、という原文の時間順序と焦点を保つ。",
+      "token_rationales_ja": {
+        "1": "『駅に着いてから』に対応する時間句。",
+        "2": "「又」と「一遍」により『もう一度見て』を表し、後続に目的語を取る。",
+        "3": "「看了一遍」の目的語で、『友達が送ってくれた地図』に対応する。",
+        "4": "「才」が、前の行為を経て『やっと』入口を発見したことを表す。",
+        "5": "時間句としては自然だが、『駅に着く前に』となり原文の時間関係を逆転させる。",
+        "6": "文法的には後ろに目的語を取れるが、『一度だけ見た』となり『もう一度』を失う。",
+        "7": "自然な名詞句だが、『刚』という『たった今』の情報を原文にない形で加える。",
+        "8": "結果句として成立するが、『すぐ見つけた』という含意になり、『やっと』に対応しない。"
+      }
+    }
+  ],
+  "workflow": {"state": "draft", "generation_mode": "manual_chat", "blueprint_version": "R8-2026-full-v1"}
+}

@@ -1,0 +1,92 @@
+blueprint_version: R8-2026-full-v1
+exam: Common Test Chinese
+reference_year: 2026
+duration_minutes: 80
+total_score: 200
+answer_numbers: [1, 50]
+
+reference_hierarchy:
+  tier_0:
+    role: construct_boundary
+    source: 2026 University Entrance Examination Center problem-making policy
+  tier_1:
+    role: surface_blueprint
+    sources:
+      - 2026 main examination Chinese
+      - 2026 makeup/re-examination Chinese
+    rule: co-equal; shared patterns are the core and differences define legitimate variation
+  tier_2:
+    role: historical_reference_only
+    years: 2025_and_earlier
+    may_inform:
+      - language_level
+      - stable_constructs
+      - distractor_plausibility
+      - japanese_instruction_conventions
+    must_not_define: 2026_default_surface_architecture
+
+sections:
+  Q1:
+    label_ja: 発音・ピンイン
+    score: 24
+    answer_start: 1
+    answer_end: 6
+    answer_slot_count: 6
+    family_rule: shared_2026
+  Q2:
+    label_ja: 語句
+    score: 16
+    answer_start: 7
+    answer_end: 12
+    answer_slot_count: 6
+    family_rule: shared_2026
+  Q3:
+    label_ja: 表現力
+    score: 40
+    answer_start: 13
+    answer_end: 20
+    answer_slot_count: 8
+    family_rule: shared_2026
+  Q4:
+    label_ja: 複合的な資料の読み取り
+    score: 60
+    answer_start: 21
+    answer_end: 36
+    answer_slot_count: 16
+    family_rule: main_2026_or_makeup_2026
+  Q5:
+    label_ja: 長文読解
+    score: 60
+    answer_start: 37
+    answer_end: 50
+    answer_slot_count: 14
+    family_rule: main_2026_or_makeup_2026
+
+exam_families:
+  main_2026:
+    Q1: shared_2026
+    Q2: shared_2026
+    Q3: shared_2026
+    Q4: main_2026
+    Q5: main_2026
+  makeup_2026:
+    Q1: shared_2026
+    Q2: shared_2026
+    Q3: shared_2026
+    Q4: makeup_2026
+    Q5: makeup_2026
+
+hard_invariants:
+  - total score is exactly 200
+  - duration is 80 minutes
+  - answer numbers 1 through 50 appear exactly once across the five sections
+  - section score and answer ranges are fixed to the table above
+  - each section is generated, reviewed, revised and human-QAed independently
+  - final exam QA is invalidated if any section content fingerprint changes
+  - no section may copy official wording, data, characters, narrative, or distinctive scenario sequence
+
+sources:
+  main_problem: https://www.dnc.ac.jp/kyotsu/kakomondai/r8/r8_honshiken_mondai.html
+  makeup_problem: https://www.dnc.ac.jp/kyotsu/kakomondai/r8/r8_tuisaishiken_mondai.html
+  main_self_evaluation: https://www.dnc.ac.jp/albums/abm.php?d=2151&f=abm00017678.pdf
+  makeup_self_evaluation: https://www.dnc.ac.jp/albums/abm.php?d=2152&f=abm00017740.pdf

@@ -1,0 +1,118 @@
+{
+  "schema_version": "0.5",
+  "section": "Q2",
+  "section_id": "TABITO-CN-PILOT-EXAM-001-Q2",
+  "title_ja": "語句",
+  "score": 16,
+  "tasks": [
+    {
+      "task_type": "fill_choice",
+      "task_id": "Q2-A",
+      "subsection": "A",
+      "order": 1,
+      "selection_rule": "appropriate",
+      "sentence_zh": "现在还没有足够的资料，我们只能＿＿＿问题可能出在设备上，不能马上下结论。",
+      "blank_marker": "＿＿＿",
+      "prompt_ja": "空欄に入れるのに最も適当なものを選べ。",
+      "options": ["推测", "断定", "证明", "保证"],
+      "answer_slot": {"slot_id": "Q2-7", "answer_number": 7, "correct_option": 1},
+      "rationale_ja": "資料がまだ不足し『結論をすぐ出せない』段階なので、可能性を仮に考える「推测」が最も適切。",
+      "distractor_rationales_ja": {
+        "2": "「断定」は確定的に判断する語で、後半の『不能马上下结论』と衝突する。",
+        "3": "「证明」は根拠によって事実を証明する語で、資料不足の段階で『可能』を述べる文脈に合わない。",
+        "4": "「保证」は結果・品質などを保証する意味で、原因の可能性を判断する動作を表さない。"
+      }
+    },
+    {
+      "task_type": "fill_choice",
+      "task_id": "Q2-B",
+      "subsection": "B",
+      "order": 2,
+      "selection_rule": "inappropriate",
+      "sentence_zh": "新的预约办法上线以后，已经＿＿＿了很大影响，很多人因此改变了到店时间。",
+      "blank_marker": "＿＿＿",
+      "prompt_ja": "空欄に入れるのに適当でないものを選べ。",
+      "options": ["产生", "造成", "带来", "发挥"],
+      "answer_slot": {"slot_id": "Q2-8", "answer_number": 8, "correct_option": 4},
+      "rationale_ja": "「产生了很大影响」「造成了很大影响」「带来了很大影响」はいずれも成立する。「发挥」は通常「发挥作用／优势／能力」などと用い、「发挥影响」はこの文では不自然。",
+      "distractor_rationales_ja": {
+        "1": "「产生了很大影响」は影響が生じたことを表す自然な組合せ。",
+        "2": "「造成了很大影响」は結果として大きな影響をもたらした意味で成立する。",
+        "3": "「带来了很大影响」も大きな影響をもたらした意味で成立する。"
+      }
+    },
+    {
+      "task_type": "ordering",
+      "task_id": "Q2-C1",
+      "subsection": "C",
+      "order": 3,
+      "source_ja": "この知らせを聞いて、彼女は驚いてしばらく何も言えなかった。",
+      "sentence_frame_zh": "听到这个消息，她 ＿＿ ＿＿ ＿＿ ＿＿ 。",
+      "prompt_ja": "八つの語句から四つを選んで正しい中国語文を作るとき、指定された位置に入る語句の番号を答えよ。",
+      "token_pool": [
+        {"token_id": 1, "text_zh": "惊讶得"},
+        {"token_id": 2, "text_zh": "好一会儿"},
+        {"token_id": 3, "text_zh": "都"},
+        {"token_id": 4, "text_zh": "说不出话来"},
+        {"token_id": 5, "text_zh": "过了一会儿"},
+        {"token_id": 6, "text_zh": "才"},
+        {"token_id": 7, "text_zh": "能够"},
+        {"token_id": 8, "text_zh": "说出话来"}
+      ],
+      "correct_sequence": [1, 2, 3, 4],
+      "answer_positions": [2, 4],
+      "answer_slots": [
+        {"slot_id": "Q2-9", "answer_number": 9, "correct_option": 2},
+        {"slot_id": "Q2-10", "answer_number": 10, "correct_option": 4}
+      ],
+      "rationale_ja": "「她惊讶得好一会儿都说不出话来。」となる。「惊讶得」で結果状態を導き、「好一会儿」でその継続時間を示す。",
+      "token_rationales_ja": {
+        "1": "「得」構文で驚きの結果状態を後続させる。",
+        "2": "言葉が出ない状態が『しばらく』続いたことを表す。",
+        "3": "継続時間のあいだ一貫して言葉が出なかったことを自然に示す。",
+        "4": "「说不出话来」で『言葉が出ない』という結果を完成する。",
+        "5": "「过了一会儿」は時間経過後の次の出来事を導けるため局所的には自然だが、原文は『しばらく言えなかった』状態を述べる。",
+        "6": "「才」は遅れて成立した結果を表すため、5・7・8と組めるが原文の否定状態とは異なる。",
+        "7": "「能够」は能力回復を表す8と結び得るが、『言えなかった』を反転させる。",
+        "8": "5・6・7・8を組み合わせる方向では『しばらくしてやっと話せた』となり、原文とは結果が逆になる。"
+      }
+    },
+    {
+      "task_type": "ordering",
+      "task_id": "Q2-C2",
+      "subsection": "C",
+      "order": 4,
+      "source_ja": "宿題を終えてからでなければ、あなたと映画を見に行けません。",
+      "sentence_frame_zh": "我 ＿＿ ＿＿ ＿＿ ＿＿ 跟你去看电影。",
+      "prompt_ja": "八つの語句から四つを選んで正しい中国語文を作るとき、指定された位置に入る語句の番号を答えよ。",
+      "token_pool": [
+        {"token_id": 1, "text_zh": "得"},
+        {"token_id": 2, "text_zh": "先"},
+        {"token_id": 3, "text_zh": "做完作业"},
+        {"token_id": 4, "text_zh": "才能"},
+        {"token_id": 5, "text_zh": "可以"},
+        {"token_id": 6, "text_zh": "不做作业"},
+        {"token_id": 7, "text_zh": "就"},
+        {"token_id": 8, "text_zh": "马上"}
+      ],
+      "correct_sequence": [1, 2, 3, 4],
+      "answer_positions": [1, 4],
+      "answer_slots": [
+        {"slot_id": "Q2-11", "answer_number": 11, "correct_option": 1},
+        {"slot_id": "Q2-12", "answer_number": 12, "correct_option": 4}
+      ],
+      "rationale_ja": "「我得先做完作业才能跟你去看电影。」となる。「得先……才能……」で、宿題を終えることを映画に行くための必要条件として示す。",
+      "token_rationales_ja": {
+        "1": "必要性を示し、「先」と自然に結ぶ。",
+        "2": "宿題を映画より前に済ませる順序を示す。",
+        "3": "『宿題を終える』に対応し、結果補語「完」を含む。",
+        "4": "前件を満たして初めて後件が可能になることを示す。",
+        "5": "5・6・7・8を使えば局所的には『宿題をせずすぐ映画へ行ける』という文を作れるが、原文と逆。",
+        "6": "文法的には5・7・8と組めるが、宿題をしないことになり原文の必要条件を反転させる。",
+        "7": "条件成立後の即時性を示せるが、原文の「才能」による必要条件とは異なる。",
+        "8": "映画へ行く時点を『すぐ』と強める情報は原文にない。"
+      }
+    }
+  ],
+  "workflow": {"state": "draft", "generation_mode": "manual_chat", "blueprint_version": "R8-2026-full-v1"}
+}

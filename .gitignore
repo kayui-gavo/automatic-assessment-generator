@@ -21,3 +21,12 @@ workspace/releases/*
 !workspace/releases/.gitkeep
 workspace/ui_temp/*
 !workspace/ui_temp/.gitkeep
+workspace/exams/*
+!workspace/exams/.gitkeep
+
+# Full exam projects contain unpublished production content. Keep the live bank local;
+# commit curated pilots/fixtures explicitly instead.
+exam_bank/draft/*
+!exam_bank/draft/.gitkeep
+exam_bank/approved/*
+!exam_bank/approved/.gitkeep

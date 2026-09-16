@@ -1,6 +1,6 @@
 section: Q4
 construct: integrated_information_use
-baseline: R8-2026-main-tsui-v3
+baseline: R8-2026-main-tsui-v4
 
 source_priority:
   normative_construct_boundary: 2026_problem_making_policy
