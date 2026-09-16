@@ -10,9 +10,10 @@ from pydantic import BaseModel, Field
 _OVERFULL_RE = re.compile(r"Overfull \\hbox \((?P<points>[0-9.]+)pt too wide\)")
 _PAGE_RE = re.compile(r"Output written on .*?\((?P<pages>\d+) pages?")
 
-# Only files that can change the generated booklet / answer sheet or the PDF
-# preflight contract belong here. This keeps unrelated repository commits from
-# invalidating a good PDF while guaranteeing that renderer bug fixes do.
+# Only files that can change the generated booklet / answer sheet / canonical
+# release artifacts belong here. This keeps unrelated repository commits from
+# invalidating a good artifact set while guaranteeing that renderer or scoring
+# fixes do.
 _RENDERER_SOURCE_FILES = (
     "answer_sheet.py",
     "artifact_preflight.py",
@@ -20,8 +21,9 @@ _RENDERER_SOURCE_FILES = (
     "exam_surface.py",
     "presentation.py",
     "render.py",
+    "scoring.py",
 )
-REQUIRED_EXTRA_FILES = ("answer_key.json",)
+REQUIRED_EXTRA_FILES = ("answer_key.json", "scoring_scheme.json")
 
 
 class ArtifactCheck(BaseModel):
@@ -76,12 +78,12 @@ def sha256_file(path: Path) -> str:
 
 
 def renderer_revision(root: Path | None = None) -> str:
-    """Fingerprint the implementation that determines produced PDF artifacts.
+    """Fingerprint the implementation that determines canonical release artifacts.
 
-    A Git commit is too broad (README edits would invalidate PDFs) and also too
-    weak for release gating because an old artifact merely needed *some* known
-    commit. Hash the actual renderer/preflight source instead. The optional root
-    argument remains for API compatibility with existing callers.
+    A Git commit is too broad (README edits would invalidate artifacts) and also
+    too weak for release gating because an old artifact merely needed *some*
+    known commit. Hash the actual rendering / preflight / scoring source instead.
+    The optional root argument remains for API compatibility with existing callers.
     """
 
     del root
@@ -164,7 +166,7 @@ def build_artifact_manifest(
         checks.append(preflight_pdf(tex, pdf))
 
     extras: dict[str, str] = {}
-    for filename in ("answer_key.json", "scoring_scheme.json"):
+    for filename in REQUIRED_EXTRA_FILES:
         path = out_dir / filename
         if path.exists() and path.stat().st_size:
             extras[filename] = sha256_file(path)
