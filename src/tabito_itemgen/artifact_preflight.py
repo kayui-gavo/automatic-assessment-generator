@@ -7,6 +7,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
+from .scoring import scoring_scheme
+
 _OVERFULL_RE = re.compile(r"Overfull \\hbox \((?P<points>[0-9.]+)pt too wide\)")
 _PAGE_RE = re.compile(r"Output written on .*?\((?P<pages>\d+) pages?")
 
@@ -151,6 +153,40 @@ def preflight_pdf(
     )
 
 
+def _exam_family(root: Path, exam_id: str) -> str:
+    candidates = (
+        root / "exam_bank" / "draft" / exam_id / "exam.json",
+        root / "exam_bank" / "approved" / exam_id / "exam.json",
+    )
+    for path in candidates:
+        if not path.exists():
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"cannot read exam manifest for scoring: {path}") from exc
+        family = payload.get("exam_family") if isinstance(payload, dict) else None
+        if family not in {"main_2026", "makeup_2026"}:
+            raise ValueError(f"unsupported exam family for scoring: {family!r}")
+        return family
+    raise FileNotFoundError(f"exam manifest not found for scoring: {exam_id}")
+
+
+def _write_scoring_scheme(root: Path, exam_id: str, out_dir: Path) -> Path:
+    family = _exam_family(root, exam_id)
+    path = out_dir / "scoring_scheme.json"
+    path.write_text(
+        json.dumps(
+            scoring_scheme(family).model_dump(mode="json"),
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
 def build_artifact_manifest(
     *,
     root: Path,
@@ -164,6 +200,11 @@ def build_artifact_manifest(
         tex = out_dir / f"{name}.tex"
         pdf = out_dir / f"{name}.pdf"
         checks.append(preflight_pdf(tex, pdf))
+
+    # Scoring is canonical release evidence, not teacher-entered metadata. Always
+    # regenerate it from the frozen family-specific 2026 scoring contract before
+    # hashing the artifact set.
+    _write_scoring_scheme(root, exam_id, out_dir)
 
     extras: dict[str, str] = {}
     for filename in REQUIRED_EXTRA_FILES:
