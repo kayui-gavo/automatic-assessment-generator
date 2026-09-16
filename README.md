@@ -230,14 +230,17 @@ output/<exam_id>/
 ├── answer_sheet.tex
 ├── answer_sheet.pdf
 ├── answer_key.json
+├── scoring_scheme.json
 └── artifact_manifest.json
 ```
 
-PDF preflight は missing character、重大な overfull、PDF hash 等を検査します。
+PDF preflight は missing character、重大な overfull、PDF hash 等を検査します。`answer_key.json` と family-specific `scoring_scheme.json` も canonical release artifact として SHA-256 binding されます。
 
-`artifact_manifest.json` は exam fingerprint と **renderer implementation fingerprint** に binding されます。renderer / surface / answer-sheet / preflight 実装が変わった場合、同じ問題内容でも旧 PDF は current release evidence として使えません。再生成が必要です。
+`scoring_scheme.json` は 2026 本試験 / 追試験の公式正解・配点表にある grouped scoring を保持します。単純な「50欄を均等配点」ではなく、全欄正解でのみ加点する組、順序不問の組、各正答ごとに加点する組を family ごとに区別します。Q1–Q5 の配点合計は 24 / 16 / 40 / 60 / 60 = 200点です。
 
-一方、過去に定稿した artifact manifest 自体は将来の renderer 更新後も audit 用に読み取れるようにします。
+`artifact_manifest.json` は exam fingerprint と **renderer implementation fingerprint** に binding されます。renderer / surface / answer-sheet / scoring / preflight 実装が変わった場合、同じ問題内容でも旧 PDF は current release evidence として使えません。再生成が必要です。
+
+一方、過去に定稿した artifact manifest 自体は将来新しい必須 artifact が追加されても audit 用 historical evidence として読み取れるようにします。current release requirement と historical manifest validity は分離しています。
 
 ## Release gate
 
@@ -252,7 +255,7 @@ Q3 Ready
 Q4 Ready
 Q5 Ready
 +
-current PDF artifact preflight
+current PDF / answer / scoring artifact preflight
 +
 整卷教师确认
 ```
@@ -301,7 +304,7 @@ tabito-itemgen exam-review-request <EXAM_ID> Q1
 # Revision request
 tabito-itemgen exam-revision-request <EXAM_ID> Q1
 
-# Full booklet + PDF preflight
+# Full booklet + PDF / answer / scoring preflight
 tabito-itemgen exam-render <EXAM_ID> --compile
 
 # Release readiness
@@ -315,19 +318,31 @@ tabito-itemgen exam-approve <EXAM_ID>
 
 旧 Q4-only CLI (`new-item`, `validate`, `render` 等) は backward compatibility / 单独大题 production 用として残しています。
 
+## Student pilot
+
+定稿済み模試の timed student trial は `docs/STUDENT_PILOT_PROTOCOL.md` を正とします。入力 CSV は学生の実際の回答・空答・時間だけを保持し、正解と配点を手入力しません。
+
+分析は approved `release.json` から PDF / answer key / scoring scheme の hash chain を検証してから実行します。
+
+```bash
+python -m tabito_itemgen.pilot_analysis pilots/exam_001/student_trial_answers.csv pilots/exam_001/student_trial_sections.csv --release-record exam_bank/approved/<EXAM_ID>/release.json --out-dir pilots/exam_001/analysis
+```
+
+出力には item-level 正答率・空答率・選択肢頻度、section timing、各受験者の `correct / 50` と **official-rule `score / 200`** の両方を残します。過去の trial はその release に同梱された scoring scheme で再計算し、将来のコード変更で採点規則を勝手に差し替えません。
+
 ## Repository layout
 
 ```text
-blueprints/                    2026 section blueprints
+blueprints/                    2026 section / scoring blueprints
 prompts/                       Q1–Q5 generate / review / revise prompts
-src/tabito_itemgen/            schema / production / validation / UI / renderer
+src/tabito_itemgen/            schema / production / validation / UI / renderer / scoring
 examples/                      schema / renderer fixtures
-pilots/                        content-QA candidates
+pilots/                        content-QA candidates and pilot data templates
 benchmarks/                    future human-approved gold exemplars only
 exam_bank/draft/               unpublished full exams
 exam_bank/approved/            released full exams
 workspace/exams/               requests / responses / review / QA / release records
-output/                        generated TeX / PDF / manifests
+output/                        generated TeX / PDF / answer / scoring manifests
 ```
 
 Live `workspace/exams/`, `exam_bank/draft/`, `exam_bank/approved/`, `output/` は public repo に自動 commit しません。
@@ -340,9 +355,10 @@ Live `workspace/exams/`, `exam_bank/draft/`, `exam_bank/approved/`, `output/` �
 - Section ごとの人工返工時間
 - defect frequency
 - PDF 手修正量
-- 学生の item / section 解答時間
-- 正答率
+- 学生の section 解答時間
+- item-level 正答率 / 空答率
 - distractor selection frequency
-- 上位群 / 下位群の discrimination
+- official-rule `score / 200` distribution
+- 上位群 / 下位群の discrimination（十分な sample が得られた後）
 
 `official_like` はモデルの自己申告ではなく、Human QA と pilot data で更新します。
