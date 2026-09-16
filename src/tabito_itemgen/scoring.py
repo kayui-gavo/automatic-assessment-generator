@@ -42,8 +42,8 @@ class ScoringGroup(BaseModel):
       answer in that group is correct.
     - a hyphen joining answer numbers / correct answers means order is ignored.
 
-    Those conventions must not be conflated.  A starred pair without a hyphen
-    is still order-sensitive.
+    Those conventions must not be conflated. A starred pair without a hyphen is
+    still order-sensitive.
     """
 
     group_id: str
@@ -298,12 +298,13 @@ def _group_score(
     return points_each * len(correct_values & selected_values)
 
 
-def score_responses(
-    family: ExamFamily,
+def score_with_scheme(
+    scheme: ScoringScheme,
     author_key: Mapping[int | str, int],
     responses: Mapping[int | str, int],
 ) -> ScoreResult:
-    scheme = scoring_scheme(family)
+    """Score with an explicit immutable scheme, e.g. one stored at release time."""
+
     author = _normalize_answers(
         author_key,
         label="author key",
@@ -324,7 +325,18 @@ def score_responses(
         for group in scheme.groups
     )
     return ScoreResult(
-        family=family,
+        scoring_version=scheme.scoring_version,
+        family=scheme.family,
         earned=sum(group.earned for group in groups),
         groups=groups,
     )
+
+
+def score_responses(
+    family: ExamFamily,
+    author_key: Mapping[int | str, int],
+    responses: Mapping[int | str, int],
+) -> ScoreResult:
+    """Score with the current frozen scheme for the requested 2026 family."""
+
+    return score_with_scheme(scoring_scheme(family), author_key, responses)
