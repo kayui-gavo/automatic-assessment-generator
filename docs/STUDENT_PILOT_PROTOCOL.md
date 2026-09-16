@@ -49,7 +49,7 @@ Required columns:
 - `ambiguity_flag` — `1` only when the student reports that the item itself was ambiguous
 - `note` — short free text only when needed
 
-Do **not** type the correct option or an `is_correct` flag into the student CSV. The analyzer derives correctness from the released, hash-bound answer artifact. This avoids turning answer-key transcription into a new source of empirical-data error.
+Do **not** type the correct option, an `is_correct` flag, or points into the student CSV. Correctness and the 200-point score are derived from the released, hash-bound answer/scoring artifacts. This avoids turning answer-key or point-weight transcription into a new source of empirical-data error.
 
 Preserve the actual selected option so distractor frequencies can be calculated later.
 
@@ -86,12 +86,39 @@ release.json
   → artifact_manifest.json SHA-256
   → student / teacher / answer-sheet PDF SHA-256
   → answer_key.json SHA-256
+  → scoring_scheme.json SHA-256
   → answer numbers 1–50
+  → scoring family matches approved exam family
 ```
 
-The `exam_id` and `exam_fingerprint` in the release evidence must exactly match both student CSV files. If the wrong release record is supplied, a released artifact was modified, or the CSV fingerprint belongs to another candidate version, analysis stops with an error.
+The `exam_id` and `exam_fingerprint` in the release evidence must exactly match both student CSV files. If the wrong release record is supplied, a released artifact was modified, the scoring file belongs to another family, or the CSV fingerprint belongs to another candidate version, analysis stops with an error.
 
-## 6. Run the analyzer
+## 6. 200-point scoring contract
+
+`scoring_scheme.json` is generated automatically during PDF/artifact preflight from the frozen 2026 family-specific scoring contract. It is not teacher-entered metadata.
+
+The scoring contract reproduces the official 2026 answer-table semantics rather than assigning a naive weight to every answer box:
+
+- ordinary single answer: independent points
+- `＊` linked answers: all linked answers must be correct to receive the group's points
+- hyphen-linked correct answers: order does not matter
+- `各N`: each correct selection in that unordered group earns N points
+- starred pairs without a hyphen remain order-sensitive
+
+`main_2026` and `makeup_2026` have different Q4/Q5 grouping, so they use separate scoring schemes. Both sum to:
+
+```text
+Q1  24
+Q2  16
+Q3  40
+Q4  60
+Q5  60
+TOTAL 200
+```
+
+The released `scoring_scheme.json` is itself hash-bound. Historical pilot analysis uses that released scheme directly; it does not silently substitute whatever scoring code happens to be current later.
+
+## 7. Run the analyzer
 
 Copy the templates in `pilots/exam_001/`, remove `_template` from the filenames, and enter the trial data. Then run:
 
@@ -99,22 +126,18 @@ Copy the templates in `pilots/exam_001/`, remove `_template` from the filenames,
 python -m tabito_itemgen.pilot_analysis pilots/exam_001/student_trial_answers.csv pilots/exam_001/student_trial_sections.csv --release-record exam_bank/approved/<EXAM_ID>/release.json --out-dir pilots/exam_001/analysis
 ```
 
-The analyzer rejects mixed fingerprints, incomplete 1–50 answer records, wrong answer-number/section mappings, malformed omission records, missing Q1–Q5 timing rows, mismatched participant sets, failed release evidence, artifact identity mismatches, PDF hash mismatches, and answer-key hash mismatches.
+The analyzer rejects mixed fingerprints, incomplete 1–50 answer records, wrong answer-number/section mappings, malformed omission records, missing Q1–Q5 timing rows, mismatched participant sets, failed release evidence, artifact identity mismatches, PDF hash mismatches, answer-key hash mismatches, scoring-scheme hash mismatches, and scoring-family mismatches.
 
 It writes:
 
 - `item_summary.csv` — bound correct option, correct rate, omission rate, ambiguity reports, and option-selection counts for each answer number
-- `participant_summary.csv` — correct-answer count, omissions, and ambiguity reports per participant
+- `participant_summary.csv` — correct-answer count, **official-rule score / 200**, omissions, and ambiguity reports per participant
 - `section_summary.csv` — median elapsed time, completion rate, and median perceived difficulty
-- `pilot_summary.json` — tested exam identity, participant count, and correct-answer-count range/median
+- `pilot_summary.json` — tested exam identity/family/scoring version, participant count, correct-answer-count range/median, and 200-point score range/median
 
-### Scoring note
+Keep both `correct / 50` and `score / 200`. They answer different questions: raw answer-slot accuracy is useful for item diagnostics, while the 200-point score follows the official grouped scoring rules.
 
-The current exam schema stores the correct option for each of the 50 answer slots but does not yet store a point value for each slot. Therefore the analyzer reports **correct-answer count out of 50**, not an invented 200-point score.
-
-Do not label this count as the official exam score. A true 200-point student score should only be calculated after answer-slot scoring weights become part of the canonical exam schema / answer artifact. The artifact layer already permits a future `scoring_scheme.json`, but no production scoring scheme is generated yet.
-
-## 7. Minimum analysis after the trial
+## 8. Minimum analysis after the trial
 
 For each answer number inspect:
 
@@ -123,7 +146,7 @@ For each answer number inspect:
 - correct rate
 - count/share for every selected option
 
-After enough participants are available, split participants by whole-exam correct-answer count and inspect upper/lower-group item performance. Do not fit IRT for Pilot 001.
+After enough participants are available, split participants by whole-exam score and inspect upper/lower-group item performance. Do not fit IRT for Pilot 001.
 
 For each section inspect:
 
@@ -133,14 +156,15 @@ For each section inspect:
 
 For the whole exam inspect:
 
-- correct-answer-count distribution
+- `score / 200` distribution
+- `correct / 50` distribution
 - whether 80 minutes was feasible
 - items with unusually high omission
 - distractors almost nobody selected
 - distractors selected heavily by stronger students
 - items with repeated ambiguity reports
 
-## 8. What triggers revision
+## 9. What triggers revision
 
 Student data is a diagnostic signal, not an automatic rewrite rule. Prioritize review when an item shows one or more of:
 
@@ -153,12 +177,15 @@ Student data is a diagnostic signal, not an automatic rewrite rule. Prioritize r
 
 Any substantive revision creates a new candidate fingerprint and requires the normal independent-review and teacher-QA chain again.
 
-## 9. Pilot 001 output
+## 10. Pilot 001 output
 
 Pilot 001 should end with a short evidence summary containing:
 
 - participant count
 - tested exam fingerprint
+- scoring family/version
+- 200-point score distribution
+- correct-answer-count distribution
 - section timing summary
 - item correct/omission rates
 - distractor frequencies
