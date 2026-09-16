@@ -9,6 +9,8 @@ from pathlib import Path
 from statistics import median
 from typing import Iterable
 
+from .scoring import ScoringScheme, score_with_scheme
+
 ANSWER_COLUMNS = {
     "participant_id",
     "exam_id",
@@ -106,12 +108,56 @@ def _read_json(path: Path, label: str) -> object:
         raise ValueError(f"cannot read {label}: {path}") from exc
 
 
-def _load_released_answer_key(
+def _verify_bound_file(
+    artifact_dir: Path,
+    extra_files: dict[str, object],
+    filename: str,
+) -> Path:
+    expected_sha = extra_files.get(filename)
+    if not isinstance(expected_sha, str) or not expected_sha:
+        raise ValueError(f"artifact manifest does not bind {filename}")
+    path = artifact_dir / filename
+    if not path.exists():
+        raise ValueError(f"approved {filename} is missing")
+    if _sha256_file(path) != expected_sha:
+        raise ValueError(f"{filename} hash does not match artifact manifest")
+    return path
+
+
+def _parse_answer_key(path: Path) -> dict[int, int]:
+    raw_key = _read_json(path, "answer key")
+    if not isinstance(raw_key, dict):
+        raise ValueError("answer_key.json must be an object")
+
+    parsed: dict[int, int] = {}
+    for raw_number, raw_option in raw_key.items():
+        try:
+            number = int(raw_number)
+            option = int(raw_option)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("answer_key.json contains a non-integer answer mapping") from exc
+        if not 1 <= number <= 50 or not 1 <= option <= 10:
+            raise ValueError("answer_key.json contains an out-of-range answer mapping")
+        if number in parsed:
+            raise ValueError(f"answer_key.json duplicates answer number {number}")
+        parsed[number] = option
+    if set(parsed) != EXPECTED_ANSWERS:
+        missing = sorted(EXPECTED_ANSWERS - set(parsed))
+        extra = sorted(set(parsed) - EXPECTED_ANSWERS)
+        raise ValueError(
+            f"answer_key.json must contain answer numbers 1..50 exactly; missing={missing}, extra={extra}"
+        )
+    return parsed
+
+
+def _load_released_scoring_evidence(
     release_record_path: Path,
     *,
     exam_id: str,
     exam_fingerprint: str,
-) -> dict[int, int]:
+) -> tuple[dict[int, int], ScoringScheme]:
+    """Verify the approved release chain before using answers or point weights."""
+
     release = _read_json(release_record_path, "release record")
     if not isinstance(release, dict):
         raise ValueError("release.json must be an object")
@@ -163,37 +209,29 @@ def _load_released_answer_key(
     extra_files = manifest.get("extra_files")
     if not isinstance(extra_files, dict):
         raise ValueError("artifact manifest has no valid extra_files map")
-    expected_answer_sha = extra_files.get("answer_key.json")
-    if not isinstance(expected_answer_sha, str) or not expected_answer_sha:
-        raise ValueError("artifact manifest does not bind answer_key.json")
 
-    answer_key_path = artifact_dir / "answer_key.json"
-    if not answer_key_path.exists():
-        raise ValueError("approved answer_key.json is missing")
-    if _sha256_file(answer_key_path) != expected_answer_sha:
-        raise ValueError("answer_key.json hash does not match artifact manifest")
+    answer_key_path = _verify_bound_file(artifact_dir, extra_files, "answer_key.json")
+    scoring_path = _verify_bound_file(artifact_dir, extra_files, "scoring_scheme.json")
+    answer_key = _parse_answer_key(answer_key_path)
+    raw_scheme = _read_json(scoring_path, "scoring scheme")
+    try:
+        scheme = ScoringScheme.model_validate(raw_scheme)
+    except Exception as exc:
+        raise ValueError("scoring_scheme.json is invalid") from exc
 
-    raw_key = _read_json(answer_key_path, "answer key")
-    if not isinstance(raw_key, dict):
-        raise ValueError("answer_key.json must be an object")
+    # Approved snapshots are self-contained. Tie the release-scoring family back
+    # to the canonical exam manifest as an additional defense against a valid but
+    # wrong-family scoring file being copied into the artifact directory.
+    approved_manifest_path = release_record_path.parent / "exam.json"
+    approved_manifest = _read_json(approved_manifest_path, "approved exam manifest")
+    if not isinstance(approved_manifest, dict):
+        raise ValueError("approved exam.json must be an object")
+    if approved_manifest.get("exam_id") != exam_id:
+        raise ValueError("approved exam manifest exam_id does not match student pilot data")
+    if approved_manifest.get("exam_family") != scheme.family:
+        raise ValueError("released scoring family does not match approved exam family")
 
-    parsed: dict[int, int] = {}
-    for raw_number, raw_option in raw_key.items():
-        try:
-            number = int(raw_number)
-            option = int(raw_option)
-        except (TypeError, ValueError) as exc:
-            raise ValueError("answer_key.json contains a non-integer answer mapping") from exc
-        if not 1 <= number <= 50 or not 1 <= option <= 10:
-            raise ValueError("answer_key.json contains an out-of-range answer mapping")
-        parsed[number] = option
-    if set(parsed) != EXPECTED_ANSWERS:
-        missing = sorted(EXPECTED_ANSWERS - set(parsed))
-        extra = sorted(set(parsed) - EXPECTED_ANSWERS)
-        raise ValueError(
-            f"answer_key.json must contain answer numbers 1..50 exactly; missing={missing}, extra={extra}"
-        )
-    return parsed
+    return answer_key, scheme
 
 
 def validate_answer_rows(rows: list[dict[str, str]]) -> tuple[str, str]:
@@ -283,9 +321,18 @@ def _row_is_correct(row: dict[str, str], answer_key: dict[int, int]) -> bool:
     return int(selected) == answer_key[int(row["answer_number"])]
 
 
+def _participant_response(rows: list[dict[str, str]]) -> dict[int, int]:
+    return {
+        int(row["answer_number"]): int(row["selected_option"])
+        for row in rows
+        if row["selected_option"].strip()
+    }
+
+
 def analyze_answers(
     rows: list[dict[str, str]],
     answer_key: dict[int, int],
+    scoring_scheme: ScoringScheme,
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     by_item: dict[int, list[dict[str, str]]] = defaultdict(list)
     by_participant: dict[str, list[dict[str, str]]] = defaultdict(list)
@@ -324,11 +371,17 @@ def analyze_answers(
     participant_summary: list[dict[str, object]] = []
     for participant in sorted(by_participant):
         participant_rows = by_participant[participant]
+        score = score_with_scheme(
+            scoring_scheme,
+            answer_key,
+            _participant_response(participant_rows),
+        )
         participant_summary.append(
             {
                 "participant_id": participant,
                 "answered_rows": len(participant_rows),
                 "correct": sum(_row_is_correct(row, answer_key) for row in participant_rows),
+                "score_200": score.earned,
                 "omitted": sum(int(row["omitted"]) for row in participant_rows),
                 "ambiguity_reports": sum(
                     int(row["ambiguity_flag"]) for row in participant_rows
@@ -396,12 +449,12 @@ def analyze_pilot(
         raise ValueError("answer and section files refer to different exam versions")
 
     exam_id, fingerprint = answer_identity
-    answer_key = _load_released_answer_key(
+    answer_key, scoring = _load_released_scoring_evidence(
         release_record_path,
         exam_id=exam_id,
         exam_fingerprint=fingerprint,
     )
-    item_summary, participant_summary = analyze_answers(answer_rows, answer_key)
+    item_summary, participant_summary = analyze_answers(answer_rows, answer_key, scoring)
     section_summary = analyze_sections(section_rows)
 
     answer_participants = {row["participant_id"].strip() for row in answer_rows}
@@ -415,13 +468,19 @@ def analyze_pilot(
     _write_csv(out_dir / "section_summary.csv", section_summary)
 
     correct_counts = [int(row["correct"]) for row in participant_summary]
+    scores = [int(row["score_200"]) for row in participant_summary]
     summary = {
         "exam_id": exam_id,
         "exam_fingerprint": fingerprint,
+        "exam_family": scoring.family,
+        "scoring_version": scoring.scoring_version,
         "participants": len(participant_summary),
         "median_correct_answers": float(median(correct_counts)),
         "max_correct_answers": max(correct_counts),
         "min_correct_answers": min(correct_counts),
+        "median_score_200": float(median(scores)),
+        "max_score_200": max(scores),
+        "min_score_200": min(scores),
     }
     (out_dir / "pilot_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
@@ -438,7 +497,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--release-record",
         type=Path,
         required=True,
-        help="approved exam release.json used to verify artifacts and answer_key.json",
+        help=(
+            "approved exam release.json used to verify PDFs, answer_key.json, "
+            "and scoring_scheme.json"
+        ),
     )
     parser.add_argument(
         "--out-dir",
