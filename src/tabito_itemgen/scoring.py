@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Mapping
 from typing import Literal
 
@@ -7,22 +8,42 @@ from pydantic import BaseModel, Field, model_validator
 
 from .exam_models import ExamFamily, SectionKind
 
+SCORING_VERSION = "R8-2026-scoring-v1"
 AwardMode = Literal["all_or_nothing", "per_choice"]
 ComparisonMode = Literal["ordered", "set"]
+
+SECTION_TOTALS: dict[SectionKind, int] = {
+    "Q1": 24,
+    "Q2": 16,
+    "Q3": 40,
+    "Q4": 60,
+    "Q5": 60,
+}
+
+
+def _section_for_answer(answer_number: int) -> SectionKind:
+    if answer_number <= 6:
+        return "Q1"
+    if answer_number <= 12:
+        return "Q2"
+    if answer_number <= 20:
+        return "Q3"
+    if answer_number <= 36:
+        return "Q4"
+    return "Q5"
 
 
 class ScoringGroup(BaseModel):
     """One official scoring unit.
 
-    A group may span multiple answer numbers.  This matters because the 2026
-    Chinese answer sheet contains both:
+    The 2026 Chinese answer tables use two independent conventions:
 
-    - starred groups where *all* linked answers must be correct to earn the
-      group's points, and
-    - linked answers marked ``各5`` where each correct selection earns points.
+    - ``＊`` means the linked answers earn the group's points only when every
+      answer in that group is correct.
+    - a hyphen joining answer numbers / correct answers means order is ignored.
 
-    ``comparison_mode`` is independent from ``award_mode``: Q2 ordering is
-    order-sensitive, while hyphen-connected multi-select answers are not.
+    Those conventions must not be conflated.  A starred pair without a hyphen
+    is still order-sensitive.
     """
 
     group_id: str
@@ -36,6 +57,13 @@ class ScoringGroup(BaseModel):
     def validate_group(self) -> ScoringGroup:
         if len(self.answer_numbers) != len(set(self.answer_numbers)):
             raise ValueError("scoring group answer_numbers must be unique")
+        for number in self.answer_numbers:
+            if not 1 <= number <= 50:
+                raise ValueError("scoring group answer_numbers must be in 1..50")
+            if _section_for_answer(number) != self.section:
+                raise ValueError(
+                    f"scoring group {self.group_id} assigns answer {number} to wrong section"
+                )
         if self.award_mode == "per_choice" and self.points % len(self.answer_numbers) != 0:
             raise ValueError("per_choice group points must divide evenly across answer numbers")
         return self
@@ -48,6 +76,7 @@ class ScoringGroup(BaseModel):
 
 
 class ScoringScheme(BaseModel):
+    scoring_version: Literal[SCORING_VERSION] = SCORING_VERSION
     family: ExamFamily
     total_points: Literal[200] = 200
     groups: tuple[ScoringGroup, ...]
@@ -61,6 +90,14 @@ class ScoringScheme(BaseModel):
             raise ValueError("scoring scheme contains duplicated answer numbers")
         if sum(group.points for group in self.groups) != self.total_points:
             raise ValueError("scoring groups must sum to 200 points")
+
+        section_points: dict[SectionKind, int] = defaultdict(int)
+        for group in self.groups:
+            section_points[group.section] += group.points
+        if dict(section_points) != SECTION_TOTALS:
+            raise ValueError(
+                f"section scoring totals must be {SECTION_TOTALS}, got {dict(section_points)}"
+            )
         return self
 
 
@@ -72,6 +109,7 @@ class GroupScore(BaseModel):
 
 
 class ScoreResult(BaseModel):
+    scoring_version: Literal[SCORING_VERSION] = SCORING_VERSION
     family: ExamFamily
     earned: int
     possible: Literal[200] = 200
@@ -126,17 +164,19 @@ def _main_groups() -> tuple[ScoringGroup, ...]:
     groups.extend(
         [
             _group("Q4", (21, 22), 10, award="per_choice", comparison="set"),
-            _group("Q4", (23, 24), 5, award="all_or_nothing", comparison="set"),
+            # Starred, but the answer numbers are not hyphen-joined in the
+            # official table: all correct is required and order still matters.
+            _group("Q4", (23, 24), 5, award="all_or_nothing", comparison="ordered"),
             _single("Q4", 25, 5),
             _single("Q4", 26, 5),
             _group("Q4", (27, 28), 5, award="all_or_nothing", comparison="set"),
             _group("Q4", (29, 30), 10, award="per_choice", comparison="set"),
-            _group("Q4", (31, 32), 5, award="all_or_nothing", comparison="set"),
+            _group("Q4", (31, 32), 5, award="all_or_nothing", comparison="ordered"),
             _single("Q4", 33, 5),
             _single("Q4", 34, 5),
-            _group("Q4", (35, 36), 5, award="all_or_nothing", comparison="set"),
+            _group("Q4", (35, 36), 5, award="all_or_nothing", comparison="ordered"),
             _single("Q5", 37, 5),
-            _group("Q5", (38, 39), 5, award="all_or_nothing", comparison="set"),
+            _group("Q5", (38, 39), 5, award="all_or_nothing", comparison="ordered"),
             _single("Q5", 40, 5),
             _single("Q5", 41, 5),
             _single("Q5", 42, 5),
@@ -171,7 +211,8 @@ def _makeup_groups() -> tuple[ScoringGroup, ...]:
             _single("Q5", 43, 5),
             _single("Q5", 44, 5),
             _group("Q5", (45, 46), 10, award="per_choice", comparison="set"),
-            _group("Q5", (47, 48), 5, award="all_or_nothing", comparison="set"),
+            # Starred pair without an answer-number hyphen: order-sensitive.
+            _group("Q5", (47, 48), 5, award="all_or_nothing", comparison="ordered"),
             _group("Q5", (49, 50), 10, award="per_choice", comparison="set"),
         ]
     )
@@ -190,10 +231,32 @@ def scoring_scheme(family: ExamFamily) -> ScoringScheme:
     return _SCHEMES[family].model_copy(deep=True)
 
 
-def _normalize_answers(values: Mapping[int | str, int]) -> dict[int, int]:
+def _normalize_answers(
+    values: Mapping[int | str, int],
+    *,
+    label: str,
+    require_complete: bool,
+) -> dict[int, int]:
     normalized: dict[int, int] = {}
-    for number, option in values.items():
-        normalized[int(number)] = int(option)
+    for raw_number, raw_option in values.items():
+        try:
+            number = int(raw_number)
+            option = int(raw_option)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{label} contains a non-integer answer mapping") from exc
+        if not 1 <= number <= 50:
+            raise ValueError(f"{label} answer number must be in 1..50")
+        if not 1 <= option <= 10:
+            raise ValueError(f"{label} option must be in 1..10")
+        if number in normalized:
+            raise ValueError(f"{label} contains duplicate normalized answer number {number}")
+        normalized[number] = option
+    if require_complete and set(normalized) != set(range(1, 51)):
+        missing = sorted(set(range(1, 51)) - set(normalized))
+        extra = sorted(set(normalized) - set(range(1, 51)))
+        raise ValueError(
+            f"{label} must contain answer numbers 1..50 exactly; missing={missing}, extra={extra}"
+        )
     return normalized
 
 
@@ -210,6 +273,8 @@ def _group_score(
     chosen = _ordered(response, group.answer_numbers)
     if any(value is None for value in correct):
         raise ValueError(f"author key is missing answer number in {group.group_id}")
+    if group.comparison_mode == "set" and len(set(correct)) != len(correct):
+        raise ValueError(f"author key contains duplicate choices in set group {group.group_id}")
 
     if group.award_mode == "all_or_nothing":
         if any(value is None for value in chosen):
@@ -239,8 +304,16 @@ def score_responses(
     responses: Mapping[int | str, int],
 ) -> ScoreResult:
     scheme = scoring_scheme(family)
-    author = _normalize_answers(author_key)
-    response = _normalize_answers(responses)
+    author = _normalize_answers(
+        author_key,
+        label="author key",
+        require_complete=True,
+    )
+    response = _normalize_answers(
+        responses,
+        label="response",
+        require_complete=False,
+    )
     groups = tuple(
         GroupScore(
             group_id=group.group_id,
