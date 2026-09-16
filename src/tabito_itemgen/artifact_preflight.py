@@ -25,6 +25,10 @@ _RENDERER_SOURCE_FILES = (
     "render.py",
     "scoring.py",
 )
+# These are the extras required for a *current* release. ArtifactManifest.passed
+# deliberately does not use this tuple: historical manifests written before a
+# newly-required artifact existed must remain readable as the evidence they were
+# at creation time. Current freshness/completeness is enforced by the release gate.
 REQUIRED_EXTRA_FILES = ("answer_key.json", "scoring_scheme.json")
 
 
@@ -48,9 +52,9 @@ class ArtifactManifest(BaseModel):
     """Immutable evidence describing one rendered artifact set.
 
     Parsing a historical manifest must never depend on the current repository,
-    renderer revision, or filesystem. Runtime freshness/integrity belongs to the
-    release gate, so approved evidence remains readable even after outputs are
-    cleaned up or the renderer evolves.
+    renderer revision, current release requirements, or filesystem. Runtime
+    freshness/integrity belongs to the release gate, so approved evidence remains
+    readable even after outputs are cleaned up or the renderer evolves.
     """
 
     exam_id: str
@@ -64,10 +68,13 @@ class ArtifactManifest(BaseModel):
 
     @property
     def passed(self) -> bool:
+        # answer_key.json was part of the original immutable artifact contract.
+        # New requirements such as scoring_scheme.json are enforced by the
+        # *current* release gate rather than retroactively changing old evidence.
         return (
             bool(self.checks)
             and all(check.passed for check in self.checks)
-            and all(filename in self.extra_files for filename in REQUIRED_EXTRA_FILES)
+            and "answer_key.json" in self.extra_files
         )
 
 
