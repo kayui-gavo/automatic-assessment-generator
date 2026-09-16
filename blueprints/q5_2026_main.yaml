@@ -24,8 +24,9 @@ verified_question_functions_from_official_self_evaluation:
   inappropriate_choice_questions: [4]
 
 verified_slot_groups:
-  note: Public problem disclosure omits copyright-protected article material at the beginning. Do not invent hidden surface details. The following later groups are visible/verified; Q1-Q2 jointly occupy 37-39.
-  Q1_Q2_combined: [37, 38, 39]
+  note: The public problem PDF omits copyright-protected source text at the beginning, but the official answer/point table explicitly identifies the question-to-answer-number grouping. Do not infer hidden wording; only preserve this verified answer architecture.
+  Q1: [37]
+  Q2: [38, 39]
   Q3: [40]
   Q4: [41]
   Q5: [42]
@@ -35,6 +36,32 @@ verified_slot_groups:
   Q9: [46]
   Q10: [47, 48]
   Q11: [49, 50]
+
+verified_response_architecture:
+  Q1: single_choice
+  Q2: multi_slot_choice
+  Q3: single_choice
+  Q4: single_choice
+  Q5: single_choice
+  Q6: single_choice
+  Q7: single_choice
+  Q8: single_choice
+  Q9: single_choice
+  Q10: multi_select
+  Q11: multi_select
+
+scoring_architecture:
+  Q1: independent_5
+  Q2: ordered_all_or_nothing_5
+  Q3: independent_5
+  Q4: independent_5
+  Q5: independent_5
+  Q6: independent_5
+  Q7: independent_5
+  Q8: independent_5
+  Q9: independent_5
+  Q10: unordered_all_or_nothing_5
+  Q11: unordered_per_correct_5_each
 
 surface_features:
   - vocabulary/phrase choice fitting discourse flow
@@ -78,6 +105,10 @@ schema_requirements:
   tasks:
     - refer to anchors by id, never by substring search
     - preserve question_no separately from answer numbers
+    - Q1 must use answer 37 only
+    - Q2 must use answers 38 and 39 as an ordered two-slot task
+    - Q10 must use answers 47 and 48 as an unordered two-answer task
+    - Q11 must use answers 49 and 50 as an unordered two-answer task
 
 human_qa:
   - article_naturalness
